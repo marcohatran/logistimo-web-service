@@ -408,7 +408,7 @@ public class LinkedDomainController {
     }
 
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     navigator =
         new Navigator(request.getSession(), "DomainConfigController.getDomains", 0, 10, "dummy", 0);
     PageParams pageParams = new PageParams(navigator.getCursor(0), 0, 10);

@@ -985,8 +985,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
               LockUtil.lock(String.valueOf(kioskId), LOCK_RETRY_COUNT,
                   LOCK_RETRY_DELAY_IN_MILLISECONDS);
           if (!LockUtil.isLocked(lockStatus)) {
-            ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES,
-                SecurityUtils.getLocale());
+            ResourceBundle backendMessages = Resources.getBundle(SecurityUtils.getLocale());
             throw new ServiceException(backendMessages.getString("lockinventory.failed"));
           }
           kidLockStatusMap.put(kioskId, lockStatus);
@@ -1395,7 +1394,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
             || ITransaction.TRACKING_OBJECT_TYPE_TRANSFER_SHIPMENT.equals(trkType);
     boolean isReturn = ITransaction.TYPE_RETURNS_INCOMING.equals(tType) || ITransaction.TYPE_RETURNS_OUTGOING.equals(tType);
     Locale locale = SecurityUtils.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     try {
       if (!isOrder && !authorizationService.authoriseTransactionAccess(tType, domainId,
           userId)) {
@@ -1835,6 +1834,10 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     list.add(inventoryTransaction);
     CreateTransactionsReturnModel createTransactionsReturnModel = updateInventoryTransactions(domainId, list, skipVal, skipPred,
         pm);
+    return convertResponseToTransaction(createTransactionsReturnModel);
+  }
+
+  private ITransaction convertResponseToTransaction(CreateTransactionsReturnModel createTransactionsReturnModel) throws ServiceException {
     if (!CollectionUtils.isEmpty(createTransactionsReturnModel.getErrorTransactions())) {
       // Since the list has only one Transaction, the errorList also cannot have more than one Transaction
       return createTransactionsReturnModel.getErrorTransactions().get(
@@ -1857,15 +1860,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     List<ITransaction> list = new ArrayList<>();
     list.add(inventoryTransaction);
     CreateTransactionsReturnModel createTransactionsReturnModel = updateInventoryTransactions(domainId, list, false, skipPred, pm);
-    if (!CollectionUtils.isEmpty(createTransactionsReturnModel.getErrorTransactions())) {
-      return createTransactionsReturnModel.getErrorTransactions().get(
-          0); // Since the list has only one Transaction, the errorList also cannot have more than one Transaction
-    } else if (!CollectionUtils.isEmpty(createTransactionsReturnModel.getSuccessfulTransactions())) {
-      return createTransactionsReturnModel.getSuccessfulTransactions().get(
-          0);
-    } else {
-      throw new ServiceException("ServiceException while updating inventory transaction");
-    }
+    return convertResponseToTransaction(createTransactionsReturnModel);
   }
 
   /**
@@ -3439,8 +3434,8 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
       }
 
       pm.makePersistentAll(allocations);
-      xLogger.info("Inventory allocations transferred for kiosk {0}, material {1}, source type {3}"
-          + " ,source type id {4}, dest type {5} , dest type id {6}", kid, mid, srcType, srcTypeId, destType, destTypeId);
+      xLogger.info("Inventory allocations transferred for kiosk {0}, material {1}, source type {2}"
+          + " ,source type id {3}, dest type {4} , dest type id {5}", kid, mid, srcType, srcTypeId, destType, destTypeId);
     } catch (ServiceException ie) {
       throw ie;
     } catch (Exception e) {
@@ -4058,7 +4053,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
       Long domainId = kiosk.getDomainId();
       if (domainId == null) {
         Locale locale = sUser.getLocale();
-        ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
+        ResourceBundle backendMessages = Resources.getBundle(locale);
         xLogger.severe("Error while fetching Return configuration");
         throw new InvalidServiceException(
             backendMessages

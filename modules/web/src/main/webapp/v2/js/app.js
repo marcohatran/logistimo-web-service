@@ -33,7 +33,7 @@ var logistimoApp = angular.module('logistimoApp', ['ngCookies', 'ngSanitize', 'n
     'exportControllers','once','assetControllers','assetServices','handlingUnitControllers','handlingUnitServices',
     'conversationServices', 'activityServices','conversationControllers','hc.downloader','reportsPluginCore','approvalServices',
     'approvalControllers', 'bulletinBoardControllers', 'logistimo.storyboard', 'eventSummaryServices', 'systemCfgControllers',
-    'stockRebalancingControllers','stockRebalancingServices'
+    'stockRebalancingControllers','stockRebalancingServices', 'transporterControllers', 'transporterServices'
     /*<% do-not-remove-this-comment-grunt-will-insert-dep-for-prod %>*/]);
 
 logistimoApp.config(function (uibDatepickerConfig) {
@@ -245,6 +245,8 @@ logistimoApp.config(function ($routeProvider) {
         action: "configuration.approvals"
     }).when("/configuration/rebalancing/", {
        action: "configuration.rebalancing"
+    }).when("/configuration/transporters/", {
+       action: "configuration.transporters"
     }).when("/configuration/forms/", {
        action: "configuration.forms"
     }).when("/configuration/accounting/", {
@@ -379,6 +381,10 @@ logistimoApp.config(function ($routeProvider) {
         action: "setup.users.all.details.kiosks"
     }).when("/setup/users/all/details/domains", {
         action: "setup.users.all.details.domains"
+    }).when("/setup/users/all/details/tokens", {
+        action: "setup.users.all.details.tokens"
+    }).when("/setup/users/all/details/tokens/new", {
+        action: "setup.users.all.details.tokens.new"
     }).when("/configuration/notifications/notifstatus", {
         action: "configuration.notifications.notifstatus"
     }).when("/setup/assets/",{
@@ -451,6 +457,18 @@ logistimoApp.config(function ($routeProvider) {
         action: "setup.auth"
     }).when("/configuration/bulletin/config", {
         action: "configuration.bulletin.config"
+    }).when("/setup/transporters", {
+        action: "setup.transporters.all.list"
+    }).when("/setup/transporters/all", {
+        action: "setup.transporters.all.list"
+    }).when("/setup/transporters/all", {
+        action: "setup.transporters.all.list"
+    }).when("/setup/transporters/all/add", {
+        action: "setup.transporters.all.add"
+    }).when("/setup/transporters/all/edit", {
+        action: "setup.transporters.all.edit"
+    }).when("/setup/transporters/all/detail/:transporterId", {
+        action: "setup.transporters.all.detail.summary"
     });
 });
 /* @endif */
@@ -522,6 +540,11 @@ logistimoApp.filter('orderObjectBy', function () {
             return direction ? b - a : a - b;
         });
         return array;
+    }
+});
+logistimoApp.filter('capitalize', function() {
+    return function(input) {
+        return (!!input) ? input.charAt(0).toUpperCase() + input.substr(1).toLowerCase() : '';
     }
 });
 logistimoApp.config(['uiGmapGoogleMapApiProvider', function (GoogleMapApi) {

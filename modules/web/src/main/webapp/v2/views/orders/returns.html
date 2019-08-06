@@ -31,7 +31,7 @@
             </tr>
             <tr ng-repeat="return in returnsList" class="clickable" ng-click="openReturns(return.return_id)">
                 <td class="text-left vmiddle">{{return.return_id}}</td>
-                <td class="text-center vmiddle">{{RETURNS.statusLabel[return.status.status]}}</td>
+                <td class="text-center vmiddle">{{getLabelFromResourceBundle(RETURNS.statusLabel[return.status.status])}}</td>
                 <td class="text-center">
                     <a ng-href="#/setup/users/all/details?userId={{return.created_by.user_id}}" target="_blank"
                        ng-click="$event.stopPropagation();">{{return.created_by.full_name}}</a>
@@ -40,7 +40,7 @@
             </tr>
         </table>
         <span ng-if="returnsList.length == 0" class="col-sm-12 lPad5">
-            <p class="alert alert-warning">No returns have been created.</p>
+            <p class="alert alert-warning">{{resourceBundle['returns.no.returns.created']}}</p>
         </span>
     </div>
 </div>

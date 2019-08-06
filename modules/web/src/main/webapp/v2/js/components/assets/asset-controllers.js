@@ -42,7 +42,7 @@ assetControllers.controller("AddAssetController", ['$scope', '$route', 'assetSer
             {grp:'highWarn', key: 'temp'}, {grp:'highWarn', key: 'dur'},
             {grp:'lowWarn', key: 'temp'}, {grp:'lowWarn', key: 'dur'},
             {grp:'notf', key: 'dur'}, {grp:'notf', key: 'num'}];
-        $scope.configCommunicationChannel = [{id: 0, value: "SMS"}, {id: 1, value: "Internet"}, {id: 2, value:"Failover"}];
+        $scope.configCommunicationChannel = [{id: 0, value: $scope.resourceBundle['communication.channel.sms']}, {id: 1, value: $scope.resourceBundle['communication.channel.internet']}, {id: 2, value:$scope.resourceBundle['communication.channel.failover']}];
         $scope.assetCapacityMetrics = [{id: "Litres", value: "Litres"}];
         $scope.editConfig = false;
         $scope.editAssetId = requestContext.getParam("aid");
@@ -420,7 +420,7 @@ assetControllers.controller("AddAssetController", ['$scope', '$route', 'assetSer
             }
             if(invalidSensorMsg.length > 0) {
                 invalidSensorMsg.sort();
-                $scope.sensorMsg = "Enable stats push is enabled in sensor: " + invalidSensorMsg;
+                $scope.sensorMsg = $scope.resourceBundle['enable.stats.push.enabled.message'] + " " + invalidSensorMsg;
             }
             if($scope.config.comm.statsNotify || $scope.sensorConfigEnabled) {
                 if(checkNullEmpty($scope.config.comm.statsUrl)) {
@@ -550,16 +550,16 @@ assetControllers.controller('AssetsDetailsListingController', ['$scope', '$locat
         $scope.params = $location.path();
         $scope.at_mg = [];
         $scope.at_md = [];
-        $scope.filters = [{"value": "0", "displayValue": "All"},
-            {"value": "1", "displayValue": "Temperature alarms", "type": 2},
-            {"value": "2", "displayValue": "Device alarms", "type": 1},
-            {"value": "3", "displayValue": "No data"},
-            {"value": "4", "displayValue": "Normal items"}];
-        $scope.filterDur = [{"index":"0","factorValue": "1", "displayValue": "Minutes"},
-            {"index":"1","factorValue": "60", "displayValue": "Hours"},
-            {"index":"2","factorValue": "1440", "displayValue": "Days"},
-            {"index":"3","factorValue": "10080", "displayValue": "Weeks"},
-            {"index":"4","factorValue": "43200", "displayValue": "Months"}];
+        $scope.filters = [{"value": "0", "displayValue": $scope.resourceBundle['all']},
+            {"value": "1", "displayValue": $scope.resourceBundle['temperature.alarms'], "type": 2},
+            {"value": "2", "displayValue": $scope.resourceBundle['device.alarms'], "type": 1},
+            {"value": "3", "displayValue": $scope.resourceBundle['no.data']},
+            {"value": "4", "displayValue": $scope.resourceBundle['assets.alarms.normal.items']}];
+        $scope.filterDur = [{"index":"0","factorValue": "1", "displayValue": $scope.resourceBundle['minutes.upper']},
+            {"index":"1","factorValue": "60", "displayValue": $scope.resourceBundle['hours.upper']},
+            {"index":"2","factorValue": "1440", "displayValue": $scope.resourceBundle['days.upper']},
+            {"index":"3","factorValue": "10080", "displayValue": $scope.resourceBundle['weeks.upper']},
+            {"index":"4","factorValue": "43200", "displayValue": $scope.resourceBundle['months.upper']}];
         $scope.localFilters = ['entity', 'duration'];
         $scope.filterMethods = ['filterResults', 'onDurationFilterChange'];
         $scope.currentFilter = 0;
@@ -578,8 +578,8 @@ assetControllers.controller('AssetsDetailsListingController', ['$scope', '$locat
         ListingController.call(this, $scope, requestContext, $location);
         $scope.mparams = ["did", "vid", "alrm", "dur", "dtype", "eid", "o", "s", "at", "ws","awr"];
 
-        $scope.assetRelationFilters = [{id:0,data:"All assets"},{id:1,data:"Assets with relationships"},
-            {id:2,data:"Assets without relationships"}];
+        $scope.assetRelationFilters = [{id:0,data:$scope.resourceBundle['assets.all']},{id:1,data:$scope.resourceBundle['assets.with.relationships']},
+            {id:2,data:$scope.resourceBundle['assets.without.relationships']}];
         $scope.awrDisplay = $scope.assetRelationFilters[0].data;
         $scope.tempAwrDisplay = $scope.assetRelationFilters[0].data;
         $scope.aDurationDisplay = 1;
@@ -678,10 +678,10 @@ assetControllers.controller('AssetsDetailsListingController', ['$scope', '$locat
 
         function constructAssetTypeValue() {
             if (checkNotNullEmpty($scope.assetTypeFilter) && $scope.assetTypeFilter.length == 1 && $scope.assetTypeFilter[0] == 'md') {
-                $scope.assetTypeFilterText = ['All monitored assets'];
+                $scope.assetTypeFilterText = [$scope.resourceBundle['assets.all.monitored']];
                 setAssetTypeFilter($scope.mAssetFilters.md);
             } else if (checkNotNullEmpty($scope.assetTypeFilter) && $scope.assetTypeFilter.length == 1 && $scope.assetTypeFilter[0] == 'mg') {
-                $scope.assetTypeFilterText = ['All monitoring assets'];
+                $scope.assetTypeFilterText = [$scope.resourceBundle['assets.all.monitoring']];
                 setAssetTypeFilter($scope.mAssetFilters.mg);
             } else {
                 var allMd = true;
@@ -692,7 +692,7 @@ assetControllers.controller('AssetsDetailsListingController', ['$scope', '$locat
                     }
                 }
                 if(allMd) {
-                    $scope.assetTypeFilterText = ['All monitored assets'];
+                    $scope.assetTypeFilterText = [$scope.resourceBundle['assets.all.monitored']];
                 } else {
                     var allMg = true;
                     for(mg in $scope.mAssetFilters.mg) {
@@ -702,7 +702,7 @@ assetControllers.controller('AssetsDetailsListingController', ['$scope', '$locat
                         }
                     }
                     if(allMg) {
-                        $scope.assetTypeFilterText = ['All monitoring assets'];
+                        $scope.assetTypeFilterText = [$scope.resourceBundle['assets.all.monitoring']];
                     }
                 }
                 if(!allMd && !allMg) {
@@ -886,7 +886,7 @@ assetControllers.controller('AssetsDetailsListingController', ['$scope', '$locat
             caption += getFilterTitle($scope.assetTypeFilterText, $scope.resourceBundle['type']);
             caption += getFilterTitle($scope.awrDisplay, $scope.resourceBundle['relationships']);
             caption += getFilterTitle($scope.filters[$scope.currentFilter].displayValue, $scope.resourceBundle['alarms']);
-            caption += getFilterTitle((($scope.assetWSFilter == 0) ? "All" : $scope.assetConfig.wses[$scope.assetWSFilter].dV), $scope.resourceBundle['working.status']);
+            caption += getFilterTitle((($scope.assetWSFilter == 0) ? $scope.resourceBundle['all'] : $scope.assetConfig.wses[$scope.assetWSFilter].dV), $scope.resourceBundle['working.status']);
             if (checkNotNullEmpty($scope.duration)) {
                 var duration = $scope.duration + " " + $scope.filterDur[$scope.aDurationDisplay].displayValue;
                 caption += getFilterTitle(duration, $scope.resourceBundle['duration']);
@@ -1037,7 +1037,7 @@ assetControllers.controller('AssetDetailsController', ['$injector', '$scope', '$
         $scope.vendorMapping = {};
         $scope.deviceConfiguredStatus = true;
         $scope.entityInformation = {};
-        $scope.configCommunicationChannel = [{id: 0, value: "SMS"}, {id: 1, value: "Internet"}, {id: 2, value: "Failover"}];
+        $scope.configCommunicationChannel = [{id: 0, value: $scope.resourceBundle['communication.channel.sms']}, {id: 1, value: $scope.resourceBundle['communication.channel.internet']}, {id: 2, value: $scope.resourceBundle['communication.channel.failover']}];
         $scope.assetCapacityMetrics = [{id: "Litres", value: "Litres"}];
         $scope.configCommChannelArray = ["SMS", "Internet", "Failover"];
         $scope.loadingInvItems = true;
@@ -1318,7 +1318,7 @@ assetControllers.controller('AssetDetailsController', ['$injector', '$scope', '$
 
         $scope.updateWS = function(){
             if(checkNullEmpty($scope.workingStatus)) {
-                $scope.showWarning("Please select status");
+                $scope.showWarning($scope.resourceBundle['assets.select.status']);
                 return;
             }
             $scope.editWS = false;
@@ -1456,9 +1456,9 @@ assetControllers.controller('AssetRelationsController', ['$scope', 'assetService
                 $scope.postData = {data:[{dId: $scope.assetDetails.dId, vId: $scope.assetDetails.vId, ras: tmpAssetRelations}]};
                 assetService.createAssetRelationships($scope.postData).then(function(data){
                     if($scope.edit){
-                        $scope.showSuccess("Asset relationship updated successfully.");
+                        $scope.showSuccess($scope.resourceBundle['asset.relation.updated.successfully']);
                     }else{
-                        $scope.showSuccess("Asset relationship created successfully.");
+                        $scope.showSuccess($scope.resourceBundle['asset.relation.created.successfully']);
                     }
                     $scope.get();
                 }).catch(function(err){
@@ -1471,7 +1471,7 @@ assetControllers.controller('AssetRelationsController', ['$scope', 'assetService
                     $scope.hideLoading();
                 });
             }else{
-                $scope.showWarning("Please enter valid details");
+                $scope.showWarning($scope.resourceBundle['assets.enter.valid.details']);
             }
         };
 
@@ -1500,7 +1500,7 @@ assetControllers.controller('AssetRelationsController', ['$scope', 'assetService
                 var tmpAssetRelations = [];
                 $scope.postData = {data:[{dId: $scope.assetDetails.dId, vId: $scope.assetDetails.vId, ras: tmpAssetRelations}]};
                 assetService.createAssetRelationships($scope.postData, true).then(function(data){
-                    $scope.showSuccess("Asset relationship deleted successfully.");
+                    $scope.showSuccess($scope.resourceBundle['asset.relation.deleted.successfully']);
                     $scope.arModel.relAsset = undefined;
                     $scope.assetRelations = [];
                     $scope.get();
@@ -1550,12 +1550,12 @@ assetControllers.controller('AssetSummaryController', ['$scope', 'requestContext
             height: "225",
             width: "100%",
             options: {
-                "caption": "Power availability",
+                "caption": $scope.resourceBundle['power.availability'],
                 "exportEnabled": 1,
                 "theme": "fint",
                 "showLegend": 1,
                 "labelDisplay": "rotate",
-                "xAxisName": "Time",
+                "xAxisName": $scope.resourceBundle['time'],
                 "showValues": "0",
                 "yAxisMaxValue": 1,
                 "yAxisMinValue": 0,
@@ -1575,15 +1575,15 @@ assetControllers.controller('AssetSummaryController', ['$scope', 'requestContext
             legends: [
                 {
                     color: "#00a65a",
-                    name: "Available"
+                    name: $scope.resourceBundle['available']
                 },
                 {
                     color: "#f56954",
-                    name: "Outage"
+                    name: $scope.resourceBundle['outage']
                 },
                 {
                     color: "#D3D3D3",
-                    name: "Unknown"
+                    name: $scope.resourceBundle['status.unknown']
                 }
             ],
             "trendlines": [{
@@ -1591,13 +1591,13 @@ assetControllers.controller('AssetSummaryController', ['$scope', 'requestContext
                     {
                         "startvalue": "1",
                         "color": "#00a65a",
-                        "displayvalue": "Available",
+                        "displayvalue": $scope.resourceBundle['available'],
                         "valueOnRight" : "0"
                     },
                     {
                         "startvalue": "0",
                         "color": "#f56954",
-                        "displayvalue": "Outage",
+                        "displayvalue": $scope.resourceBundle['outage'],
                         "valueOnRight" : "0"
                     }
                 ]
@@ -1696,9 +1696,9 @@ assetControllers.controller('AssetSummaryController', ['$scope', 'requestContext
                                 var values = {"label": value.label, "value": value.pwa};
                                 if(checkNotNullEmpty(value.pwa)){
                                     if(value.pwa == 1){
-                                        values.toolText = value.label + ", Available";
+                                        values.toolText = value.label + ", " + $scope.resourceBundle['available'];
                                     }else if(value.pwa == 0){
-                                        values.toolText = value.label + ", Outage";
+                                        values.toolText = value.label + ", " + $scope.resourceBundle['outage'];
                                     }
                                 }
                                 $scope.pg.values.push(values);
@@ -1750,8 +1750,8 @@ assetControllers.controller('AssetSummaryController', ['$scope', 'requestContext
                         var today = parseUrlDate(new Date(dt.getFullYear(), dt.getMonth(), dt.getDate()));
                         var dataJson = {
                             "chart": {
-                                "xAxisName": "Time",
-                                "yAxisName": "Temperature",
+                                "xAxisName": $scope.resourceBundle['time'],
+                                "yAxisName": $scope.resourceBundle['temperature'],
                                 "numberSuffix": "°C",
                                 "showValues": "1",
                                 "showBorder": "0",
@@ -1802,7 +1802,7 @@ assetControllers.controller('AssetSummaryController', ['$scope', 'requestContext
                             }]
                         };
 
-                        var noDataMessage = checkNullEmpty(tdate) ? "No data available" : "No data available for " + formatDate(tdate);
+                        var noDataMessage = checkNullEmpty(tdate) ? $scope.resourceBundle['no.data.available'] : messageFormat($scope.resourceBundle['no.data.available.for'], formatDate(tdate));
                         FusionCharts.ready(function () {
                             var chartReference = FusionCharts("temp-map");
                             if (checkNotNullEmpty(chartReference)) {

@@ -67,7 +67,7 @@ public class MessageLogExportHandler implements IExportHandler {
         MessageService smsService = MessageService.getInstance(MessageService.SMS, u.getCountry());
         name = u.getFullName();
         ph = u.getMobilePhoneNumber();
-        status = smsService.getStatusMessage(messageLog.getStatus(), locale);
+        status = smsService.getStatusMessage(messageLog.getStatus(), locale, messageLog.getProviderId());
       } catch (ObjectNotFoundException e) {
         name = messageLog.getUserId() + "(" + "User deleted" + ")";
         ph = "";

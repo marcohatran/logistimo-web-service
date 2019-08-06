@@ -1,0 +1,382 @@
+<!--
+  ~ Copyright © 2017 Logistimo.
+  ~
+  ~ This file is part of Logistimo.
+  ~
+  ~ Logistimo software is a mobile & web platform for supply chain management and remote temperature monitoring in
+  ~ low-resource settings, made available under the terms of the GNU Affero General Public License (AGPL).
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+  ~ Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+  ~ later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+  ~ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License along with this program.  If not, see
+  ~ <http://www.gnu.org/licenses/>.
+  ~
+  ~ You can be released from the requirements of the license by purchasing a commercial license. To know more about
+  ~ the commercial license, please contact us at opensource@logistimo.com
+  -->
+
+<div class="box topbox">
+    <div class="bizinfo bizinfo-last">
+        <div ng-controller="AddTransporterController">
+            <form class="form-horizontal" role="form" name="addTransporterForm" novalidate>
+                <div class="bgr">
+                    <div class="title-heading">
+                        {{resourceBundle['transporter.infotitle']}}
+                    </div>
+                    <p class="litetext">{{resourceBundle["specify.transporter.info"]}}</p>
+
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label class="col-sm-4 control-label required">
+                                    {{resourceBundle['transporter.name']}}</label>
+
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control" maxlength="100" autocomplete="off"
+                                           ng-model="transporter.name" name="trname"
+                                           placeholder="{{resourceBundle['transporter.name']}}"
+                                           ng-class="{'c-visited' : uVisited.tname}"
+                                           ng-blur="uVisited.tname = true;"
+                                           required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="has-error">
+                                <span ng-show="uVisited.tname && addTransporterForm.trname.$error.required"
+                                      class="help-block">{{resourceBundle['transporter.name']}}
+                                    {{resourceBundle['isrequired']}}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label class="col-sm-4 control-label">
+                                    {{resourceBundle['description']}}</label>
+
+                                <div class="col-sm-8">
+                                    <textarea type="text" maxlength="500" class="form-control" autocomplete="off"
+                                           ng-model="transporter.desc"
+                                          placeholder="{{resourceBundle['description']}}">
+                                    </textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row"> <!--Mobile Phone-->
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="trPhnm" class="col-sm-4 control-label required">
+                                    {{resourceBundle['user.mobile']}}</label>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control" id="trPhnm"
+                                           autocomplete="off"
+                                           ng-model="transporter.phnm"
+                                           name="phnm"
+                                           maxlength="20"
+                                           placeholder="{{resourceBundle['user.mobile']}}"
+                                           ng-class="{'c-visited' : uVisited.phnm}"
+                                           contact
+                                           ng-blur="uVisited.phnm = true; validateMobilePhone()" required>
+                                    <span class="litetext">+&lt;{{resourceBundle['country']}}-{{resourceBundle['code']}}&gt; &lt;{{resourceBundle['user.mobile']}}&gt;<br/>{{resourceBundle['eg']}} +91 9844360948 [{{resourceBundle['india']}}], +1 5404569089 [{{resourceBundle['usa']}}]</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <div class="has-error"
+                                     ng-show="uVisited.phnm && (addTransporterForm.phnm.$error.required || invalidPhnm == 'r')">
+                                    <span class="help-block">{{resourceBundle['user.mobile']}} {{resourceBundle['isrequired']}}</span>
+                                </div>
+                                <div class="has-error" ng-show="uVisited.phnm && invalidPhnm == 's'">
+                                    <span class="help-block">{{resourceBundle['phoneformatmsg']}}</span>
+                                </div>
+                                <div class="has-error" ng-show="uVisited.phnm && invalidPhnm == 'f'">
+                                    <span class="help-block">{{resourceBundle['followformatmsg']}}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row"> <!--Country-->
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="trCtr" class="col-sm-4 control-label required">{{resourceBundle['country']}}</label>
+                                <div class="col-sm-8">
+                                    <select id="trCtr" ng-model="transporter.cnt" name="ctry" class="form-control"
+                                            ng-class="{'c-visited' : uVisited.cnt}" ng-blur="uVisited.cnt = true;setCountry(transporter.cnt)" required>
+                                        <option value=""> -- {{resourceBundle['select']}} {{resourceBundle['country']}} -- </option>
+                                        <option ng-repeat="(name,val) in sCountries" value="{{val.code}}" ng-selected="val.code === transporter.cnt">{{val.name}}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <div class="has-error" ng-show="uVisited.cnt && transporter.cnt == undefined">
+                                    <span class="help-block">{{resourceBundle['country']}} {{resourceBundle['isrequired']}}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row"> <!--State-->
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="trSt" class="col-sm-4 control-label required">{{resourceBundle['state']}}</label>
+                                <div class="col-sm-8">
+                                    <select ng-model="transporter.st" name="st" id="trSt" class="form-control" ng-class="{'c-visited' : uVisited.st}" ng-blur="uVisited.st = true;setState(transporter.st)" required>
+                                        <option value=""> -- {{resourceBundle['select']}} {{resourceBundle['state']}} -- </option>
+                                        <option ng-repeat="(key,item) in states" value="{{key}}" ng-selected="key == transporter.st">{{key}}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <div class="has-error" ng-show="uVisited.st && isUndef(transporter.st)">
+                                    <span class="help-block">{{resourceBundle['state']}} {{resourceBundle['isrequired']}}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row"> <!--District-->
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="trDs" class="col-sm-4 control-label">{{resourceBundle['district']}}</label>
+                                <div class="col-sm-8">
+                                    <select ng-model="transporter.ds" name="ds" ng-blur="setDistrict(transporter.ds)" ng-change="setDistrict(transporter.ds)"  class="form-control" id="trDs" >
+                                        <option value=""> -- {{resourceBundle['select']}} {{resourceBundle['district']}} -- </option>
+                                        <option ng-repeat="(key,item) in districts" value="{{key}}" ng-selected="key == transporter.ds">{{key}}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row"> <!--Taluk-->
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="trTlk" class="col-sm-4 control-label">{{resourceBundle['taluk']}}</label>
+                                <div class="col-sm-8">
+                                    <select  ng-model="transporter.tlk" name="tk" class="form-control" id="trTlk" >
+                                        <option value=""> -- {{resourceBundle['select']}} {{resourceBundle['taluk']}} -- </option>
+                                        <option ng-repeat="(key,item) in taluks" value="{{item}}" ng-selected="item == transporter.tlk">{{item}}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row"> <!--City-->
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="trCt" class="col-sm-4 control-label">{{resourceBundle['village']}}</label>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control" id="trCt"
+                                           autocomplete="off"
+                                           ng-model="transporter.ct"
+                                           name="ct"
+                                           maxlength="50"
+                                           placeholder="{{resourceBundle['village']}}"
+                                           ng-class="{'c-visited' : uVisited.ct}"
+                                           ng-blur="uVisited.ct = true">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row"> <!--Street-->
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="trStn" class="col-sm-4 control-label">{{resourceBundle['streetaddress']}}</label>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control" id="trStn"
+                                           autocomplete="off"
+                                           ng-model="transporter.stn"
+                                           name="stn"
+                                           maxlength="200"
+                                           placeholder="{{resourceBundle['streetaddress']}}"
+                                           ng-class="{'c-visited' : uVisited.stn}"
+                                           ng-blur="uVisited.stn = true">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row"> <!--PIN code-->
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="trPin" class="col-sm-4 control-label">{{resourceBundle['zipcode']}}</label>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control" id="trPin"
+                                           autocomplete="off"
+                                           ng-model="transporter.pin"
+                                           name="pin"
+                                           zip-code
+                                           maxlength="50"
+                                           placeholder="{{resourceBundle['zipcode']}}"
+                                           ng-class="{'c-visited' : uVisited.pin}"
+                                           ng-blur="uVisited.pin = true">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row"> <!--Vehicle-->
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="trVh" class="col-sm-4 control-label">{{resourceBundle['vehicle']}} {{resourceBundle['details'] | lowercase}}</label>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control" id="trVh"
+                                           autocomplete="off"
+                                           ng-model="transporter.vhcl"
+                                           name="vh" maxlength="100"
+                                           placeholder="{{resourceBundle['vehicle']}} {{resourceBundle['details'] | lowercase}}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label class="col-sm-4 control-label">{{resourceBundle['type']}}</label>
+                                <div class="col-sm-8">
+                                    <label class="radio-inline">
+                                        <input type="radio" name="optradio" ng-model="transporter.type" value="owned"
+                                               checked>{{resourceBundle['owned']}}
+                                    </label>
+                                    <label class="radio-inline">
+                                        <input type="radio" name="optradio" ng-model="transporter.type"
+                                               value="third_party">{{resourceBundle['third.party']}}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bgr" ng-show="transporter.type == 'third_party' && tspSysConfigs && tspSysConfigs.length>0">
+                    <div class="title-heading">
+                        {{resourceBundle['transporter.service.configtitle']}}
+                    </div>
+                    <p class="litetext">{{resourceBundle["specify.tsp.info"]}}</p>
+
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label class="col-sm-4 control-label">{{resourceBundle['api.enabled']}}</label>
+                                <div class="col-sm-8">
+                                    <div class="cbx">
+                                        <input type="checkbox" id="apienabled" ng-true-value="true"
+                                               ng-change="onEnableApiFlagChange(transporter.is_api_enabled)"
+                                               ng-false-value="false" ng-model="transporter.is_api_enabled" name="apienabled">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label class="col-sm-4 control-label">
+                                    {{resourceBundle['select']}} {{resourceBundle['provider.lower']}}</label>
+
+                                <div class="col-sm-7">
+
+                                    <select id="tspId" ng-model="transporter.tsp_id" name="trAccId" class="form-control"
+                                            ng-change="onTspChange()" ng-disabled="!transporter.is_api_enabled">
+                                        <option value=""> -- {{resourceBundle['select']}} --</option>
+                                        <option ng-repeat="config in tspSysConfigs" value="{{config.id}}"
+                                                ng-selected="config.id === transporter.tsp_id">{{config.name}}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label class="col-sm-4 control-label">
+                                    {{resourceBundle['account.id']}}</label>
+
+                                <div class="col-sm-7">
+                                    <input type="text" class="form-control" maxlength="100" autocomplete="off"
+                                           ng-model="transporter.ac_id" name="trAccId"
+                                           placeholder="{{resourceBundle['account.id']}}"
+                                           ng-disabled="!transporter.is_api_enabled">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label class="col-sm-4 control-label">
+                                    {{resourceBundle['url']}}</label>
+
+                                <div class="col-sm-7">
+                                    <input type="text" class="form-control" maxlength="100" autocomplete="off"
+                                           ng-model="transporter.url" name="trurl"
+                                           placeholder="{{resourceBundle['url']}}"
+                                           ng-disabled="!transporter.is_api_enabled">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label class="col-sm-4 control-label">
+                                    {{resourceBundle['access.token']}}</label>
+
+                                <div class="col-sm-7">
+                                    <input type="text" class="form-control" maxlength="100"
+                                           autocomplete="off"
+                                           ng-model="transporter.secret" name="trkey"
+                                           placeholder="{{resourceBundle['access.token']}}"
+                                           ng-readonly="secret_readonly"
+                                           ng-disabled="!transporter.is_api_enabled">
+                                </div>
+                                <div ng-show="secret_readonly" class="clickable temp"
+                                     ng-click="transporter.secret = ''; secret_readonly = false; transporter.secret_updated = true;"><span
+                                        class="glyphicons glyphicons-edit"></span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="row mt10">
+                    <div class="col-sm-6">
+                        <div class="pull-right">
+                            <button type="button" ng-hide="edit"
+                                    ng-click="uVisited.tname = true; uVisited.phnm = true; uVisited.cnt = true; uVisited.st = true; validateMobilePhone() && addTransporterForm.$valid && createTransporter()"
+                                    name="save" class="btn btn-primary">{{resourceBundle['save']}}</button>
+                            <button type="button" ng-show="edit"
+                                    ng-click="uVisited.tname = true; uVisited.phnm = true; uVisited.cnt = true; uVisited.st = true; validateMobilePhone() && addTransporterForm.$valid && updateTransporter()"
+                                    name="update" class="btn btn-primary">{{resourceBundle['update']}}</button>
+                            <a ng-show="edit" ng-click="$back()" name="cancel" class="btn btn-default">{{resourceBundle['cancel']}}</a>
+                            <a ng-hide="edit" href="#/setup/transporters/" name="cancel" class="btn btn-default">{{resourceBundle['cancel']}}</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

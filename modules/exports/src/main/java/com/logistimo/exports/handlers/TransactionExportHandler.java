@@ -31,6 +31,7 @@ import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
+import com.logistimo.inventory.TransactionUtil;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IMaterial;
@@ -69,21 +70,19 @@ public class TransactionExportHandler implements IExportHandler {
   // Get the CSV header - Modified to suit export only.
   @Override
   public String getCSVHeader(Locale locale, DomainConfig dc, String type) {
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-    ResourceBundle jsMessages = Resources.get().getBundle("JSMessages", locale);
+    ResourceBundle messages = Resources.getBundle(locale);
 
     StringBuilder header = new StringBuilder();
     header.append(messages.getString("transactionid")).append(CharacterConstants.COMMA)
         .append(messages.getString("type")).append(CharacterConstants.COMMA)
         .append(messages.getString("trackingobjecttype")).append(CharacterConstants.COMMA)
         .append(messages.getString("trackingid")).append(CharacterConstants.COMMA)
-        .append(backendMessages.getString("kiosk")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("id")).append(CharacterConstants.COMMA)
+        .append(messages.getString("kiosk")).append(CharacterConstants.SPACE)
+        .append(messages.getString("id")).append(CharacterConstants.COMMA)
         .append(messages.getString("customid.entity")).append(CharacterConstants.COMMA)
         .append(messages.getString("kiosk.name")).append(CharacterConstants.COMMA)
         .append(messages.getString("material")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("id")).append(CharacterConstants.COMMA)
+        .append(messages.getString("id")).append(CharacterConstants.COMMA)
         .append(messages.getString("customid.material")).append(CharacterConstants.COMMA)
         .append(messages.getString("material.name")).append(CharacterConstants.COMMA)
         .append(messages.getString("quantity")).append(CharacterConstants.COMMA)
@@ -92,23 +91,23 @@ public class TransactionExportHandler implements IExportHandler {
         .append(messages.getString("stockadjustment")).append(CharacterConstants.COMMA)
         .append(messages.getString("reason")).append(CharacterConstants.COMMA)
         .append(messages.getString("material")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("status.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("status.lower")).append(CharacterConstants.COMMA)
         .append(messages.getString("time")).append(CharacterConstants.COMMA)
         .append(messages.getString("date.actual.transaction")).append(CharacterConstants.COMMA)
-        .append(jsMessages.getString("relatedentity.id")).append(CharacterConstants.COMMA)
+        .append(messages.getString("relatedentity.id")).append(CharacterConstants.COMMA)
         .append(messages.getString("customid.relatedentity")).append(CharacterConstants.COMMA)
-        .append(jsMessages.getString("relatedentity.name")).append(CharacterConstants.COMMA)
+        .append(messages.getString("relatedentity.name")).append(CharacterConstants.COMMA)
         .append(messages.getString("kiosk")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("tags.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("tags.lower")).append(CharacterConstants.COMMA)
         .append(messages.getString("material")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("tags.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("tags.lower")).append(CharacterConstants.COMMA)
         .append(messages.getString("batchid")).append(CharacterConstants.COMMA)
         .append(messages.getString("batch")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("expiry.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("expiry.lower")).append(CharacterConstants.COMMA)
         .append(messages.getString("batch")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("manufacturer.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("manufacturer.lower")).append(CharacterConstants.COMMA)
         .append(messages.getString("batch")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("manufactured.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("manufactured.lower")).append(CharacterConstants.COMMA)
         .append(messages.getString("openingstock")).append(CharacterConstants.SPACE)
         .append(CharacterConstants.O_SBRACKET).append(messages.getString("in"))
         .append(CharacterConstants.SPACE)
@@ -131,16 +130,16 @@ public class TransactionExportHandler implements IExportHandler {
         .append(messages.getString("accuracy")).append(CharacterConstants.SPACE)
         .append(CharacterConstants.O_BRACKET).append(messages.getString("meters"))
         .append(CharacterConstants.C_BRACKET).append(CharacterConstants.COMMA)
-        .append(jsMessages.getString("gps")).append(CharacterConstants.SPACE)
+        .append(messages.getString("gps")).append(CharacterConstants.SPACE)
         .append(messages.getString("errors.small")).append(CharacterConstants.COMMA)
         .append(messages.getString("transaction")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("source")).append(CharacterConstants.COMMA)
-        .append(jsMessages.getString("createdby")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("id")).append(CharacterConstants.COMMA)
-        .append(jsMessages.getString("createdby")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("customid.lower")).append(CharacterConstants.COMMA)
-        .append(jsMessages.getString("createdby")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("fullname.lower"));
+        .append(messages.getString("source")).append(CharacterConstants.COMMA)
+        .append(messages.getString("createdby")).append(CharacterConstants.SPACE)
+        .append(messages.getString("id")).append(CharacterConstants.COMMA)
+        .append(messages.getString("createdby")).append(CharacterConstants.SPACE)
+        .append(messages.getString("customid.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("createdby")).append(CharacterConstants.SPACE)
+        .append(messages.getString("fullname.lower"));
 
     return header.toString();
   }
@@ -148,7 +147,7 @@ public class TransactionExportHandler implements IExportHandler {
   // Get the CSV
   @Override
   public String toCSV(Locale locale, String timezone, DomainConfig dc, String type) {
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+    ResourceBundle messages = Resources.getBundle(locale);
     try {
       // Get services
       EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
@@ -312,35 +311,6 @@ public class TransactionExportHandler implements IExportHandler {
   }
 
   public static String getDisplayName(String transType, String transNaming, Locale locale) {
-    String name = "";
-    // Get the resource bundle
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-    if (messages == null) {
-      return "";
-    }
-    if (ITransaction.TYPE_ISSUE.equals(transType)) {
-      name =
-          DomainConfig.TRANSNAMING_ISSUESRECEIPTS.equals(transNaming) ? messages
-              .getString("transactions.issue") : messages.getString("transactions.sale");
-    } else if (ITransaction.TYPE_RECEIPT.equals(transType)) {
-      name =
-          DomainConfig.TRANSNAMING_ISSUESRECEIPTS.equals(transNaming) ? messages
-              .getString("transactions.receipt") : messages.getString("transactions.purchase");
-    } else if (ITransaction.TYPE_PHYSICALCOUNT.equals(transType)) {
-      name = messages.getString("transactions.stockcount");
-    } else if (ITransaction.TYPE_ORDER.equals(transType)) {
-      name = messages.getString("transactions.order");
-    } else if (ITransaction.TYPE_REORDER.equals(transType)) {
-      name = messages.getString("transactions.reorder");
-    } else if (ITransaction.TYPE_WASTAGE.equals(transType)) {
-      name = messages.getString("transactions.wastage");
-    } else if (ITransaction.TYPE_TRANSFER.equals(transType)) {
-      name = messages.getString("transactions.transfer");
-    } else if (ITransaction.TYPE_RETURNS_INCOMING.equals(transType)) {
-      name = messages.getString("transactions.return.incoming");
-    } else if(ITransaction.TYPE_RETURNS_OUTGOING.equals(transType)) {
-      name = messages.getString("transactions.return.outgoing");
-    }
-    return name;
+    return TransactionUtil.getDisplayName(transType, transNaming, locale);
   }
 }

@@ -90,7 +90,7 @@ public class AccountsController {
         new Navigator(request.getSession(), "AccountsController.getAccounts", offset, size,
             "act" + type, 0);
     PageParams pageParams = new PageParams(navigator.getCursor(offset), offset, size);
-    backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    backendMessages = Resources.getBundle(locale);
     try {
       Results results;
       if (EntityAuthoriser.authoriseEntity(Long.valueOf(kioskId))) {

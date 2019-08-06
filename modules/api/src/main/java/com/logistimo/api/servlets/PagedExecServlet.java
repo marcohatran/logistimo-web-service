@@ -56,15 +56,13 @@ public class PagedExecServlet extends SgServlet {
 
   @Override
   protected void processGet(HttpServletRequest request, HttpServletResponse response,
-                            ResourceBundle backendMessages,
                             ResourceBundle messages) throws ServletException, IOException,
       ServiceException {
-    processPost(request, response, backendMessages, messages);
+    processPost(request, response, messages);
   }
 
   @Override
   protected void processPost(HttpServletRequest request, HttpServletResponse response,
-                             ResourceBundle backendMessages,
                              ResourceBundle messages) throws ServletException, IOException,
       ServiceException {
     xLogger.fine("Entered processPost");

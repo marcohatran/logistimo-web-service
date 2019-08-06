@@ -112,7 +112,7 @@ public class ConversationController {
                                         @RequestParam(required = false, defaultValue = "false") boolean update) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     Long domainId = sUser.getCurrentDomainId();
     ConversationModel model;
     try {
@@ -169,7 +169,7 @@ public class ConversationController {
                               @RequestParam(required = false, defaultValue = "false") boolean update) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     MessageModel retmodel;
     try {
       IMessage message = messageBuilder.buildMessage(model, sUser.getUsername(), !update);

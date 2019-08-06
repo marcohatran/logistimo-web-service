@@ -49,16 +49,16 @@ handlingUnitControllers.controller('AddHUController', ['$scope', 'handlingUnitSe
 
         function validate() {
             if (checkNullEmpty($scope.hu.name)) {
-                $scope.showWarning("Name is mandatory");
+                $scope.showWarning($scope.resourceBundle['handling.unit.name.mandatory']);
                 return false;
             } else if (checkNullEmptyObject($scope.materials)) {
-                $scope.showWarning("Contents is mandatory");
+                $scope.showWarning($scope.resourceBundle['handling.unit.contents.mandatory']);
                 return false;
             } else if (checkNullEmpty($scope.qty)) {
-                $scope.showWarning("Quantity is mandatory");
+                $scope.showWarning($scope.resourceBundle['handling.unit.quantity.mandatory']);
                 return false;
             } else if ($scope.qty <= 0) {
-                $scope.showWarning("Quantity should be greater than zero");
+                $scope.showWarning($scope.resourceBundle['handling.unit.quantity.greater.than.zero']);
                 return false;
             }
             return true;

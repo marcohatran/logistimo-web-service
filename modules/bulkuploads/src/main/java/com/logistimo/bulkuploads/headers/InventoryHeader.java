@@ -23,10 +23,14 @@
 
 package com.logistimo.bulkuploads.headers;
 
+import com.logistimo.constants.CharacterConstants;
 import com.logistimo.services.Resources;
+import com.logistimo.utils.FieldLimits;
 
+import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.StringJoiner;
 
 /**
  * Created by charan on 06/03/17.
@@ -35,24 +39,23 @@ public class InventoryHeader implements IHeader {
 
   @Override
   public String getUploadableCSVHeader(Locale locale, String type) {
-    ResourceBundle bundle = Resources.get().getBundle("Messages", locale);
-    String
-        format =
-        "Operation* (a = add / e = edit / d = delete; if empty it is defaulted to add; ensure that the Material Name and "
-            + bundle.getString("kiosk")
-            + " Name are EXACT for edit/delete; if inventory already exists then add will perform edit operation),"
-            +
-            bundle.getString("kiosk.name") + "* (1-50 characters)," +
-            bundle.getString("material.name") + "* (1-75 characters)," +
-            bundle.getString("material.reorderlevel") + "," +
-            bundle.getString("max") + "," +
-            bundle.getString("config.consumptionrates") + "," +
-            bundle.getString("material.retailerprice") + "," +
-            bundle.getString("tax") + "," +
-            bundle.getString("inventory.model")
-            + " (sq = system defined replenishment; us = user specified replenishment; leave empty to keep existing value),"
-            +
-            bundle.getString("inventory.servicelevel") + " (65 - 99)";
-    return format;
+    ResourceBundle bundle = Resources.getBundle(locale);
+    StringJoiner
+        header = new StringJoiner(CharacterConstants.COMMA);
+    header.add(bundle.getString("bulkupload.inventory.operation.header"))
+        .add(MessageFormat.format(bundle.getString("bulkupload.entity.name.header"),
+            FieldLimits.ENTITY_NAME_MIN_LENGTH, FieldLimits.TEXT_FIELD_MAX_LENGTH))
+        .add(MessageFormat.format(bundle.getString("bulkupload.material.name.header"),
+            FieldLimits.MATERIAL_NAME_MIN_LENGTH, FieldLimits.TEXT_FIELD_MAX_LENGTH))
+        .add(bundle.getString("bulkupload.min.header"))
+        .add(bundle.getString("bulkupload.max.header"))
+        .add(bundle.getString("config.consumptionrates"))
+        .add(MessageFormat
+            .format(bundle.getString("bulkupload.material.retailer.price.header"),
+                FieldLimits.MAX_PRICE))
+        .add(MessageFormat.format(bundle.getString("bulkupload.tax.header"), FieldLimits.TAX_MIN_VALUE, FieldLimits.TAX_MAX_VALUE))
+        .add(MessageFormat.format(bundle.getString("bulkupload.inventory.model.header"), FieldLimits.SYSTEM_DETERMINED_REPLENISHMENT, FieldLimits.USER_SPECIFIED_REPLENISHMENT))
+        .add(MessageFormat.format(bundle.getString("bulkupload.service.level.header"), FieldLimits.MIN_SERVICE_LEVEL, FieldLimits.MAX_SERVICE_LEVEL));
+    return header.toString();
   }
 }

@@ -70,7 +70,7 @@ public class DataGenerationServlet extends JsonRestServlet {
   private static final XLog xLogger = XLog.getLog(DataGenerationServlet.class);
 
   public void processGet(HttpServletRequest req, HttpServletResponse resp,
-                         ResourceBundle backendMessages, ResourceBundle messages)
+                         ResourceBundle messages)
       throws IOException {
     xLogger.fine("Entered doGet");
     xLogger.warn("GET not supported by DataGenerationServlet");
@@ -78,7 +78,7 @@ public class DataGenerationServlet extends JsonRestServlet {
   }
 
   public void processPost(HttpServletRequest req, HttpServletResponse resp,
-                          ResourceBundle backendMessages, ResourceBundle messages)
+                          ResourceBundle messages)
       throws IOException {
     xLogger.fine("Entered doPost");
     // Get the action command

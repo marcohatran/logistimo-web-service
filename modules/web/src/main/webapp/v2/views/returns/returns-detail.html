@@ -27,10 +27,10 @@
             <div class="row mt18 lPad5">
                 <div class="col-sm-8 mb10">
                     <span class="h3">
-                        Return: {{returns.return_id}}
+                        {{resourceBundle['return']}}: {{returns.return_id}}
                     </span>
                     <span class="badge currentstatus"
-                          ng-class="{'cancelled': returns.status.status == RETURNS.status.CANCELLED}">{{RETURNS.statusLabel[returns.status.status]}}</span>
+                          ng-class="{'cancelled': returns.status.status == RETURNS.status.CANCELLED}">{{getLabelFromResourceBundle(RETURNS.statusLabel[returns.status.status])}}</span>
 
                     <span class="suborder h5" ng-if="returns.order_type !=0">
                         ({{resourceBundle['order']}}: <a ng-href="#/orders/detail/{{returns.order_id}}/"
@@ -71,13 +71,13 @@
                 <div class="col-sm-12">
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            Status
+                            {{resourceBundle['status']}}
                         </div>
                         <div class="panel-body">
                             <div class="col-sm-9">
                                 <div ng-include="'views/orders/status-indicator.html'"></div>
                                 <span class="glyphicons glyphicons-history codegray large"
-                                      uib-tooltip="{{displayStatusHistory ? 'Hide' : 'Show'}} status history"
+                                      uib-tooltip="{{displayStatusHistory ? resourceBundle['returns.hide.status.history'] : resourceBundle['returns.show.status.history']}}"
                                       tooltip-append-to-body="true" ng-click="toggleStatusHistory()"></span>
                             </div>
                             <div class="col-sm-3 btn-group" ng-show="!dp.vp">

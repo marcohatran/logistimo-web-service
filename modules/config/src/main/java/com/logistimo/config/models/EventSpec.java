@@ -370,7 +370,7 @@ public class EventSpec implements Serializable {
     }
 
     public static String getFrequencyDisplay(int frequency, Locale locale) {
-      ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+      ResourceBundle messages = Resources.getBundle(locale);
       String key = null;
       if (frequency == IMMEDIATE) {
         key = "immediately";

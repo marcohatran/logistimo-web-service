@@ -50,7 +50,7 @@ public class PublicDemandDetailsServlet extends ReportsServlet {
 
   @Override
   protected void processRequest(HttpServletRequest req, HttpServletResponse resp,
-                                ResourceBundle backendMessages, ResourceBundle messages)
+                                ResourceBundle messages)
       throws IOException {
     // Read the report type
     String type = req.getParameter("type");
@@ -69,9 +69,9 @@ public class PublicDemandDetailsServlet extends ReportsServlet {
     }
 
     if (!accessDenied && ReportsConstants.TYPE_DEMANDBOARD.equals(type)) {
-      super.processRequest(req, resp, backendMessages, messages);
+      super.processRequest(req, resp, messages);
     } else if (!accessDenied && ReportsConstants.TYPE_STOCK.equals(type)) {
-      super.processRequest(req, resp, backendMessages, messages);
+      super.processRequest(req, resp, messages);
     } else {
       PrintWriter pw = resp.getWriter();
       pw.write(

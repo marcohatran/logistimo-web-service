@@ -70,7 +70,7 @@ public class MobileExportAdapter {
     RequestModel requestModel = new RequestModel();
     final SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     requestModel.setDomainId(params.get(MobileExportConstants.DOMAIN_ID_KEY));
     setFromDate(params, caption, requestModel, backendMessages);
     setEndDate(params, caption, requestModel, backendMessages);
@@ -159,7 +159,7 @@ public class MobileExportAdapter {
     }
   }
 
-  private String getTransactionType(ResourceBundle backendMessages, String transactionType) {
+  String getTransactionType(ResourceBundle backendMessages, String transactionType) {
     switch (transactionType) {
       case ITransaction.TYPE_ISSUE:
         return backendMessages.getString("exports.transaction.type.issue");
@@ -172,9 +172,9 @@ public class MobileExportAdapter {
       case ITransaction.TYPE_TRANSFER:
         return backendMessages.getString("exports.transaction.type.transfers");
       case ITransaction.TYPE_RETURNS_INCOMING:
-        return backendMessages.getString("exports.transaction.type.wastage");
+        return backendMessages.getString("exports.transaction.type.incoming.returns");
       case ITransaction.TYPE_RETURNS_OUTGOING:
-        return backendMessages.getString("exports.transaction.type.outgoing");
+        return backendMessages.getString("exports.transaction.type.outgoing.returns");
       default:
         return transactionType;
     }

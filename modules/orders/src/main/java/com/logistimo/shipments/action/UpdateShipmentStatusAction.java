@@ -24,9 +24,6 @@
 package com.logistimo.shipments.action;
 
 import com.logistimo.AppFactory;
-import com.logistimo.activity.entity.IActivity;
-import com.logistimo.activity.models.ActivityModel;
-import com.logistimo.activity.service.ActivityService;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.CharacterConstants;
@@ -34,11 +31,16 @@ import com.logistimo.constants.Constants;
 import com.logistimo.constants.SourceConstants;
 import com.logistimo.conversations.entity.IMessage;
 import com.logistimo.dao.JDOUtils;
+import com.logistimo.deliveryrequest.actions.GetDeliveryRequestsAction;
+import com.logistimo.deliveryrequest.actions.ICancelDeliveryRequestAction;
+import com.logistimo.deliveryrequest.models.DeliveryRequestModel;
+import com.logistimo.deliveryrequest.models.DeliveryRequestStatus;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.events.entity.IEvent;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.LogiException;
+import com.logistimo.exception.ValidationException;
 import com.logistimo.inventory.entity.IInvAllocation;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.IInvntryBatch;
@@ -51,6 +53,8 @@ import com.logistimo.materials.service.MaterialUtils;
 import com.logistimo.models.ResponseModel;
 import com.logistimo.models.shipments.ShipmentItemBatchModel;
 import com.logistimo.orders.actions.GetOrderOverallStatusAction;
+import com.logistimo.orders.actions.ValidateFullAllocationAction;
+import com.logistimo.orders.approvals.service.IOrderApprovalsService;
 import com.logistimo.orders.entity.IDemandItem;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.orders.service.IDemandService;
@@ -73,6 +77,7 @@ import com.logistimo.utils.StringUtil;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -120,14 +125,30 @@ public class UpdateShipmentStatusAction {
   @Autowired
   private GetOrderOverallStatusAction orderOverallStatusAction;
 
+  @Autowired
+  private ValidateFullAllocationAction validateFullAllocationAction;
+
+  @Autowired
+  private GetDeliveryRequestsAction getDeliveryRequestsAction;
+
+  @Autowired
+  IOrderApprovalsService orderApprovalsService;
+
+  @Autowired
+  @Qualifier("fleetCancelDeliveryRequestAction")
+  private ICancelDeliveryRequestAction cancelDeliveryRequestAction;
+
   public ResponseModel invoke(String shipmentId, ShipmentStatus status,
-                                             String message,
-                                             String userId,
-                                             PersistenceManager pm, String reason,
-                                             IShipment shipment,
-                                             boolean updateOrderStatus, boolean isOrderFulfil,
-                                             int source, String salesRefId,
-                                             Date estimatedDateOfArrival, Boolean updateOrderFields)
+                              String message,
+                              String userId,
+                              PersistenceManager pm, String reason,
+                              IShipment shipment,
+                              boolean updateOrderStatus,
+                              boolean isOrderFulfil,
+                              int source, String salesRefId,
+                              Date estimatedDateOfArrival,
+                              boolean updateOrderFields,
+                              boolean transferAllocations)
       throws LogiException {
     Long orderId = extractOrderId(shipmentId);
     LockUtil.LockStatus lockStatus = LockUtil.lock(Constants.TX_O + orderId);
@@ -153,16 +174,14 @@ public class UpdateShipmentStatusAction {
 
       ShipmentStatus prevStatus = shipment.getStatus();
       validateStatusTransition(prevStatus, status);
+      validateAllocations(status, shipment);
+      validateApproval(status, shipment);
       responseModel = validateStatusChange(shipment, status.toString(), pm);
 
       if (ShipmentStatus.CANCELLED == status) {
-        cancel(shipmentId, status, message, userId, pm, reason, shipment, updateOrderStatus, source, prevStatus);
+        cancel(shipmentId, status, message, userId, pm, reason, shipment, updateOrderStatus, source, prevStatus, transferAllocations);
       } else {
-
         shipment.setStatus(status);
-        shipment.setUpdatedBy(userId);
-        shipment.setUpdatedOn(new Date());
-
         if (status == ShipmentStatus.SHIPPED || (prevStatus != ShipmentStatus.SHIPPED &&
             status == ShipmentStatus.FULFILLED)) {
           ship(shipmentId, status, userId, pm, shipment, source, orderId, localShipObject, prevStatus);
@@ -173,13 +192,17 @@ public class UpdateShipmentStatusAction {
           postInventoryTransaction(shipment, userId, pm, ShipmentStatus.SHIPPED, source);
         }
 
-        generateEvent(shipment.getDomainId(), IEvent.STATUS_CHANGE, shipment, null, null);
+        generateEvent(shipment.getDomainId(), IEvent.STATUS_CHANGE, shipment.getShipmentId(),
+            shipment.getStatus(), null, null);
 
         updateMessageAndActivity(shipmentId, message, userId, pm, shipment, isOrderFulfil, prevStatus);
 
         if (updateOrderStatus) {
           updateOrderStatus(shipment.getOrderId(), shipment.getStatus(), userId, pm);
         }
+
+        shipment.setUpdatedBy(userId);
+        shipment.setUpdatedOn(new Date());
 
         orderManagementService
             .updateOrderMetadata(orderId, userId, pm, salesRefId, estimatedDateOfArrival,
@@ -207,6 +230,23 @@ public class UpdateShipmentStatusAction {
     }
     responseModel.status = true;
     return responseModel;
+  }
+
+  private void validateApproval(ShipmentStatus status, IShipment shipment) throws ServiceException {
+    if (status == ShipmentStatus.READY_FOR_DISPATCH) {
+      IOrder order = orderManagementService.getOrder(shipment.getOrderId());
+      if (!orderApprovalsService.isShippingApprovalComplete(order)) {
+        throw new ValidationException("O007", new Object[0]);
+      }
+    }
+  }
+
+  private void validateAllocations(ShipmentStatus status, IShipment shipment)
+      throws ServiceException {
+    // Validate if items are fully allocated if shipment status moves to Ready for dispatch
+    if (status == ShipmentStatus.READY_FOR_DISPATCH) {
+      validateFullAllocationAction.invoke(IInvAllocation.Type.SHIPMENT, shipment.getShipmentId());
+    }
   }
 
   private void updateMessageAndActivity(String shipmentId, String message, String userId, PersistenceManager pm, IShipment shipment, boolean isOrderFulfil,
@@ -274,14 +314,15 @@ public class UpdateShipmentStatusAction {
 
   private void cancel(String shipmentId, ShipmentStatus status, String message, String userId, PersistenceManager pm, String reason,
                       IShipment shipment, boolean updateOrderStatus, int source,
-                      ShipmentStatus prevStatus) throws Exception {
+                      ShipmentStatus prevStatus, boolean transferAllocations) throws Exception {
 
-    cancelShipment(shipmentId, message, userId, pm, reason);
+    cancelShipment(shipmentId, message, userId, pm, reason, transferAllocations);
+    cancelDeliveryRequests(userId, shipmentId);
 
     if (ShipmentStatus.SHIPPED.equals(prevStatus) ||
         ShipmentStatus.FULFILLED.equals(prevStatus)) {
       postInventoryTransaction(shipment, userId, pm, prevStatus, source);
-    } else if (ShipmentStatus.OPEN.equals(prevStatus)) {
+    } else if (ShipmentStatus.PRE_SHIP_STATUSES.contains(prevStatus)) {
       DomainConfig dc = DomainConfig.getInstance(shipment.getDomainId());
       if (dc.autoGI()) {
         inventoryManagementService
@@ -291,7 +332,25 @@ public class UpdateShipmentStatusAction {
     if (updateOrderStatus) {
       updateOrderStatus(shipment.getOrderId(), status, userId, pm);
     }
-    generateEvent(shipment.getDomainId(), IEvent.STATUS_CHANGE, shipment, null, null);
+    generateEvent(shipment.getDomainId(), IEvent.STATUS_CHANGE, shipment.getShipmentId(),
+        shipment.getStatus(), null, null);
+  }
+
+  private void cancelDeliveryRequests(String userId, String shipmentId) {
+    Results<DeliveryRequestModel> drs =
+        getDeliveryRequestsAction.getByShipmentId(shipmentId, false);
+    if(CollectionUtils.isNotEmpty(drs.getResults())) {
+      drs.getResults().stream()
+          .filter(dr -> !DeliveryRequestStatus.INACTIVE_DELIVERY_REQUEST_STATUSES.contains(dr
+              .getStatus()))
+          .forEach(dr -> {
+            try {
+              cancelDeliveryRequestAction.invoke(userId, dr.getId());
+            } catch (ServiceException e) {
+              xLogger.warn("Error while cancelling delivery request with Id: " + dr.getId(), e);
+            }
+          });
+    }
   }
 
   private IShipment fetchShipment(String shipmentId, PersistenceManager pm) {
@@ -300,7 +359,7 @@ public class UpdateShipmentStatusAction {
     if (shipment == null) {
       ResourceBundle
           backendMessages =
-          Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
+          Resources.getBundle("BackendMessages", SecurityUtils.getLocale());
       throw new IllegalArgumentException(
           backendMessages.getString("shipment.unavailable.db") + " " + backendMessages
               .getString("shipment.id") + " : "
@@ -311,7 +370,7 @@ public class UpdateShipmentStatusAction {
   }
 
   private boolean cancelShipment(String shipmentId, String message, String userId,
-                         PersistenceManager pm, String reason) throws ServiceException {
+                                 PersistenceManager pm, String reason, boolean transferAllocations) throws ServiceException {
     Long orderId = extractOrderId(shipmentId);
     LockUtil.LockStatus lockStatus = LockUtil.lock(Constants.TX_O + orderId);
     if (!LockUtil.isLocked(lockStatus)) {
@@ -337,9 +396,8 @@ public class UpdateShipmentStatusAction {
           prevStatus == ShipmentStatus.SHIPPED || prevStatus == ShipmentStatus.FULFILLED;
       Map<Long, IDemandItem> demandItems = demandService.getDemandMetadata(orderId, pm);
       for (IShipmentItem shipmentItem : shipment.getShipmentItems()) {
-        if (prevStatus == ShipmentStatus.OPEN) {
-          List<IInvAllocation>
-              allocations =
+        if (ShipmentStatus.PRE_SHIP_STATUSES.contains(prevStatus) && transferAllocations) {
+          List<IInvAllocation> allocations =
               inventoryManagementService.getAllocationsByTypeId(shipment.getServicingKiosk(),
                   shipmentItem.getMaterialId(),
                   IInvAllocation.Type.SHIPMENT, shipmentId);
@@ -395,7 +453,7 @@ public class UpdateShipmentStatusAction {
       xLogger.severe("Error while cancelling the shipment {0}", shipmentId, e);
       ResourceBundle
           backendMessages =
-          Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
+          Resources.getBundle("BackendMessages", SecurityUtils.getLocale());
       throw new ServiceException(
           backendMessages.getString("shipment.cancel.error") + " " + shipmentId, e);
     } finally {
@@ -413,8 +471,13 @@ public class UpdateShipmentStatusAction {
   }
 
   private Boolean validateStatusTransition(ShipmentStatus prevStatus, ShipmentStatus status) {
-    if (ShipmentStatus.OPEN.equals(prevStatus) && (ShipmentStatus.SHIPPED.equals(status)
-        || ShipmentStatus.CANCELLED.equals(status))) {
+    if (ShipmentStatus.OPEN.equals(prevStatus) && (ShipmentStatus.READY_FOR_DISPATCH.equals(status)
+        || ShipmentStatus.SHIPPED.equals(status) || ShipmentStatus.CANCELLED.equals(status))) {
+      return Boolean.TRUE;
+    }
+
+    if (ShipmentStatus.READY_FOR_DISPATCH.equals(prevStatus) &&
+        (ShipmentStatus.SHIPPED.equals(status) || ShipmentStatus.CANCELLED.equals(status))) {
       return Boolean.TRUE;
     }
 
@@ -516,7 +579,7 @@ public class UpdateShipmentStatusAction {
       } else {
         ResourceBundle
             backendMessages =
-            Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
+            Resources.getBundle("BackendMessages", SecurityUtils.getLocale());
         throw new ServiceException(backendMessages.getString("inventory.post"));
       }
       t.setMaterialId(shipmentItem.getMaterialId());
@@ -525,10 +588,10 @@ public class UpdateShipmentStatusAction {
       t.setTrackingObjectType(getTrackingObjectType(shipment, pm));
       t.setSourceUserId(userId);
       List<IShipmentItemBatch>
-          batch =
+          shipmentItemBatches =
           checkBatch ? (List<IShipmentItemBatch>) shipmentItem.getShipmentItemBatch() : null;
-      if (batch != null && !batch.isEmpty()) {
-        for (IShipmentItemBatch ib : batch) {
+      if (shipmentItemBatches != null && !shipmentItemBatches.isEmpty()) {
+        for (IShipmentItemBatch ib : shipmentItemBatches) {
           if ((ShipmentStatus.FULFILLED.equals(shipment.getStatus()) && BigUtil
               .equalsZero(ib.getFulfilledQuantity())) || (
               !(ShipmentStatus.FULFILLED.equals(shipment.getStatus())) && BigUtil
@@ -593,7 +656,7 @@ public class UpdateShipmentStatusAction {
         xLogger.warn("Error in posting transactions", e);
         ResourceBundle
             backendMessages =
-            Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
+            Resources.getBundle("BackendMessages", SecurityUtils.getLocale());
         throw new ServiceException(backendMessages.getString("order.post.exception"), e);
       }
       if (CollectionUtils.isNotEmpty(errors)) {
@@ -628,7 +691,7 @@ public class UpdateShipmentStatusAction {
       if (dc.autoGI()) {
         ResourceBundle
             backendMessages =
-            Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
+            Resources.getBundle("BackendMessages", SecurityUtils.getLocale());
         responseModel.message =
             backendMessages.getString("the.following.items")
                 + CharacterConstants.SPACE + MsgUtil.bold(cst.getName())
@@ -656,7 +719,7 @@ public class UpdateShipmentStatusAction {
         if (dc.autoGI()) {
           ResourceBundle
               backendMessages =
-              Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
+              Resources.getBundle("BackendMessages", SecurityUtils.getLocale());
           responseModel.message = backendMessages.getString("the.following.items")
               + CharacterConstants.SPACE + MsgUtil.bold(vnd.getName())
               + CharacterConstants.DOT + CharacterConstants.SPACE + backendMessages
@@ -694,9 +757,10 @@ public class UpdateShipmentStatusAction {
       throws Exception {
     boolean fulfilled = status == ShipmentStatus.FULFILLED;
     boolean shipped = status == ShipmentStatus.SHIPPED;
+    boolean readyForDispatch = status == ShipmentStatus.READY_FOR_DISPATCH;
     boolean cancelled = status == ShipmentStatus.CANCELLED;
 
-    if (fulfilled || shipped || cancelled) {
+    if (fulfilled || shipped || cancelled || readyForDispatch) {
       List<IShipment> shipments = shipmentRepository.getByOrderId(orderId, pm);
       Map<Long, IDemandItem> demandMap = demandService.getDemandMetadata(orderId, pm);
       boolean allItemsInShipments = true;

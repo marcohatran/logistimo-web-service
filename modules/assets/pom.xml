@@ -32,20 +32,20 @@
     <!-- Output to jar format -->
     <packaging>jar</packaging>
 
-    <version>2.8.0</version>
+    <version>2.9.0</version>
 
     <name>assets</name>
 
     <properties>
         <build.number>SNAPSHOT</build.number>
-        <camel-version>2.19.0</camel-version>
-        <build.version>2.8.0</build.version>
+        <camel-version>2.24.0</camel-version>
+        <build.version>2.9.0</build.version>
     </properties>
 
     <parent>
         <artifactId>logistimo</artifactId>
         <groupId>com.logistimo</groupId>
-        <version>2.8.0</version>
+        <version>2.9.0</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 

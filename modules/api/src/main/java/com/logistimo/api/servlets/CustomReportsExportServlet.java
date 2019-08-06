@@ -232,15 +232,14 @@ public class CustomReportsExportServlet extends SgServlet {
 
   @Override
   protected void processGet(HttpServletRequest request, HttpServletResponse response,
-                            ResourceBundle backendMessages,
                             ResourceBundle messages)
       throws ServletException, IOException, ServiceException {
-    processPost(request, response, backendMessages, messages);
+    processPost(request, response, messages);
   }
 
   @Override
   protected void processPost(HttpServletRequest req, HttpServletResponse resp,
-                             ResourceBundle backendMessages, ResourceBundle messages)
+                             ResourceBundle messages)
       throws ServletException, IOException, ServiceException {
     xLogger.fine("Entered processPost");
     // Get request parameters
@@ -255,7 +254,7 @@ public class CustomReportsExportServlet extends SgServlet {
     } else if (action.equals(CustomReportConstants.ACTION_SCHEDULEEXPORT)) {
       scheduleExport(req, resp);
     } else if (CustomReportConstants.ACTION_FINALIZECUSTOMREPORTSEXPORT.equals(action)) {
-      finalizeExport(req, resp, backendMessages);
+      finalizeExport(req, resp, messages);
     }
     xLogger.fine("Exiting processPost");
   }

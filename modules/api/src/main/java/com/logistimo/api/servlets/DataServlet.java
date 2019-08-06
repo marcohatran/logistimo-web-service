@@ -111,7 +111,7 @@ public class DataServlet extends JsonRestServlet {
   private static ITaskService taskService = AppFactory.get().getTaskService();
 
   public void processGet(HttpServletRequest req, HttpServletResponse resp,
-                         ResourceBundle backendMessages, ResourceBundle messages)
+                         ResourceBundle messages)
       throws IOException {
     String action = req.getParameter("action");
     xLogger.fine("Executing action {0}", action);
@@ -195,7 +195,7 @@ public class DataServlet extends JsonRestServlet {
   }
 
   public void processPost(HttpServletRequest req, HttpServletResponse resp,
-                          ResourceBundle backendMessages, ResourceBundle messages)
+                          ResourceBundle messages)
       throws IOException {
     xLogger.fine("Entered doPost");
     // Get the action command

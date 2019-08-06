@@ -153,7 +153,7 @@ public class EmailHelper {
       return ReportType.getReportName(jobStatus.getMetadataMap().get(
           ExportConstants.REPORT_TYPE));
     } else {
-      ResourceBundle backendMessages = Resources.get().getBundle("JSMessages", Locale.ENGLISH);
+      ResourceBundle backendMessages = Resources.getBundle(Locale.ENGLISH);
       return backendMessages.getString("exports." + jobStatus.getSubType());
     }
   }

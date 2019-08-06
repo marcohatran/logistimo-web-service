@@ -171,6 +171,7 @@ public class ReturnsBuilder {
       returnsModel
           .setReturnsTrackingModel(buildTrackingDetails(returnsVO.getReturnsTrackingDetailsVO()));
     }
+    returnsModel.setUpdatedTime(returnsVO.getUpdatedTime());
     return returnsModel;
   }
 
@@ -528,6 +529,7 @@ public class ReturnsBuilder {
     returnsVO.setUpdatedBy(SecurityUtils.getUsername());
     returnsVO.setCreatedAt(now);
     returnsVO.setCreatedBy(SecurityUtils.getUsername());
+    returnsVO.setUpdatedTime(returnsUpdateRequestModel.getUpdatedTime());
     return returnsVO;
   }
 

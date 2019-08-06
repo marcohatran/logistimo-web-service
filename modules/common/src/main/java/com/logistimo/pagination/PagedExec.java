@@ -27,7 +27,6 @@
 package com.logistimo.pagination;
 
 import com.logistimo.AppFactory;
-import com.logistimo.constants.CharacterConstants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.exception.TaskSchedulingException;
 import com.logistimo.logger.XLog;
@@ -144,23 +143,8 @@ public class PagedExec {
       }
       try {
         // Get results
-        Query q;
-        if (QueryParams.QTYPE.SQL.equals(qp.qType)) {
-          String query = qp.query;
-          if (query != null && pageParams != null && !query.contains(" LIMIT ")) {
-            query +=
-                " LIMIT " + pageParams.getOffset() + CharacterConstants.COMMA + pageParams
-                    .getSize();
-          }
-          q = pm.newQuery("javax.jdo.query.SQL", query);
-          q.setClass(JDOUtils.getImplClass(qp.qClazz));
-        } else {
-          q = pm.newQuery(qp.query);
-          if (pageParams != null) {
-            QueryUtil.setPageParams(q, pageParams);
-          }
-        }
-        List results = null;
+        Query q = JDOUtils.getQuery(qp, pm, pageParams);
+        List results;
         int size = 0;
         try {
           results = execute(qp, q);

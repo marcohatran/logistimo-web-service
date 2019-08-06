@@ -22,7 +22,7 @@
   -->
 
 <select ng-disabled="ngDisabled" ng-click="$event.stopPropagation();" class="form-control" ng-init="resourceBundle = $parent.resourceBundle" ng-model="filterModel">
-    <option value="">All</option>
-    <option value="1">Monitoring</option>
-    <option value="2">Monitored</option>
+    <option value="">{{resourceBundle['all']}}</option>
+    <option value="1">{{resourceBundle['reports.assets.monitoring']}}</option>
+    <option value="2">{{resourceBundle['reports.assets.monitored']}}</option>
 </select>

@@ -39,13 +39,13 @@
                     <rpt-export-data ng-if="activeMetric != 'ot'" report-type="reportType" callback="exportData(reportType,isInfo)"></rpt-export-data>
                     <div class="row metric-row">
                         <div class="col-sm-2">
-                            <span class="form-label">Abnormality type</span>
+                            <span class="form-label">{{resourceBundle['abnormality.type']}}</span>
                             <select class="form-control" ng-model="metrics.primary">
                                 <option ng-repeat="metric in primaryMetric" value="{{metric.value}}">{{metric.name}}</option>
                             </select>
                         </div>
                         <div class="col-sm-3 noleftpad">
-                            <span class="form-label">Metric</span>
+                            <span class="form-label">{{resourceBundle['metric']}}</span>
                             <select class="form-control" ng-model="metrics.secondary">
                                 <option ng-repeat="metric in secondaryMetric" value="{{metric.value}}">{{metric.name}}</option>
                             </select>

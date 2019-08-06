@@ -26,11 +26,13 @@ package com.logistimo.auth.service;
 import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.models.AuthRequest;
+import com.logistimo.models.users.PersonalAccessToken;
 import com.logistimo.models.users.UserDetails;
 import com.logistimo.services.ServiceException;
 import com.logistimo.users.entity.IUserToken;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 
 
@@ -46,7 +48,13 @@ public interface AuthenticationService {
 
   String getUserIdByToken(String token);
 
-  Boolean clearUserTokens(String userId, boolean removeAccessKeys);
+  /**
+   * Clear tokens associated with the userId, and if includeOtherTokens is passed Bulletin board and Personal access tokens will also be removed.
+   * @param userId - user id.
+   * @param includeOtherTokens - remove bulletin board and personal access tokens.
+   * @return - true/false
+   */
+  Boolean clearUserTokens(String userId, boolean includeOtherTokens);
 
   /**
    * Update users session with new session Id. This also clears user tokens generated for mobile.
@@ -126,4 +134,25 @@ public interface AuthenticationService {
   boolean authenticateUserByCredentials(String userId, String deviceKey, Integer loginSource,
                                         String otp, boolean isTwoFactorAuthenticationOTP)
       throws IOException, MessageHandlingException;
+
+  /**
+   * Register a new personal access token
+   * @param tokenDescription - Some description about this token.
+   * @return
+   */
+  PersonalAccessToken generatePersonalAccessToken(String tokenDescription) throws ServiceException;
+
+  /**
+   *
+   * @param username - User id
+   * @param domainId - domain id
+   * @return Personal access tokens registered by this user in the given domain.
+   */
+  List<PersonalAccessToken> getPersonalAccessTokens(String username, Long domainId);
+
+  /**
+   * Remove a token, including personal access tokens.
+   * @param token - encrypted token.
+   */
+  void deleteToken(String token);
 }

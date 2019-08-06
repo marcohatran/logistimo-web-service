@@ -570,7 +570,7 @@ linkDomainControllers.controller('DomainDetailController', ['$scope', 'requestCo
 
         $scope.updateChild = function () {
             if (checkNullEmpty($scope.dperm)) {
-                $scope.showWarning("Please select children to update permission");
+                $scope.showWarning($scope.resourceBundle['domain.select.children.to.update.permission']);
                 return;
             }
             $scope.showLoading();
@@ -707,7 +707,7 @@ linkDomainControllers.controller('AddChildDomainsController', ['$scope', 'reques
         };
         $scope.addChildren = function () {
             if (checkNullEmpty($scope.nchld) ||  $scope.nchld.ldl.length == 0) {
-                $scope.showWarning("Please select children to add");
+                $scope.showWarning($scope.resourceBundle['domain.select.children.to.add']);
                 return;
             }
             $scope.populateDomainPermission();
@@ -726,11 +726,11 @@ linkDomainControllers.controller('AddChildDomainsController', ['$scope', 'reques
 
         $scope.addChildrenToDomain = function () {
             if (checkNullEmpty($scope.nchld)  ||  $scope.nchld.ldl.length == 0) {
-                $scope.showWarning("Please select children to add");
+                $scope.showWarning($scope.resourceBundle['domain.select.children.to.add']);
                 return;
             }
             if (checkNullEmpty($scope.domId)) {
-                $scope.showWarning("Domain is not proper");
+                $scope.showWarning($scope.resourceBundle['domain.invalid']);
                 return;
             }
             $scope.showLoading();
@@ -749,7 +749,7 @@ linkDomainControllers.controller('AddChildDomainsController', ['$scope', 'reques
 
         $scope.updateChild = function () {
             if (checkNullEmpty($scope.nchld)) {
-                $scope.showWarning("Please select children to update permission");
+                $scope.showWarning($scope.resourceBundle['domain.select.children.to.update.permission']);
                 return;
             }
             $scope.showLoading();

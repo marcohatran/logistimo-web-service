@@ -125,7 +125,7 @@ public class ApproverStatusUpdateEventProcessor {
     DomainConfig domainConfig = DomainConfig.getInstance(requester.getDomainId());
     ResourceBundle
         messages =
-        Resources.get().getBundle("Messages", new Locale(domainConfig.getLangPreference()));
+        Resources.getBundle(new Locale(domainConfig.getLangPreference()));
 
     Map<String, String> values = new HashMap<>();
     values.put("approvalType", ApprovalUtils.getApprovalType(orderApproval.getApprovalType()));

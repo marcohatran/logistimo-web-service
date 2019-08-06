@@ -23,10 +23,12 @@
 
 package com.logistimo.bulkuploads.headers;
 
+import com.logistimo.constants.CharacterConstants;
 import com.logistimo.services.Resources;
 
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.StringJoiner;
 
 /**
  * Created by charan on 06/03/17.
@@ -35,25 +37,22 @@ public class MnlTransactionHeader implements IHeader {
 
   @Override
   public String getUploadableCSVHeader(Locale locale, String type) {
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-    String
-        header =
-        messages.getString("kiosk") + "* (" + messages.getString("kiosk") + " name)" + "," +
-            messages.getString("material") + "* (Material name)" + "," +
-            messages.getString("openingstock") + "* (Opening stock)" + "," +
-            messages.getString("reportingperiod") + " (yyyy-MM-dd)," +
-            messages.getString("receipts") + "," +
-            messages.getString("issues") + "," +
-            messages.getString("transactions.wastage.upper") + "," +
-            messages.getString("stockout") + " " + messages.getString("duration") + "," +
-//						messages.getString( "numberofstockouts" ) +"," +
-            messages.getString("manual") + " " + messages.getString("consumption") + "," +
-            messages.getString("computed") + " " + messages.getString("consumption") + "," +
-            messages.getString("ordered") + " " + messages.getString("quantity") + "," +
-            messages.getString("fulfilled") + " " + messages.getString("quantity") + "," +
-            messages.getString("order") + " " + messages.getString("tags") + " "
-            + "(semi-colon separated list of tags)" + "," +
-            messages.getString("vendor") + " (" + messages.getString("vendor") + " name)";
-    return header;
+    ResourceBundle messages = Resources.getBundle(locale);
+    StringJoiner header = new StringJoiner(CharacterConstants.COMMA);
+    header.add(messages.getString("bulkupload.mnltransaction.entity.name.header"))
+        .add(messages.getString("bulkupload.mnltransaction.material.name.header"))
+        .add(messages.getString("bulkupload.mnltransaction.opening.stock.header"))
+        .add(messages.getString("bulkupload.mnltransaction.reporting.period.header"))
+        .add(messages.getString("receipts"))
+        .add(messages.getString("issues"))
+        .add(messages.getString("transactions.wastage.upper"))
+        .add(messages.getString("bulkupload.mnltransaction.stockouts.duration.header"))
+        .add(messages.getString("bulkupload.mnltransaction.manual.consumption.header"))
+        .add(messages.getString("bulkupload.mnltransaction.computed.consumption.header"))
+        .add(messages.getString("bulkupload.mnltransaction.ordered.quantity.header"))
+        .add(messages.getString("bulkupload.mnltransaction.fulfilled.quantity.header"))
+        .add(messages.getString("bulkupload.order.tags.header"))
+        .add(messages.getString("bulkupload.mnltransaction.vendor.header"));
+    return header.toString();
   }
 }

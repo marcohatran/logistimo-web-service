@@ -78,15 +78,14 @@ public class BBoardMgrServlet extends JsonRestServlet {
 
   @Override
   protected void processGet(HttpServletRequest request, HttpServletResponse response,
-                            ResourceBundle backendMessages,
                             ResourceBundle messages) throws ServletException, IOException,
       ServiceException {
-    processPost(request, response, backendMessages, messages);
+    processPost(request, response, messages);
   }
 
   @Override
   protected void processPost(HttpServletRequest request, HttpServletResponse response,
-                             ResourceBundle backendMessages, ResourceBundle messages)
+                             ResourceBundle messages)
       throws ServletException, IOException, ServiceException {
     xLogger.fine("Entered processPost");
     String action = request.getParameter("action");

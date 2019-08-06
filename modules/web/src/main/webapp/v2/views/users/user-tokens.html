@@ -1,0 +1,110 @@
+<!--
+  ~ Copyright © 2019 Logistimo.
+  ~
+  ~ This file is part of Logistimo.
+  ~
+  ~ Logistimo software is a mobile & web platform for supply chain management and remote temperature monitoring in
+  ~ low-resource settings, made available under the terms of the GNU Affero General Public License (AGPL).
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+  ~ Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+  ~ later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+  ~ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License along with this program.  If not, see
+  ~ <http://www.gnu.org/licenses/>.
+  ~
+  ~ You can be released from the requirements of the license by purchasing a commercial license. To know more about
+  ~ the commercial license, please contact us at opensource@logistimo.com
+  -->
+
+<div class="box topbox">
+    <div ng-controller="SimpleMenuController"
+         ng-init="init('setup.users.all.details.tokens')">
+
+        <div ng-switch="subview">
+            <div ng-switch-when="new">
+                <div ng-controller="CreatePersonalAccessTokenController">
+
+                    <h2>{{resourceBundle['users.tokens.new']}}</h2>
+                    <hr>
+
+                    <div ng-show="isUndef(token)">
+                        <p>{{resourceBundle['users.tokens.info']}}</p>
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <div class="form-group">
+                                    <span class="control-label">{{resourceBundle['users.tokens.pat.desc']}}</span>
+                                    <input type="text" ng-model="tokenDescription" class="form-control"
+                                           placeholder="{{resourceBundle['users.tokens.pat.placeholder']}}">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="form-group">
+                                    <div class="col-sm-12 pt10">
+                                        <button class="btn btn-primary" ng-click="generateToken()">{{resourceBundle['users.tokens.generate']}}</button>
+                                        <a class="btn btn-default"
+                                           ng-href="#/setup/users/all/details/tokens/?userId={{user.id}}">{{resourceBundle['cancel']}}</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div ng-if="isDef(token)">
+                        <p class="alert alert-info">{{resourceBundle['users.tokens.new.warning']}}</p>
+                        <br>
+                        <p class="alert alert-success">{{token.rawToken}}</p>
+                        <br>
+                        <a class="btn btn-default"
+                           ng-href="#/setup/users/all/details/tokens/?userId={{user.id}}">Done</a>
+                    </div>
+                </div>
+            </div>
+            <div ng-switch-default>
+                <div ng-controller="PersonalAccessTokensController">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <a ng-href="#/setup/users/all/details/tokens/new?userId={{user.id}}"
+                               class="btn btn-primary mt5">{{resourceBundle['users.tokens.generate.info']}}</a>
+                        </div>
+                    </div>
+                    <div class="row" ng-show="tokens.numFound > 0">
+                        <div class="col-sm-12 mt10">
+                            {{resourceBundle['users.tokens.listing.message']}}
+                            <table class="table table-striped table-condensed table-hover table-logistimo">
+                                <tbody>
+                                <tr>
+                                    <th class="col-sm-0-1"></th>
+                                    <th class="col-sm-0-1 text-center">{{resourceBundle['serialnum']}}</th>
+                                    <th class="col-sm-4">{{resourceBundle['users.tokens.pat.desc']}}</th>
+                                    <th>{{resourceBundle['created']}}</th>
+                                    <th></th>
+                                </tr>
+                                <tr ng-repeat="token in tokens.results track by $index">
+                                    <td>{{}}</td>
+                                    <td>{{$index+1}}</td>
+                                    <td>{{token.description}}</td>
+                                    <td>{{formatDate(token.createdOn)}}</td>
+                                    <td><a ng-click="delete(token.token)" uib-tooltip="Remove">
+                                        <span class="glyphicons glyphicons-bin"></span>
+                                    </a></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="row" ng-show="tokens.numFound <= 0">
+                        <div class="col-sm-12 mt10">
+                            <p class="alert alert-warning">{{resourceBundle['users.tokens.none']}}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -51,7 +51,7 @@ public class DomainUsageStatsExportHandler implements IExportHandler {
   @Override
   public String getCSVHeader(Locale locale, DomainConfig dc, String type) {
     xLogger.fine("Entering getCSVHeader. locale: {0}", locale);
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+    ResourceBundle messages = Resources.getBundle(locale);
     String header = messages.getString("date") + "," +
         messages.getString("domain") + "," +
         messages.getString("transactions") + "," +

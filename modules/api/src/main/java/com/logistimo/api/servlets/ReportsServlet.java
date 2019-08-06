@@ -76,20 +76,20 @@ public class ReportsServlet extends SgServlet {
 
   // Process the GET request
   public void processGet(HttpServletRequest request, HttpServletResponse response,
-                         ResourceBundle backendMessages, ResourceBundle messages)
+                         ResourceBundle messages)
       throws IOException {
-    processRequest(request, response, backendMessages, messages);
+    processRequest(request, response, messages);
   }
 
   public void processPost(HttpServletRequest request, HttpServletResponse response,
-                          ResourceBundle backendMessages, ResourceBundle messages)
+                          ResourceBundle messages)
       throws IOException {
     // do nothing
   }
 
   // This is public, given PublicDemandDetailsServlet also uses this for public demand board details (only)
   protected void processRequest(HttpServletRequest request, HttpServletResponse response,
-                                ResourceBundle backendMessages, ResourceBundle messages)
+                                ResourceBundle messages)
       throws IOException {
     xLogger.fine("Entered processRequest");
 

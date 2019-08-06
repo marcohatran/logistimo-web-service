@@ -156,7 +156,7 @@ public class UsersController {
                            boolean includeChildDomainUsers) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     Long domainId = sUser.getCurrentDomainId();
     Results results;
     try {
@@ -198,7 +198,7 @@ public class UsersController {
       @PathVariable String role, HttpServletRequest request) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     Long domainId = sUser.getCurrentDomainId();
     Results results;
     try {
@@ -277,7 +277,7 @@ public class UsersController {
 
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     Long domainId = sUser.getCurrentDomainId();
     Set<String> elementSet;
     try {
@@ -305,7 +305,7 @@ public class UsersController {
       HttpServletRequest request) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     Long domainId = sUser.getCurrentDomainId();
     DomainConfig dc = DomainConfig.getInstance(domainId);
     Results results;
@@ -386,7 +386,7 @@ public class UsersController {
     if (StringUtils.isNotEmpty(userid)) {
       SecureUserDetails user = SecurityUtils.getUserDetails();
       Locale locale = user.getLocale();
-      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+      ResourceBundle backendMessages = Resources.getBundle(locale);
       try {
         if (usersService.userExists(userid)) {
           return true;
@@ -421,7 +421,7 @@ public class UsersController {
   String create(@RequestBody UserModel userModel) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     IUserAccount ua = userBuilder.buildUserAccount(userModel);
     ua.setRegisteredBy(sUser.getUsername());
     ua.setUpdatedBy(sUser.getUsername());
@@ -451,7 +451,7 @@ public class UsersController {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Long domainId = sUser.getCurrentDomainId();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     int usrCnt;
     int errCnt = 0;
     StringBuilder errMsg = new StringBuilder();
@@ -468,7 +468,7 @@ public class UsersController {
               errMsg.append(" - ").append(u.getFullName())
                   .append(" ").append(backendMessages.getString("user.cannotdelete")).append(" ")
                   .append(results.getResults().size())
-                  .append(" ").append(backendMessages.getString("kiosks.lowercase"))
+                  .append(" ").append(backendMessages.getString("one.or.more.kiosk"))
                   .append(MsgUtil.newLine());
             } else {
               users.add(userId.trim());
@@ -516,7 +516,7 @@ public class UsersController {
                         @RequestParam(required = false) boolean isDetail) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     String timezone = sUser.getTimezone();
     IUserAccount rb = null;
     IUserAccount lu = null;
@@ -560,7 +560,7 @@ public class UsersController {
   UserModel getUserMetaById(@PathVariable String userId) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     UserModel model;
     try {
       IUserAccount ua = usersService.getUserAccount(userId);
@@ -580,7 +580,7 @@ public class UsersController {
                                 @RequestParam(required = false) boolean isMessage) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     String[] ids;
     if (!"null".equalsIgnoreCase(userIds)) {
       ids = userIds.split(",");
@@ -644,7 +644,7 @@ public class UsersController {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Long domainId = sUser.getCurrentDomainId();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     try {
       if (!GenericAuthoriser.authoriseUser(userModel.id)) {
         throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
@@ -681,7 +681,7 @@ public class UsersController {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Long domainId = sUser.getCurrentDomainId();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     String userId = model.getUid();
     try {
       IUserAccount user = usersService.getUserAccount(userId);
@@ -720,7 +720,7 @@ public class UsersController {
   String resetUserPassword(@RequestParam String userId, @RequestParam String sendType) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     String loggedInUserId = sUser.getUsername();
     Long domainId = sUser.getCurrentDomainId();
     try {
@@ -755,7 +755,7 @@ public class UsersController {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Long domainId = sUser.getCurrentDomainId();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     try {
       IUserAccount ua = usersService.getUserAccount(userId);
       if (GenericAuthoriser.authoriseUser(userId)) {
@@ -801,7 +801,7 @@ public class UsersController {
       domainId = sUser.getCurrentDomainId();
       locale = sUser.getLocale();
     }
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     if (allUsers) {
       UserMessageUtil.scheduleSendingToAllUsers(model, domainId, null, null, senderUserId);
     } else {
@@ -834,7 +834,7 @@ public class UsersController {
     PageParams pageParams = new PageParams(navigator.getCursor(offset), offset, size);
     Results results;
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     try {
       if (SecurityUtil.compareRoles(role, SecurityConstants.ROLE_DOMAINOWNER) >= 0) {
         results = MessageUtil.getLogs(domainId, pageParams);
@@ -868,7 +868,7 @@ public class UsersController {
   boolean switchConsole() {
     SecureUserDetails user = SecurityUtils.getUserDetails();
     Locale locale = user.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     try {
       IUserAccount ua = usersService.getUserAccount(user.getUsername());
       ua.setUiPref(false);
@@ -918,7 +918,7 @@ public class UsersController {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Long domainId = sUser.getCurrentDomainId();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
 
     if (addAccDomainsReqObj.accDids == null || addAccDomainsReqObj.accDids.isEmpty()) {
       xLogger.warn("Error while adding accessible domains for user {0}, accDids is null or empty",
@@ -956,7 +956,7 @@ public class UsersController {
                                                          @RequestParam Long domainId) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     String returnMsg;
     List<DomainSuggestionModel> respAccDsm;
     try {
@@ -1004,7 +1004,7 @@ public class UsersController {
     String msg;
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     if (userId != null) {
       try {
         IUserAccount userAccount = usersService.getUserAccount(userId);

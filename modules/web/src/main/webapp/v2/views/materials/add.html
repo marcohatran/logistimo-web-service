@@ -35,7 +35,7 @@
                 <div class="form-group">
                     <label class="col-sm-4 control-label required">{{resourceBundle['material.name']}}</label>
                     <div class="col-sm-8">
-                        <input type="text" class="form-control" maxlength="50" autocomplete="off"
+                        <input type="text" class="form-control" maxlength="150" autocomplete="off"
                                ng-model="material.mnm" name="matnm" placeholder="{{resourceBundle['material.name']}}"
                                ng-class="{'c-visited' : uVisited.mnm, 'u-na' : uVisited.mnm && idVerified && idStatus}"
                                ng-focus="idCheck = false"

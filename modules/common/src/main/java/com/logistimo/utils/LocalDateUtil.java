@@ -269,7 +269,7 @@ public class LocalDateUtil {
   // Get millis in hours and days, in string format (if > 1 day, only days are returned)
   public static String getFormattedMillisInHoursDays(long duration, Locale locale,
                                                      Boolean forOrders) {
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+    ResourceBundle messages = Resources.getBundle(locale);
     float hours = getMillisInHours(duration);
     if (hours < 24.0) {
       if (forOrders && (hours == 1f || hours == 0f)) {
@@ -351,7 +351,6 @@ public class LocalDateUtil {
 
   // Get the map of timezone display names, and ids (note: key is display name, and value is ID)
   public static Map<String, String> getTimeZoneNamesWithOffset(Locale locale) {
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
     String[] timezones = TimeZone.getAvailableIDs();
     Map<String, String> timezoneMap = new HashMap<String, String>();
     for (int i = 0; i < timezones.length; i++) {
@@ -519,7 +518,7 @@ public class LocalDateUtil {
     final long MONTH_MILLIS = 30 * DAY_MILLIS;
     final long YEAR_MILLIS = 12 * MONTH_MILLIS;
     String timeString, duration;
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
 
     // if time is given in seconds, convert to millis
     if (time < 1000000000000L) {
@@ -548,7 +547,7 @@ public class LocalDateUtil {
       duration = backendMessages.getString("hour");
     } else if (diff < 24 * HOUR_MILLIS) {
       timeString = String.valueOf(Math.round(diff / HOUR_MILLIS));
-      duration = backendMessages.getString("hours");
+      duration = backendMessages.getString("hours.lower");
     } else if (diff < 48 * HOUR_MILLIS) {
       timeString = "1";
       duration = backendMessages.getString("day");

@@ -67,16 +67,10 @@ module.exports = function(grunt, ref) {
         shell: {
             convertUTF8: {
                 command:[
-                    '/usr/bin/native2ascii -encoding UTF-8 target/grunt/resources/Messages_en.properties target/grunt/resources/Messages_en.properties',
-                    '/usr/bin/native2ascii -encoding UTF-8 target/grunt/resources/Messages_fr.properties target/grunt/resources/Messages_fr.properties',
-                    '/usr/bin/native2ascii -encoding UTF-8 target/grunt/resources/JSMessages_en.properties target/grunt/resources/JSMessages_en.properties',
-                    '/usr/bin/native2ascii -encoding UTF-8 target/grunt/resources/JSMessages_fr.properties target/grunt/resources/JSMessages_fr.properties',
-                    '/usr/bin/native2ascii -encoding UTF-8 target/grunt/resources/BackendMessages_en.properties target/grunt/resources/BackendMessages_en.properties',
-                    '/usr/bin/native2ascii -encoding UTF-8 target/grunt/resources/BackendMessages_fr.properties target/grunt/resources/BackendMessages_fr.properties',
-                    '/usr/bin/native2ascii -encoding UTF-8 target/grunt/resources/HelpMessages_en.properties target/grunt/resources/HelpMessages_en.properties',
-                    '/usr/bin/native2ascii -encoding UTF-8 target/grunt/resources/HelpMessages_fr.properties target/grunt/resources/HelpMessages_fr.properties',
-                    '/usr/bin/native2ascii -encoding UTF-8 target/grunt/resources/ConfigMessages_en.properties target/grunt/resources/ConfigMessages_en.properties',
-                    '/usr/bin/native2ascii -encoding UTF-8 target/grunt/resources/ConfigMessages_fr.properties target/grunt/resources/ConfigMessages_fr.properties'
+                    '/usr/bin/native2ascii -encoding UTF-8 target/grunt/resources/LogistimoMessages_en.properties target/grunt/resources/LogistimoMessages_en.properties',
+                    '/usr/bin/native2ascii -encoding UTF-8 target/grunt/resources/LogistimoMessages_fr.properties target/grunt/resources/LogistimoMessages_fr.properties',
+                    '/usr/bin/native2ascii -encoding UTF-8 target/grunt/resources/LogistimoMessages_hi.properties target/grunt/resources/LogistimoMessages_hi.properties'
+
                 ].join('&&')
             }
         },
@@ -155,60 +149,45 @@ module.exports = function(grunt, ref) {
         rename: {
             en: {
                 files: [
-                    {src: ['target/grunt/resources/BackendMessages_en.properties.orig'], dest: 'target/grunt/resources/BackendMessages_en.properties'},
-                    {src: ['target/grunt/resources/HelpMessages_en.properties.orig'], dest: 'target/grunt/resources/HelpMessages_en.properties'},
-                    {src: ['target/grunt/resources/Messages_en.properties.orig'], dest: 'target/grunt/resources/Messages_en.properties'},
-                    {
-                        src: ['target/grunt/resources/JSMessages_en.properties.orig'],
-                        dest: 'target/grunt/resources/JSMessages_en.properties'
-                    },
-                    {
-                        src: ['target/grunt/resources/ConfigMessages_en.properties.orig'],
-                        dest: 'target/grunt/resources/ConfigMessages_en.properties'
-                    }
+                    {src: ['target/grunt/resources/LogistimoMessages_en.properties.orig'], dest: 'target/grunt/resources/LogistimoMessages_en.properties'}
                 ]
             },
             fr: {
                 files: [
-                    {src: ['target/grunt/resources/BackendMessages_fr.properties.orig'], dest: 'target/grunt/resources/BackendMessages_fr.properties'},
-                    {src: ['target/grunt/resources/HelpMessages_fr.properties.orig'], dest: 'target/grunt/resources/HelpMessages_fr.properties'},
-                    {src: ['target/grunt/resources/Messages_fr.properties.orig'], dest: 'target/grunt/resources/Messages_fr.properties'},
-                    {
-                        src: ['target/grunt/resources/JSMessages_fr.properties.orig'],
-                        dest: 'target/grunt/resources/JSMessages_fr.properties'
-                    },
-                    {
-                        src: ['target/grunt/resources/ConfigMessages_fr.properties.orig'],
-                        dest: 'target/grunt/resources/ConfigMessages_fr.properties'
-                    }
+                    {src: ['target/grunt/resources/LogistimoMessages_fr.properties.orig'], dest: 'target/grunt/resources/LogistimoMessages_fr.properties'}
                 ]
             },
             hi: {
                 files: [
-                    {
-                        src: ['target/grunt/resources/Messages_hi.properties.orig'],
-                        dest: 'target/grunt/resources/Messages_hi.properties'
-                    }
+                    {src: ['target/grunt/resources/LogistimoMessages_hi.properties.orig'], dest: 'target/grunt/resources/LogistimoMessages_hi.properties'}
                 ]
             },
             resource : {
                 files: [
                     {src: ['target/grunt/webapp/v2/i18n/resourceBundle_en.json'], dest: 'target/grunt/webapp/v2/i18n/<%= now %>-resourceBundle_en.json'},
-                    {src: ['target/grunt/webapp/v2/i18n/resourceBundle_fr.json'], dest: 'target/grunt/webapp/v2/i18n/<%= now %>-resourceBundle_fr.json'}
+                    {src: ['target/grunt/webapp/v2/i18n/resourceBundle_fr.json'], dest: 'target/grunt/webapp/v2/i18n/<%= now %>-resourceBundle_fr.json'},
+                    {src: ['target/grunt/webapp/v2/i18n/resourceBundle_hi.json'], dest: 'target/grunt/webapp/v2/i18n/<%= now %>-resourceBundle_hi.json'}
                 ]
             }
         },
         propertiesToJSON: {
             en: {
-                src: ['target/grunt/resources/*_en.properties'],
+                src: ['target/grunt/resources/LogistimoMessages_en.properties'],
                 dest: 'target/grunt/webapp/v2/i18n/resourceBundle_en.json',
                 options: {
                     merge: true
                 }
             },
             fr: {
-                src: ['target/grunt/resources/*_fr.properties'],
+                src: ['target/grunt/resources/LogistimoMessages_fr.properties'],
                 dest: 'target/grunt/webapp/v2/i18n/resourceBundle_fr.json',
+                options: {
+                    merge: true
+                }
+            },
+            hi: {
+                src: ['target/grunt/resources/LogistimoMessages_hi.properties'],
+                dest: 'target/grunt/webapp/v2/i18n/resourceBundle_hi.json',
                 options: {
                     merge: true
                 }
@@ -529,7 +508,7 @@ module.exports = function(grunt, ref) {
                     type: 'props'
                 },
                 files: {
-                    'prop': ['target/grunt/resources/BackendMessages_en.properties', 'target/grunt/resources/Messages_en.properties', 'target/grunt/resources/errors_en.properties', 'target/grunt/resources/JSMessages_en.properties', 'target/grunt/resources/ConfigMessages_en.properties']
+                    'prop': ['target/grunt/resources/LogistimoMessages_en.properties', 'target/grunt/resources/errors_en.properties']
                 }
             }
         },
@@ -702,15 +681,15 @@ module.exports = function(grunt, ref) {
     grunt.loadNpmTasks('grunt-contrib-watch');
 
 
-    grunt.registerTask('default', ['copy:main', 'copy:properties', 'rename:en', 'rename:fr', 'rename:hi', 'propertiesToJSON:en',
-        'propertiesToJSON:fr','shell:convertUTF8','copy:res2src','copy:rb2src']);
+    grunt.registerTask('default', ['copy:main', 'copy:properties', 'rename:en', 'rename:fr', 'rename:hi','propertiesToJSON:en',
+        'propertiesToJSON:fr','propertiesToJSON:hi','shell:convertUTF8','copy:res2src','copy:rb2src']);
     grunt.registerTask('development',['clean:dist', 'env:dev', 'copy:src','copy:main','copy:properties','if:default',
-        'rename:en', 'rename:fr', 'rename:hi', 'propertiesToJSON:en', 'propertiesToJSON:fr', 'shell:convertUTF8', 'if:rb',
+        'rename:en', 'rename:fr', 'rename:hi', 'propertiesToJSON:en', 'propertiesToJSON:fr', 'propertiesToJSON:hi', 'shell:convertUTF8', 'if:rb',
         'rename:resource', 'cssmin:prod', 'copy:bulletinboard', 'copy:bulletinboardlist','copy:bulletinboardApp', 'preprocess:beforeUglify',
         'env:bulletinboard', 'preprocess:bulletinboardUglify', 'env:dev', 'toggleComments', 'html2js', 'ngAnnotate',
         'string-replace:dist', 'uglify', 'preprocess:afterUglify', 'env:bulletinboard', 'preprocess:bulletinboardAfterUglify']);
     grunt.registerTask('production',['clean:dist', 'env:prod', 'copy:src','copy:main','copy:properties', 'if:default',
-        'rename:en', 'rename:fr', 'rename:hi', 'propertiesToJSON:en', 'propertiesToJSON:fr', 'shell:convertUTF8', 'if:rb',
+        'rename:en', 'rename:fr', 'rename:hi', 'propertiesToJSON:en', 'propertiesToJSON:fr', 'propertiesToJSON:hi', 'shell:convertUTF8', 'if:rb',
         'rename:resource', 'cssmin:prod', 'copy:bulletinboard','copy:bulletinboardlist','copy:bulletinboardApp', 'preprocess:beforeUglify',
         'env:bulletinboard', 'preprocess:bulletinboardUglify', 'env:prod', 'toggleComments', 'html2js', 'ngAnnotate',
         'string-replace:dist', 'uglify', 'preprocess:afterUglify', 'env:bulletinboard', 'preprocess:bulletinboardAfterUglify']);

@@ -303,7 +303,7 @@
                             <div class="form-group">
                                   <label class="col-sm-3 control-label">{{resourceBundle['config.order.recommendationreasons']}}</label>
                                 <div class="col-sm-8">
-                                  <multi-select ng-model="orders.orr" name="orsn"></multi-select>
+                                  <multi-select ng-model="orders.orr" name="orsn" place-holder="{{resourceBundle['type.text.and.press.enter']}}"></multi-select>
                                     <span class="col-sm-8 litetext noleftpad">
                                     <input type="checkbox" ng-disabled="orders.disable.orrm" ng-model="orders.orrm" ng-change="disableMandatory('orr','orrm')" >&nbsp;{{resourceBundle['markmandatory']}}
                                 </span>
@@ -316,7 +316,7 @@
                             <div class="form-group">
                                 <label class="col-sm-3 control-label">{{resourceBundle['config.order.editingreasons']}}</label>
                                 <div class="col-sm-8">
-                                    <multi-select ng-model="orders.eqr" name="orsn"></multi-select>
+                                    <multi-select ng-model="orders.eqr" name="orsn" place-holder="{{resourceBundle['type.text.and.press.enter']}}"></multi-select>
                                 </div>
                                  <span class="col-sm-offset-3 col-sm-8 litetext">
                                     <input type="checkbox" ng-disabled="orders.disable.eqrm" ng-model="orders.eqrm" ng-change="disableMandatory('eqr','eqrm')">&nbsp;{{resourceBundle['markmandatory']}}
@@ -329,7 +329,7 @@
                             <div class="form-group">
                                 <label class="col-sm-3 control-label">{{resourceBundle['config.order.partialshipmentreasons']}}</label>
                                 <div class="col-sm-8">
-                                    <multi-select ng-model="orders.psr" name="orsn"></multi-select>
+                                    <multi-select ng-model="orders.psr" name="orsn" place-holder="{{resourceBundle['type.text.and.press.enter']}}"></multi-select>
                                 </div>
                                  <span class="col-sm-offset-3 col-sm-8 litetext">
                                     <input type="checkbox" ng-disabled="orders.disable.psrm" ng-model="orders.psrm" ng-change="disableMandatory('psr','psrm')" >&nbsp;{{resourceBundle['markmandatory']}}
@@ -342,7 +342,7 @@
                             <div class="form-group">
                                 <label class="col-sm-3 control-label">{{resourceBundle['config.order.partialfulfillmentreasons']}}</label>
                                 <div class="col-sm-8">
-                                    <multi-select ng-model="orders.pfr" name="orsn"></multi-select>
+                                    <multi-select ng-model="orders.pfr" name="orsn" place-holder="{{resourceBundle['type.text.and.press.enter']}}"></multi-select>
                                 </div>
                                  <span class="col-sm-offset-3 col-sm-8 litetext">
                                     <input type="checkbox" ng-disabled="orders.disable.pfrm" ng-model="orders.pfrm" ng-change="disableMandatory('pfr','pfrm')" >&nbsp;{{resourceBundle['markmandatory']}}
@@ -355,7 +355,7 @@
                             <div class="form-group">
                                 <label class="col-sm-3 control-label">{{resourceBundle['config.cancellingorderreasons']}}</label>
                                 <div class="col-sm-8">
-                                    <multi-select ng-model="orders.cor" name="orsn"></multi-select>
+                                    <multi-select ng-model="orders.cor" name="orsn" place-holder="{{resourceBundle['type.text.and.press.enter']}}"></multi-select>
                                 </div>
                                  <span class="col-sm-offset-3 col-sm-8 litetext">
                                     <input type="checkbox" ng-disabled="orders.disable.corm" ng-model="orders.corm" ng-change="disableMandatory('cor','corm')" >&nbsp;{{resourceBundle['markmandatory']}}
@@ -513,6 +513,45 @@
                     <div class="row">
                         <div ng-include="'views/configuration/invoice.html'"></div>
                     </div>
+                    <div class="row"></div>
+                </div>
+                <div class="bgr">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="title-heading">
+                                {{resourceBundle['transport']}}
+                            </div>
+                            <p class="litetext">
+                                {{resourceBundle['transport.config.info']}}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-11">
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label ">{{resourceBundle['order.auto.state.change']}}</label>
+                                <div class="col-sm-8 cbx">
+                                    <input type="checkbox" ng-model="orders.shipOnPickup">
+                                    {{resourceBundle['config.transport.automarkshippedonpickup']}}<br/>
+                                    <input type="checkbox" ng-model="orders.fulfillOnDelivery">
+                                    {{resourceBundle['config.transport.automarkfulfilondel']}}<br/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-sm-11">
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label ">{{resourceBundle['delivery.request.perm']}}</label>
+                                <div class="col-sm-8 cbx">
+                                    <input type="checkbox" ng-model="orders.disableDeliveryReqByCustomer">
+                                    {{resourceBundle['config.transport.disablerdbycus']}}<br/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="row"></div>
                 </div>
                 <div class="row mt10" ng-if="iSU || dp.ce">

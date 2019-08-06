@@ -163,11 +163,11 @@
                                 <span ng-show="iPredEnabled && item.sap > 0 && item.pdos < 8"
                                       ng-click="select($index,'inventory')"
                                       class="glyphicon glyphicon-warning-sign rPad5 clickable fc-color-orange"
-                                      uib-tooltip="Likely to stock out within the next 7 days"></span>
+                                      uib-tooltip="{{resourceBundle['likely.to.stockout.within.next.seven.days']}}"></span>
                                 <a ng-show="iPredEnabled && ordersTabEnabled && item.sap > 0 && item.pdos<8"
                                    href="#/orders/add/?eid={{item.kId}}&mid={{item.mId}}" target="_blank">
                                     <span class="glyphicon glyphicon-shopping-cart clickable rPad5"
-                                          uib-tooltip="Place order"></span>
+                                          uib-tooltip="{{resourceBundle['place.order']}}"></span>
                                 </a>
                                 <span ng-if="item.eventType !== -1" class="glyphicons glyphicons-history clickable"
                                       ng-click="select($index,'history')"

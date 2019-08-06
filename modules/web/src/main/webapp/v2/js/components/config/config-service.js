@@ -54,6 +54,13 @@ configServices.factory('configService', ['APIService', function (apiService) {
         getConfigJson: function (configType) {
             return apiService.get('/s2/api/config/json?config_type=' + configType)
         },
+        getTransporterConfig: function(fetchEnabledTsps) {
+            var url = '/s2/api/config/transporters';
+            if(checkNotNullEmpty(fetchEnabledTsps)) {
+                url += '?enabled=' + fetchEnabledTsps;
+            }
+            return apiService.get(url);
+        },
         updateConfigJson: function (configType, configJson) {
             return apiService.post({type: configType, configJson: configJson}, '/s2/api/config/json');
         },

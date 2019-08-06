@@ -146,7 +146,7 @@ public class AssetManagementServiceImpl implements AssetManagementService {
         asset = (IAsset) DomainsUtil.addToDomain(asset, domainId, pm);
       } else {
         final Locale locale = SecurityUtils.getLocale();
-        ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
+        ResourceBundle backendMessages = Resources.getBundle(locale);
         throw new ServiceException(
             asset.getSerialId() + "(" + asset.getVendorId() + ") " + backendMessages
                 .getString("error.alreadyexists"));
@@ -177,10 +177,9 @@ public class AssetManagementServiceImpl implements AssetManagementService {
     } catch (JDOObjectNotFoundException e) {
       xLogger.warn("getAsset: Asset {0} does not exist", assetId);
       final Locale locale = SecurityUtils.getLocale();
-      ResourceBundle messages = Resources.get().getBundle(Constants.MESSAGES, locale);
-      ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
+      ResourceBundle messages = Resources.getBundle(locale);
       errMsg =
-          messages.getString("asset") + " " + assetId + " " + backendMessages
+          messages.getString("asset") + " " + assetId + " " + messages
               .getString("error.notfound");
     } catch (Exception e) {
       errMsg = e.getMessage();
@@ -318,7 +317,7 @@ public class AssetManagementServiceImpl implements AssetManagementService {
   public List<IAsset> getAssetsByKiosk(Long kioskId, Integer assetType) throws ServiceException {
     if (kioskId == null || assetType == null) {
       final Locale locale = SecurityUtils.getLocale();
-      ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
+      ResourceBundle backendMessages = Resources.getBundle(locale);
       throw new ServiceException(
           backendMessages.getString("kiosk") + " and AssetType are mandatory");
     }

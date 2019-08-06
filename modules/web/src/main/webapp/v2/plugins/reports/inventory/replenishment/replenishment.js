@@ -51,9 +51,9 @@ registerWidget('ir', 'rpt-replenishment', 'Inventory', 'Replenishment response t
         $scope.cType = "mscombi2d";
         $scope.cOptions.exportFileName = "Replenishment" + "_" + FormatDate_DD_MM_YYYY($scope.today);
 
-        $scope.primaryMetric.push({name: "Replenish from zero stock (days)", value: "1"});
-        $scope.primaryMetric.push({name: "Replenish from < min (days)", value: "2"});
-        $scope.primaryMetric.push({name: "Change from > max (days)", value: "3"});
+        $scope.primaryMetric.push({name: $scope.resourceBundle['reports.replenishment.response.replenish.from.zero.stock.days'], value: "1"});
+        $scope.primaryMetric.push({name: $scope.resourceBundle['reports.replenishment.response.replenish.from.less.than.min.days'], value: "2"});
+        $scope.primaryMetric.push({name: $scope.resourceBundle['reports.replenishment.response.change.from.greater.than.max.days'], value: "3"});
 
         $scope.downloadAsCSV = function (daily) {
             if(daily) {
@@ -196,7 +196,7 @@ registerWidget('ir', 'rpt-replenishment', 'Inventory', 'Replenishment response t
 
                 $scope.dtableCaption = undefined;
                 $scope.dtableHeading = [];
-                $scope.dtableHeading.push("Date");
+                $scope.dtableHeading.push($scope.resourceBundle['date']);
                 if(checkNotNullEmpty(compareFields[0])) {
                     angular.forEach(compareFields, function (d) {
                         $scope.dtableHeading.push(d);
@@ -223,7 +223,7 @@ registerWidget('ir', 'rpt-replenishment', 'Inventory', 'Replenishment response t
 
                 $scope.tableCaption = $scope.cOptions.subcaption;
                 $scope.tableHeading = [];
-                $scope.tableHeading.push("Date");
+                $scope.tableHeading.push($scope.resourceBundle['date']);
                 if(checkNotNullEmpty(compareFields[0])) {
                     $scope.tableMetric = $scope.cOptions.caption;
                     angular.forEach(compareFields, function (d) {

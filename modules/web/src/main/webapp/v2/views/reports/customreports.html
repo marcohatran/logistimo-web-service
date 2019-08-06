@@ -25,7 +25,7 @@
     <div ng-controller="ExportListController" ng-init="init('customreport');">
         <div class="filter-box">
             <div class="row">
-                Last <b>30</b> custom reports
+                {{resourceBundle['last']}} <b>30</b> {{resourceBundle['customreports'] | lowercase}}
             </div>
         </div>
         <div class="row action-bar">
@@ -41,7 +41,7 @@
                             <th>{{resourceBundle['exportedon']}}</th>
                             <th>{{resourceBundle['status']}}</th>
                             <th>{{resourceBundle['download']}}</th>
-                            <th>Recipients</th>
+                            <th>{{resourceBundle['recipients']}}</th>
                         </tr>
                         </thead>
                         <tbody>

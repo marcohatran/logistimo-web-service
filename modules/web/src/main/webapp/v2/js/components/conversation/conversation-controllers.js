@@ -68,15 +68,15 @@ conversationControllers.controller('ConversationController', ['$scope', 'focus',
         };
         $scope.saveMessage = function (){
             if(checkNullEmpty($scope.newMsg)){
-                $scope.showWarning("Message is required.");
+                $scope.showWarning($scope.resourceBundle['conversations.message.required']);
             }else if($scope.newMsg.length>2048) {
-                $scope.showWarning("Message is too long.");
+                $scope.showWarning($scope.resourceBundle['conversations.message.too.long']);
             }else {
                 $scope.lLoading = true;
                 conversationService.addMessage($scope.objType,$scope.objId,$scope.newMsg).then(function(){
                     $scope.addMsg = false;
                     $scope.newMsg = "";
-                    $scope.showSuccess("Message added successfully");
+                    $scope.showSuccess($scope.resourceBundle['conversations.message.added.successfully']);
                     $scope.getMessages();
                 }).catch(function error(msg) {
                     $scope.showErrorMsg(msg);

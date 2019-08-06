@@ -153,7 +153,7 @@ public class CommonUtils {
   }
 
   public static String getAppName(Integer loginSource, Locale locale) {
-    ResourceBundle resourceBundle = Resources.get().getBundle("Messages", locale);
+    ResourceBundle resourceBundle = Resources.getBundle("Messages", locale);
     if(Objects.equals(SourceConstants.MMA, loginSource)) {
       return resourceBundle.getString("pulse");
     } else if(Objects.equals(SourceConstants.MOBILE, loginSource)) {

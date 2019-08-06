@@ -47,6 +47,7 @@ public interface IConfig {
   String MAPLOCATIONCONFIG = "maplocationconfig";
   String DASHBOARDCONFIG = "dashboardconfig";
   String GENERALCONFIG = "generalconfig";
+  String TRANSPORTER_CONFIG = "transportersconfig";
   String CONFIG_PREFIX = "config.";
   String CONFIG_KIOSK_PREFIX = "config.kiosk.";
   // Configuration attributes (within a given config.)

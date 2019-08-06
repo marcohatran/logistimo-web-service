@@ -99,7 +99,7 @@ public class AuthServlet extends JsonRestServlet {
   }
 
   public void processGet(HttpServletRequest req, HttpServletResponse resp,
-                         ResourceBundle backendMessages, ResourceBundle messages)
+                         ResourceBundle messages)
       throws IOException {
     String action = req.getParameter("action");
     if (ACTION_LOGOUT.equals(action)) {
@@ -111,7 +111,7 @@ public class AuthServlet extends JsonRestServlet {
   }
 
   public void processPost(HttpServletRequest req, HttpServletResponse resp,
-                          ResourceBundle backendMessages, ResourceBundle messages)
+                          ResourceBundle messages)
       throws IOException {
     String action = req.getParameter("action");
     if (ACTION_LOGIN.equals(action)) {

@@ -128,45 +128,45 @@ public class OrderServlet extends JsonRestServlet {
   }
 
   public void processGet(HttpServletRequest req, HttpServletResponse resp,
-                         ResourceBundle backendMessages, ResourceBundle messages)
+                         ResourceBundle messages)
       throws IOException, ServiceException, ValidationException {
     xLogger.fine("OrderServlet: Entering doGet");
     String action = req.getParameter(RestConstantsZ.ACTION);
     if (RestConstantsZ.ACTION_GETORDERS.equals(action)) {
       if (RestConstantsZ.MINIMUM_RESP_VALUE.equalsIgnoreCase(req
           .getParameter(RestConstantsZ.MINIMUM_RESPONSE))) {
-        getOrdersMinimumResponse(req, resp, backendMessages);
+        getOrdersMinimumResponse(req, resp, messages);
       } else {
-        getOrders(req, resp, backendMessages);
+        getOrders(req, resp, messages);
       }
     } else if (RestConstantsZ.ACTION_GETORDER.equals(action)) {
-      getOrCancelOrder(req, resp, false, backendMessages, messages);
+      getOrCancelOrder(req, resp, false, messages);
     } else if (RestConstantsZ.ACTION_CANCELORDER.equals(action)) {
-      getOrCancelOrder(req, resp, true, backendMessages,
+      getOrCancelOrder(req, resp, true,
           messages); // TODO: NOTE: CancelOrder is retrained here for backward compatibility
     } else if (RestConstantsZ.ACTION_UPDATEORDER_OLD.equals(action)) {
-      createOrUpdateOrder(req, resp, backendMessages, true);
+      createOrUpdateOrder(req, resp, messages, true);
     } else if (RestConstantsZ.ACTION_UPDATEORDERSTATUS_OLD.equals(action)) {
-      updateOrderStatusOld(req, resp, backendMessages, messages);
+      updateOrderStatusOld(req, resp, messages);
     } else if (RestConstantsZ.ACTION_EXPORT.equals(action)) {
       scheduleExport(req, resp, messages);
     } else if (RestConstantsZ.ACTION_UPDATEORDER.equals(action)) {
-      createOrUpdateOrder(req, resp, backendMessages, false);
+      createOrUpdateOrder(req, resp, messages, false);
     } else {
       throw new ServiceException("Invalid action: " + action);
     }
   }
 
   public void processPost(HttpServletRequest req, HttpServletResponse resp,
-                          ResourceBundle backendMessages, ResourceBundle messages)
+                          ResourceBundle messages)
       throws IOException, ServiceException, ValidationException {
     String action = req.getParameter(RestConstantsZ.ACTION);
     if (RestConstantsZ.ACTION_UPDATEORDERSTATUS_OLD.equals(action)) {
-      updateOrderStatus(req, resp, backendMessages, messages, true);
+      updateOrderStatus(req, resp, messages, true);
     } else if (RestConstantsZ.ACTION_UPDATEORDERSTATUS.equals(action)) {
-      updateOrderStatus(req, resp, backendMessages, messages, false);
+      updateOrderStatus(req, resp, messages, false);
     } else {
-      processGet(req, resp, backendMessages, messages);
+      processGet(req, resp, messages);
     }
   }
 
@@ -511,7 +511,7 @@ public class OrderServlet extends JsonRestServlet {
   // Get order given an order Id for a given kiosk
   @SuppressWarnings("rawtypes")
   private void getOrCancelOrder(HttpServletRequest req, HttpServletResponse resp,
-                                boolean cancelOrder, ResourceBundle backendMessages,
+                                boolean cancelOrder,
                                 ResourceBundle messages) throws IOException {
     xLogger.fine("Entered getOrCancelOrder");
     // Get request parameters
@@ -550,7 +550,7 @@ public class OrderServlet extends JsonRestServlet {
       if (!isKioskIdOptionalForRESTStatusUpdate(appVersion) && kioskId
           == null) { // kiosk ID is mandatory, and user should have authorization on it (either domain owner, or a operator/manager of it)
         status = false;
-        message = backendMessages.getString(NO_KIOSK);
+        message = messages.getString(NO_KIOSK);
       } else {
         IUserAccount u = RESTUtil.authenticate(userId, password, kioskId, req, resp);
         timezone = u.getTimezone();
@@ -625,19 +625,19 @@ public class OrderServlet extends JsonRestServlet {
       } catch (NumberFormatException e) {
         xLogger.severe("Number format exception when getting order Id: {0}", orderId, e);
         status = false;
-        message = backendMessages.getString(SYSTEM_ERROR) + " [1]";
+        message = messages.getString(SYSTEM_ERROR) + " [1]";
         setSignatureAndStatus(cache, signature, IJobStatus.FAILED);
       } catch (ObjectNotFoundException e) {
         xLogger.severe("Object not found with order ID: {0}", orderId, e);
         status = false;
         message =
-            messages.getString("order") + " " + orderId + " " + backendMessages
+            messages.getString("order") + " " + orderId + " " + messages
                 .getString("error.notfound");
         setSignatureAndStatus(cache, signature, IJobStatus.FAILED);
       } catch (LogiException e) {
         xLogger.severe("Service exception when getting order with ID: {0}", orderId, e);
         status = false;
-        message = backendMessages.getString(SYSTEM_ERROR);
+        message = messages.getString(SYSTEM_ERROR);
         setSignatureAndStatus(cache, signature, IJobStatus.FAILED);
       }
     }
@@ -671,7 +671,7 @@ public class OrderServlet extends JsonRestServlet {
       xLogger.severe("Protocol exception when sending order with ID {0}: {1}", orderId,
           e.getMessage());
       status = false;
-      message = backendMessages.getString(SYSTEM_ERROR);
+      message = messages.getString(SYSTEM_ERROR);
       try {
         String
             jsonOutput =
@@ -1091,7 +1091,7 @@ public class OrderServlet extends JsonRestServlet {
   // Update status of an order - DEPRECATED
   @SuppressWarnings("rawtypes")
   private void updateOrderStatusOld(HttpServletRequest req, HttpServletResponse resp,
-                                    ResourceBundle backendMessages, ResourceBundle messages)
+                                    ResourceBundle messages)
       throws IOException, ValidationException {
     xLogger.fine("Entered updateOrderStatusOld");
     // Get request parameters
@@ -1124,7 +1124,7 @@ public class OrderServlet extends JsonRestServlet {
       if (kioskId
           == null) { // kiosk ID is mandatory, and user should have authorization on it (either domain owner, or a operator/manager of it)
         status = false;
-        message = backendMessages.getString(NO_KIOSK);
+        message = messages.getString(NO_KIOSK);
       } else {
         IUserAccount u = RESTUtil.authenticate(userId, password, kioskId, req, resp);
         if (userId == null) // possible if BasicAuth was used
@@ -1185,7 +1185,7 @@ public class OrderServlet extends JsonRestServlet {
               // Update order status
               UpdatedOrder uo = OrderUtils.updateOrderStatus(
                   orderId, newStatus, userId, null,
-                  SourceConstants.MOBILE, backendMessages);
+                  SourceConstants.MOBILE, messages);
               order = uo.order;
               // Send inventory error message, if any
               if (uo.inventoryError) {
@@ -1209,7 +1209,7 @@ public class OrderServlet extends JsonRestServlet {
       } catch (ObjectNotFoundException e) {
         xLogger.severe("Object not found with order ID {0}: {1}", orderId, e.getMessage());
         status = false;
-        message = messages.getString("order") + " " + orderId + " " + backendMessages.getString(
+        message = messages.getString("order") + " " + orderId + " " + messages.getString(
             "error.notfound");
         setSignatureAndStatus(cache, signature, IJobStatus.FAILED);
       } catch (ServiceException e) {
@@ -1220,7 +1220,7 @@ public class OrderServlet extends JsonRestServlet {
         if (optionalMessage.isPresent()) {
           message = optionalMessage.get();
         } else {
-          message = backendMessages.getString(SYSTEM_ERROR);
+          message = messages.getString(SYSTEM_ERROR);
         }
         setSignatureAndStatus(cache, signature, IJobStatus.FAILED);
       }
@@ -1248,7 +1248,7 @@ public class OrderServlet extends JsonRestServlet {
     } catch (Exception e) {
       xLogger.severe("Protocol exception when sending order with ID {0}: {1}", orderId,
           e.getMessage());
-      message = backendMessages.getString(SYSTEM_ERROR);
+      message = messages.getString(SYSTEM_ERROR);
       try {
         String
             json =
@@ -1282,7 +1282,7 @@ public class OrderServlet extends JsonRestServlet {
 
   @SuppressWarnings("rawtypes")
   private void updateOrderStatus(HttpServletRequest req, HttpServletResponse resp,
-                                 ResourceBundle backendMessages, ResourceBundle messages,
+                                 ResourceBundle messages,
                                  boolean doApprovalConfigCheck)
       throws IOException, ServiceException {
     xLogger.fine("Entered updateOrderStatus");
@@ -1306,7 +1306,7 @@ public class OrderServlet extends JsonRestServlet {
       if (uosReq.kid
           == null) { // kiosk ID is mandatory, and user should have authorization on it (either domain owner, or a operator/manager of it)
         status = false;
-        message = backendMessages.getString(NO_KIOSK);
+        message = messages.getString(NO_KIOSK);
       } else {
         if (uosReq.oty.equals(IOrder.TYPE_SALE)) {
           if (uosReq.vid != null) {
@@ -1326,8 +1326,7 @@ public class OrderServlet extends JsonRestServlet {
         dc = DomainConfig.getInstance(u.getDomainId());
         if (doApprovalConfigCheck && isApprovalConfigEnabled(dc.getApprovalsConfig())) {
           status = false;
-          message =
-              backendMessages.getString("upgrade.app.message");
+          message = messages.getString("upgrade.app.message");
         }
       }
     } catch (ServiceException e) {
@@ -1365,7 +1364,7 @@ public class OrderServlet extends JsonRestServlet {
             message = "Invalid Order ID or Shipment ID";
           } else if (uosReq.ost == null || uosReq.ost.isEmpty()) {
             status = false;
-            message = backendMessages.getString("error.invalidstatus");
+            message = messages.getString("error.invalidstatus");
           } else if (uosReq.ost.equals(IOrder.FULFILLED)) {
             if (uosReq.sid == null || uosReq.sid.isEmpty()) {
               message = "Invalid shipment ID";
@@ -1389,15 +1388,15 @@ public class OrderServlet extends JsonRestServlet {
               if (!uosReq.hasOrderId()) {
                 uo = OrderUtils.updateShpStatus(uosReq,
                     dc, SourceConstants.MOBILE,
-                    backendMessages, uosReq.tm);
+                    messages, uosReq.tm);
               } else {
                 uo = OrderUtils.updateOrdStatus(uosReq,
                     dc, SourceConstants.MOBILE,
-                    backendMessages);
+                    messages);
               }
             } else if (uosReq.hasOrderId()) {
               uo = OrderUtils.updateOrdStatus(uosReq, dc,
-                  SourceConstants.MOBILE, backendMessages);
+                  SourceConstants.MOBILE, messages);
             } else {
               // Error cannot change status. One of them should be present.
               uo.message = "Either tid or sid should be present";
@@ -1419,7 +1418,7 @@ public class OrderServlet extends JsonRestServlet {
               e.getMessage());
           status = false;
           message =
-              messages.getString("order") + " " + uosReq.tid + " " + backendMessages
+              messages.getString("order") + " " + uosReq.tid + " " + messages
                   .getString(
                       "error.notfound");
           setSignatureAndStatus(cache, signature, IJobStatus.FAILED);
@@ -1441,20 +1440,19 @@ public class OrderServlet extends JsonRestServlet {
               uosReq.tid, e.getMessage());
           status = false;
           if(StringUtils.isEmpty(e.getCode())) {
-            message = backendMessages.getString(SYSTEM_ERROR);
+            message = messages.getString(SYSTEM_ERROR);
           } else {
             message = e.getMessage();
           }
           setSignatureAndStatus(cache, signature, IJobStatus.FAILED);
         } catch (LogiException e) {
-          xLogger.severe("Logi exception when updating shipment with ID {0}: {1}",
-              uosReq.sid, e.getMessage());
+          xLogger.warn("Logi exception when updating shipment with ID {0}: {1}", uosReq.sid, e);
           status = false;
           if (StringUtils.isNotEmpty(e.getCode())) {
             errorCode = e.getCode();
             message = e.getMessage();
           } else{
-            message = backendMessages.getString(SYSTEM_ERROR);
+            message = messages.getString(SYSTEM_ERROR);
           }
           setSignatureAndStatus(cache, signature, IJobStatus.FAILED);
         }
@@ -1494,7 +1492,7 @@ public class OrderServlet extends JsonRestServlet {
       xLogger.severe("Protocol exception when sending order with ID {0}: {1}", uosReq.tid,
           e.getMessage());
       status = false;
-      message = backendMessages.getString(SYSTEM_ERROR);
+      message = messages.getString(SYSTEM_ERROR);
       try {
         // Send error output as JSON
         String

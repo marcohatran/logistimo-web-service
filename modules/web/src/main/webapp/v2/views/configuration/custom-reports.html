@@ -85,7 +85,7 @@
                                     <div class="form-group" ng-hide="edituf">
                                         <label class="col-sm-4 control-label required">{{resourceBundle['config.customreports.filename']}}</label>
                                         <div class="col-sm-8 pt5">
-                                                <input type="file" file-model="fileData" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"/>
+                                                <input type="file" file-model="fileData" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel.sheet.macroEnabled.12, application/vnd.ms-excel"/>
                                                 <span class="litetext">{{resourceBundle['upload']}} <b>.xls .xlsx or .xlsm</b> {{resourceBundle['files.only']}}</span>
                                             <span ng-show = "showEdit" class="glyphicons glyphicons-remove lpad10" ng-click="stopEdit()" title="Cancel"></span>
                                         </div>
@@ -108,7 +108,7 @@
                                                    autocomplete="off"
                                                    ng-model="cr.tn"
                                                    name="templateName"
-                                                   placeholder="{{'Template name'}}"/>
+                                                   placeholder="{{resourceBundle['configuration.custom.reports.template.name']}}"/>
                                         </div>
                                     </div>
                                 </div>
@@ -123,7 +123,7 @@
                                                    ng-model="cr.dsc"
                                                    name="description"
                                                    maxlength="1000"
-                                                   placeholder="{{'Description'}}"/>
+                                                   placeholder="{{resourceBundle['description']}}"/>
                                         </div>
                                     </div>
                                 </div>
@@ -461,13 +461,13 @@
                                                         <td>
                                                             <select class="form-control w50" ng-model="cr.rgtw" name="reportGenerationTimeWeekly">
                                                                 <option value="">-- {{resourceBundle['select']}} {{resourceBundle['day.upper']}} --</option>
-                                                                <option value="2" selected>{{'Monday'}}</option>
-                                                                <option value="3">{{'Tuesday'}}</option>
-                                                                <option value="4">{{'Wednesday'}}</option>
-                                                                <option value="5">{{'Thursday'}}</option>
-                                                                <option value="6">{{'Friday'}}</option>
-                                                                <option value="7">{{'Saturday'}}</option>
-                                                                <option value="1">{{'Sunday'}}</option>
+                                                                <option value="2" selected>{{resourceBundle['monday']}}</option>
+                                                                <option value="3">{{resourceBundle['tuesday']}}</option>
+                                                                <option value="4">{{resourceBundle['wednesday']}}</option>
+                                                                <option value="5">{{resourceBundle['thursday']}}</option>
+                                                                <option value="6">{{resourceBundle['friday']}}</option>
+                                                                <option value="7">{{resourceBundle['saturday']}}</option>
+                                                                <option value="1">{{resourceBundle['sunday']}}</option>
                                                             </select>
 
                                                         </td>
@@ -487,7 +487,7 @@
                                                 <table width="100%" style="margin: 5px;">
                                                     <tr>
                                                         <td class="w20 lpad5">
-                                                            <label class="control-label pt0">{{'Interval'}}</label>
+                                                            <label class="control-label pt0">{{resourceBundle['configuration.custom.reports.interval']}}</label>
                                                         </td>
                                                         <td>
                                                             <input only-digits type="text" class="form-control w30 stat-bottom h30 mt10 mb10" autocomplete="off" ng-model="cr.rgtm" name="reportGenerationTimeMonthly"> ({{resourceBundle['config.customreports.dayofmonth']}})<br/>
@@ -526,7 +526,7 @@
                                     <div class="form-group">
                                         <label class="col-sm-4 control-label">{{resourceBundle['emails']}}</label>
                                         <div class="col-sm-8 pt5">
-                                            <multi-select id="exusr" ng-model="cr.exusrsvo" name="eu" type="'email'" place-holder="'Type email id and press enter'"></multi-select>
+                                            <multi-select id="exusr" ng-model="cr.exusrsvo" name="eu" type="'email'" place-holder="{{resourceBundle['type.text.and.press.enter']}}"></multi-select>
                                         </div>
                                     </div>
                                     <div class="form-group">

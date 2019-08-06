@@ -26,12 +26,16 @@
  */
 package com.logistimo.config.service.impl;
 
+import com.google.gson.Gson;
+
 import com.logistimo.AppFactory;
 import com.logistimo.config.entity.Config;
 import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.models.ConfigurationException;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.LocationConfig;
+import com.logistimo.config.models.TransportersConfig;
+import com.logistimo.config.models.TransportersSystemConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.entity.comparator.LocationComparator;
@@ -43,12 +47,15 @@ import com.logistimo.services.ServiceException;
 import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.services.impl.PMF;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
@@ -329,6 +336,32 @@ public class ConfigurationMgmtServiceImpl implements ConfigurationMgmtService {
     } catch (Exception e) {
       xLogger.warn("Error while saving default configuration for domain: {0}", domainId, e);
       throw e;
+    }
+  }
+
+  public TransportersSystemConfig getTransporterConfig(Long dId, boolean enabled) throws
+      ServiceException {
+    IConfig config = getConfiguration(IConfig.TRANSPORTER_CONFIG);
+    TransportersSystemConfig tConfig =
+        new Gson().fromJson(config.getConfig(), TransportersSystemConfig.class);
+    if (enabled && CollectionUtils.isNotEmpty(tConfig.getTransporters())) {
+      keepOnlyEnabledTransporters(dId, tConfig);
+    }
+    return tConfig;
+  }
+
+  private void keepOnlyEnabledTransporters(Long domainId, TransportersSystemConfig tConfig) {
+    TransportersConfig config = DomainConfig.getInstance(domainId)
+        .getTransportersConfig();
+    if (CollectionUtils.isNotEmpty(config.getEnabledTransporters())) {
+      Set<String> enabledTSPIds = config.getEnabledTransporters().stream()
+          .map(TransportersConfig.TSPConfig::getTspId)
+          .collect(Collectors.toSet());
+      tConfig.setTransporters(tConfig.getTransporters().stream()
+          .filter(s -> enabledTSPIds.contains(s.getId()))
+          .collect(Collectors.toList()));
+    } else {
+      tConfig.setTransporters(new ArrayList<>());
     }
   }
 }

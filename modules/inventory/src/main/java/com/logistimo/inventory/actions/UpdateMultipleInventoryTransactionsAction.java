@@ -117,7 +117,7 @@ public class UpdateMultipleInventoryTransactionsAction {
       }
 
       // Shuffle and sort the transactions by entry time
-      Collections.sort(validTransactions, new EntryTimeComparator());
+      validTransactions.sort(new EntryTimeComparator());
 
       executeTransactions(domainId, pm, materialErrorDetailModelsMap,
           materialSuccessDetailModelsMap, midCountMap,

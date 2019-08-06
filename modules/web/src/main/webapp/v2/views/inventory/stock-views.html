@@ -43,7 +43,7 @@
                     <div class="col-sm-3">
                         <span class="filter-label">{{resourceBundle['abnormality.type']}}</span>
                         <select ng-model="abntype" class="form-control">
-                            <option value=''>-- Select --</option>
+                            <option value=''>-- {{resourceBundle['select']}} --</option>
                             <option value="200">
                                 {{resourceBundle['inventory.zerostock']}}
                             </option>
@@ -58,7 +58,7 @@
                     <div class="col-sm-2" ng-show="isDef(abntype)">
                         <span class="filter-label">{{resourceBundle['abnormality.duration']}}</span>
                         <div class="input">
-                            <input type="text" placeholder=">= days" class="form-control" ng-model="abndur"
+                            <input type="text" placeholder=">= {{resourceBundle['days']}}" class="form-control" ng-model="abndur"
                                    maxlength="5" only-digits ng-enter="onAbnDurationChanged()">
                             </input>
                         </div>

@@ -23,7 +23,6 @@
 
 package com.logistimo.utils;
 
-import java.io.UnsupportedEncodingException;
 import java.util.Enumeration;
 import java.util.Locale;
 import java.util.PropertyResourceBundle;
@@ -44,12 +43,15 @@ public class UTF8PropertyResourceBundle extends ResourceBundle {
 
   @Override
   public String handleGetObject(String key) {
-    String value = propertyResourceBundle.getString(key);
+    return propertyResourceBundle.getString(key);
+    /*String value = propertyResourceBundle.getString(key);
     try {
       return new String(value.getBytes("ISO-8859-1"), "UTF-8");
     } catch (UnsupportedEncodingException e) {
       return value;
     }
+    return value;
+    */
   }
 
   @Override

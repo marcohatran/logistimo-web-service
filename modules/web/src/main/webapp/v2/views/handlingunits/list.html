@@ -27,11 +27,11 @@
             <div ng-controller="ResetController">
                 <div class="row">
                     <div class="col-sm-3">
-                        <span class="filter-label">Handling units</span>
+                        <span class="filter-label">{{resourceBundle['handling.units']}}</span>
 
                         <div>
                             <input type="text" class="form-control" ng-model="huname" name="search.key" maxlength="50"
-                                   placeholder="{{resourceBundle['filterby']}} handling units" ng-enter="searchHU()">
+                                   placeholder="{{resourceBundle['filterby']}} {{resourceBundle['handling.units']}}" ng-enter="searchHU()">
                         </div>
                     </div>
 
@@ -60,9 +60,9 @@
                             <th></th>
                             <!--<th><input type="checkbox"  ng-change="selectAll(selAll)" ng-model='selAll'></th>-->
                             <th class="text-center">{{resourceBundle.serialnum}}</th>
-                            <th>Handling unit</th>
-                            <th>{{resourceBundle.description}}</th>
-                            <th>Contents</th>
+                            <th>{{resourceBundle['handling.units']}}</th>
+                            <th>{{resourceBundle['description']}}</th>
+                            <th>{{resourceBundle['handling.units.contents']}}</th>
                             <th>{{resourceBundle['lastupdated']}}</th>
                             <th></th>
                         </tr>

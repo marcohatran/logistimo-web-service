@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2018 Logistimo.
+  ~
+  ~ This file is part of Logistimo.
+  ~
+  ~ Logistimo software is a mobile & web platform for supply chain management and remote temperature monitoring in
+  ~ low-resource settings, made available under the terms of the GNU Affero General Public License (AGPL).
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+  ~ Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+  ~ later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+  ~ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License along with this program.  If not, see
+  ~ <http://www.gnu.org/licenses/>.
+  ~
+  ~ You can be released from the requirements of the license by purchasing a commercial license. To know more about
+  ~ the commercial license, please contact us at opensource@logistimo.com
+  -->
+
+<div class="box topbox">
+    <div class="bizinfo bizinfo-last">
+        <div ng-controller="TransportersConfigurationController">
+            <form ng-if="loading == false" class="form-horizontal" role="form" name="transportersConfigForm">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="domain-title-heading">
+                            <h4>{{resourceBundle['transporters']}}
+                                {{resourceBundle['domain.configuration.lowercase']}}</h4>
+                            <span ng-show="transportersConfig.lud"
+                                  class="caption pull-right">{{resourceBundle['lastupdated']}} {{resourceBundle['on']}} {{transportersConfig.lud}} {{resourceBundle['by']}}
+                                <a href="#setup/users/all/details?userId={{transportersConfig.ub}}" target="_new">{{transportersConfig.ubn}}</a>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt18" ng-hide="transportersConfig.cfgs && transportersConfig.cfgs.length>0">
+                    <div class="col-sm-12">
+                        <p class=" alert alert-warning" >{{resourceBundle['tsp.none']}}</p>
+                    </div>
+                </div>
+                <div ng-if="transportersConfig.cfgs && transportersConfig.cfgs.length>0">
+                    <div class="bgr">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="title-heading">
+                                    {{resourceBundle['general']}}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="litetext" style="padding-left:5px;">
+                                    {{resourceBundle['general.transporters.config.caption']}}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-8">
+                                <table class="table table-bordered table-hover table-striped table-logistimo">
+                                    <thead>
+                                    <tr>
+                                        <th>{{resourceBundle['enable']}}</th>
+                                        <th>{{resourceBundle['transporter']}} {{resourceBundle['name'] |lowercase}}</th>
+                                        <th>{{resourceBundle['default.upper']}}
+                                            {{resourceBundle['category'] | lowercase}}</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr ng-repeat="item in transportersConfig.cfgs">
+                                        <td><input type="checkbox" class="mt0" ng-model="item.enabled"
+                                                   ng-change="onTransporterEnabledChange(item)"></td>
+                                        <td>{{item.name}}</td>
+                                        <td>
+                                            <div>
+                                                <select ng-model="item.df_ctg" class="form-control"
+                                                        ng-disabled="!item.enabled">
+                                                    <option value="">&#45;&#45; {{resourceBundle['select']}}
+                                                        {{resourceBundle['default'] | lowercase}}
+                                                        {{resourceBundle['category'] | lowercase}}</option>
+                                                    <option ng-repeat="category in item.categories" value="{{category.id}}"
+                                                            ng-selected="item.df_ctg == category.id">{{category.name}}</option>
+                                                </select>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt10" ng-if="iSU || dp.ce">
+                        <div class="col-sm-12  ml5">
+                            <button type="button" ng-click="setTransportersConfiguration()" class="btn btn-primary">{{resourceBundle['save']}}</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

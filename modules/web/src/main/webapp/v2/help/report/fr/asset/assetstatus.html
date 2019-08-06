@@ -1,0 +1,79 @@
+<!--
+  ~ Copyright © 2018 Logistimo.
+  ~
+  ~ This file is part of Logistimo.
+  ~
+  ~ Logistimo software is a mobile & web platform for supply chain management and remote temperature monitoring in
+  ~ low-resource settings, made available under the terms of the GNU Affero General Public License (AGPL).
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+  ~ Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+  ~ later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+  ~ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License along with this program.  If not, see
+  ~ <http://www.gnu.org/licenses/>.
+  ~
+  ~ You can be released from the requirements of the license by purchasing a commercial license. To know more about
+  ~ the commercial license, please contact us at opensource@logistimo.com
+  -->
+
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Cache-Control" content="max-age=0" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>Logistimo</title>
+    <link rel="stylesheet" href="../../../../css/3rdparty/bootstrap.min.css">
+    <link rel="stylesheet" href="../../../../css/logistimo.css">
+    <link rel="stylesheet" href="../../../../css/help.css">
+    <link rel="shortcut icon" href="../../../../../titleiconnew.ico">
+</head>
+<body class="mainbody">
+<div class="container" style="border-bottom: 2px solid #F56C64;padding:10px 0">
+    <div>
+        <div class="row">
+            <div class="col-sm-12">
+                <img style="max-height: 60px;max-width: 360px;" src="../../../../images/acquia_marina_logo.png">
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container" style="margin-top:15px;min-height: 90%">
+    <div class="mh300">
+        <div class="page-header" style="margin-top: 20px">
+            <div class="heading">Statut de l'actif</div>
+        </div>
+        <p>
+
+            Le rapport sur l'état des actifs donne un aperçu du nombre de fois et de la durée pendant lesquels les états changent, tels que travail, réparation en cours, réparation impossible, etc. En utilisant ce rapport, on peut comprendre, par exemple, le nombre de fois où des actifs ont été 'en réparation' (ou sont tombés en panne) ou ont commencé à fonctionner au cours d’une période donnée. Il indique également la durée moyenne pendant laquelle un actif est resté dans un état particulier, par exemple la durée d'utilisation moyenne des actifs dans un domaine ou une entité donnés ou d'autres critères de filtrage.
+        </p>
+
+        <p>
+            Les métriques de ce rapport, décrites ci-dessous:
+        </p>
+        <ul>
+            <li>
+                <b>Nombre de fois que les actifs ont changé dans cet état:</b> Cette métrique est calculée en comptant le nombre de changements d'état de l'actif dans l'état sélectionné dans la période donnée, pour tous les actifs dans les critères de filtre.
+            </li>
+            <li>
+                <b>Nombre moyen de fois que les actifs ont changé pour cet état:</b> Cette métrique est calculée en divisant le nombre de changements d'état d'actifs (par rapport à cet état) par le nombre total d'actifs.
+            </li>
+            <li>
+                <b>Durée moyenne dans cet état par actif (en jours):</b>
+                Cette mesure est calculée en divisant la durée totale (en jours) d'un statut donné (par exemple, en cours de fonctionnement, en réparation) pour tous les actifs par le nombre total d'actifs.
+            </li>
+            <li>
+                <b>% d'actifs dans cet état:</b> Cette métrique représente la proportion d'actifs dans un état donné à la fin de la période. Il est calculé en divisant la somme de tous les actifs d'un état donné à la fin de la période par le nombre total d'actifs.
+            </li>
+        </ul>
+    </div>
+</div>
+</body>
+</html>

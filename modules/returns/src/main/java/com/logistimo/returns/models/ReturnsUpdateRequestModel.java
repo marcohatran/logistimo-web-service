@@ -51,4 +51,7 @@ public class ReturnsUpdateRequestModel {
   private ReturnsTrackingModel trackingModel;
 
   private List<ReturnsItemModel> items;
+
+  @SerializedName("updated_time")
+  private Long updatedTime;
 }

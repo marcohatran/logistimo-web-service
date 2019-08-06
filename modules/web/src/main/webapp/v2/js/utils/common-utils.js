@@ -114,6 +114,10 @@ checkNotNullEmptyArray = function (argument){
     return checkNotNullEmpty(argument) && Array.isArray(argument) && argument.length > 0;
 };
 
+checkNullEmptyArray = function (argument){
+    return checkNullEmpty(argument) || !checkNotNullEmptyArray(argument);
+};
+
 stripLastComma = function (str) {
     str = str.trim();
     if (str != "") {

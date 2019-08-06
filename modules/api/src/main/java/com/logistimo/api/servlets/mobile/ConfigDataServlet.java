@@ -129,7 +129,7 @@ public class ConfigDataServlet extends SgServlet {
   }
 
   public void processGet(HttpServletRequest req, HttpServletResponse resp,
-                         ResourceBundle backendMessages, ResourceBundle messages)
+                         ResourceBundle messages)
       throws IOException, ServiceException {
     String action = req.getParameter(RestConstantsZ.ACTION);
     if (ACTION_GETSYSCONFIG.equals(action)) {
@@ -140,7 +140,7 @@ public class ConfigDataServlet extends SgServlet {
   }
 
   public void processPost(HttpServletRequest req, HttpServletResponse resp,
-                          ResourceBundle backendMessages, ResourceBundle messages)
+                          ResourceBundle messages)
       throws IOException, ServiceException {
   }
 }

@@ -193,14 +193,14 @@ public class CreateEntityServlet extends SgServlet {
 
   @Override
   public void processGet(HttpServletRequest req, HttpServletResponse resp,
-                         ResourceBundle backendMessages, ResourceBundle messages)
+                         ResourceBundle messages)
       throws ServletException, IOException, ServiceException {
-    processPost(req, resp, backendMessages, messages);
+    processPost(req, resp, messages);
   }
 
   @Override
   public void processPost(HttpServletRequest req, HttpServletResponse resp,
-                          ResourceBundle backendMessages, ResourceBundle messages)
+                          ResourceBundle messages)
       throws ServletException, IOException, ServiceException {
     String entityType = req.getParameter("type"); // KIOSK or POOLGROUP or
     // USERACCOUNT or MATERIAL, etc.
@@ -228,58 +228,58 @@ public class CreateEntityServlet extends SgServlet {
       // Process operation
       if (entityAction.equalsIgnoreCase(CREATE)
           && entityType.equalsIgnoreCase(KIOSK)) {
-        createKiosk(req, resp, es, as, backendMessages, messages);
+        createKiosk(req, resp, es, as, messages);
       } else if (entityAction.equalsIgnoreCase(REMOVE)
           && entityType.equalsIgnoreCase(KIOSK)) {
-        removeKiosk(req, resp, es, backendMessages, messages);
+        removeKiosk(req, resp, es, messages);
       } else if (entityAction.equalsIgnoreCase(CREATE)
           && entityType.equalsIgnoreCase(POOLGROUP)) {
-        createPoolgroup(req, resp, es, backendMessages);
+        createPoolgroup(req, resp, es, messages);
       } else if (entityAction.equalsIgnoreCase(REMOVE)
           && entityType.equalsIgnoreCase(POOLGROUP)) {
-        removePoolgroups(req, resp, es, backendMessages);
+        removePoolgroups(req, resp, es, messages);
       } else if (entityAction.equalsIgnoreCase(MODIFY)
           && entityType.equalsIgnoreCase(KIOSK)) {
-        modifyKiosk(req, resp, es, as, backendMessages);
+        modifyKiosk(req, resp, es, as, messages);
       } else if (entityAction.equalsIgnoreCase(MODIFY)
           && entityType.equalsIgnoreCase(POOLGROUP)) {
-        modifyPoolgroup(req, resp, es, backendMessages);
+        modifyPoolgroup(req, resp, es, messages);
       } else if (entityAction.equalsIgnoreCase(CREATE)
           && entityType.equalsIgnoreCase(KIOSK_OWNER)) {
-        createKioskOwner(req, resp, as, backendMessages, messages);
+        createKioskOwner(req, resp, as, messages);
       } else if (entityAction.equalsIgnoreCase(MODIFY)
           && entityType.equalsIgnoreCase(KIOSK_OWNER)) {
-        modifyKioskOwner(req, resp, as, backendMessages);
+        modifyKioskOwner(req, resp, as, messages);
       } else if ((entityAction.equalsIgnoreCase(MODIFY) || entityAction.equalsIgnoreCase("reset"))
           && entityType.equalsIgnoreCase(PASSWRD)) {
-        modifyKioskOwnerPassword(req, resp, as, backendMessages);
+        modifyKioskOwnerPassword(req, resp, as, messages);
       } else if (entityAction.equalsIgnoreCase(REMOVE)
           && entityType.equalsIgnoreCase(KIOSK_OWNER)) {
-        removeKioskOwner(req, resp, as, backendMessages);
+        removeKioskOwner(req, resp, as, messages);
       } else if (entityAction.equalsIgnoreCase("disable")
           && entityType.equalsIgnoreCase(KIOSK_OWNER)) {
-        disableOrEnableKioskOwner(req, resp, aus, false, backendMessages, messages);
+        disableOrEnableKioskOwner(req, resp, aus, false, messages);
       } else if (entityAction.equalsIgnoreCase("enable")
           && entityType.equalsIgnoreCase(KIOSK_OWNER)) {
-        disableOrEnableKioskOwner(req, resp, aus, true, backendMessages, messages);
+        disableOrEnableKioskOwner(req, resp, aus, true, messages);
       } else if (entityAction.equalsIgnoreCase(CREATE)
           && entityType.equalsIgnoreCase(MATERIAL)) {
-        addMaterial(req, resp, mcs, backendMessages, messages);
+        addMaterial(req, resp, mcs, messages);
       } else if (entityAction.equalsIgnoreCase(MODIFY)
           && entityType.equalsIgnoreCase(MATERIAL)) {
-        modifyMaterial(req, resp, mcs, backendMessages);
+        modifyMaterial(req, resp, mcs, messages);
       } else if (entityAction.equalsIgnoreCase(REMOVE)
           && entityType.equalsIgnoreCase(MATERIALS)) {
-        removeMaterials(req, resp, mcs, backendMessages, messages);
+        removeMaterials(req, resp, mcs, messages);
       } else if (entityAction.equalsIgnoreCase("add")
           && entityType.equalsIgnoreCase(MATERIALTOKIOSK)) {
-        addMaterialsToKiosk(req, resp, es, ims, backendMessages, messages);
+        addMaterialsToKiosk(req, resp, es, ims, messages);
       } else if (entityAction.equalsIgnoreCase(MODIFY)
           && entityType.equalsIgnoreCase(MATERIALTOKIOSK)) {
-        editMaterialsToKiosk(req, resp, ims, backendMessages);
+        editMaterialsToKiosk(req, resp, ims, messages);
       } else if (entityAction.equalsIgnoreCase(REMOVE)
           && entityType.equalsIgnoreCase(MATERIALTOKIOSK)) {
-        removeMaterialsFromKiosk(req, resp, es, ims, backendMessages, messages);
+        removeMaterialsFromKiosk(req, resp, es, ims, messages);
       } else if (entityAction.equalsIgnoreCase(CREATE)
           && entityType.equalsIgnoreCase("domain")) {
         addDomain(req, resp);
@@ -291,13 +291,13 @@ public class CreateEntityServlet extends SgServlet {
         switchDomain(req, resp);
       } else if ((entityAction.equalsIgnoreCase(CREATE) || entityAction.equals(MODIFY))
           && entityType.equalsIgnoreCase("kiosklink")) {
-        createOrModifyKioskLink(req, resp, es, backendMessages, messages);
+        createOrModifyKioskLink(req, resp, es, messages);
       } else if (entityAction.equalsIgnoreCase("permissions")
           && entityType.equalsIgnoreCase(KIOSK)) {
-        setKioskPermissions(req, resp, es, backendMessages, messages);
+        setKioskPermissions(req, resp, es, messages);
       } else if (entityAction.equalsIgnoreCase(REMOVE)
           && entityType.equalsIgnoreCase("kiosklink")) {
-        removeKioskLinks(req, resp, es, backendMessages);
+        removeKioskLinks(req, resp, es, messages);
       } else if (entityAction.equalsIgnoreCase(CREATE)
           && entityType.equalsIgnoreCase("system_configuration")) {
         createSystemConfiguration(req, resp, cms);
@@ -306,21 +306,21 @@ public class CreateEntityServlet extends SgServlet {
         modifySystemConfiguration(req, resp, cms);
       } else if (entityAction.equals(CREATE)
           && entityType.equals("transaction")) {
-        createTransactions(req, resp, ims, backendMessages, messages);
+        createTransactions(req, resp, ims, messages);
       } else if (entityAction.equals(REMOVE)
           && entityType.equals("transaction")) {
-        undoTransactions(req, resp, ims, backendMessages);
+        undoTransactions(req, resp, ims, messages);
       } else if (entityAction.equals(CREATE)
           && entityType.equals("order")) {
-        createOrders(req, resp, oms, ims, mcs, backendMessages, messages);
+        createOrders(req, resp, oms, ims, mcs, messages);
       } else if (entityAction.equals("check") && entityType.equals(KIOSK_OWNER)) {
-        checkIfUserExists(req, resp, as, backendMessages);
+        checkIfUserExists(req, resp, as, messages);
       } else if (entityType.equals("materialstokiosks")) {
-        addOrRemoveMaterialsForMultipleKiosks(req, resp, es, backendMessages, messages);
+        addOrRemoveMaterialsForMultipleKiosks(req, resp, es, messages);
       } else if (entityAction.equals("saveordering")) {
-        saveOrdering(req, resp, es, backendMessages, entityType);
+        saveOrdering(req, resp, es, messages, entityType);
       } else if (entityAction.equals("resetordering")) {
-        resetOrdering(req, resp, es, backendMessages, entityType);
+        resetOrdering(req, resp, es, messages, entityType);
       } else if (entityType.equals(KIOSK_OWNER) && entityAction.equals("setuipref")) {
         setUiPreference(req, resp, as);
       } else {
@@ -334,7 +334,7 @@ public class CreateEntityServlet extends SgServlet {
 
   private void addMaterialsToKiosk(HttpServletRequest req,
                                    HttpServletResponse resp, EntitiesService as,
-                                   InventoryManagementService ims, ResourceBundle backendMessages,
+                                   InventoryManagementService ims,
                                    ResourceBundle messages)
       throws ServiceException, IOException {
     xLogger.fine("Entered addMaterialsToKiosk");
@@ -548,13 +548,13 @@ public class CreateEntityServlet extends SgServlet {
         }
       }
       message =
-          MsgUtil.bold(String.valueOf(inventories.size())) + backendMessages
+          MsgUtil.bold(String.valueOf(inventories.size())) + messages
               .getString("materials.added") + " &nbsp;[<a href=\"javascript:window.close()\">"
               + messages.getString("close") + "</a>]"
-              + "<br/><br/>" + backendMessages.getString("refreshlistmsg");
+              + "<br/><br/>" + messages.getString("refreshlistmsg");
     } catch (ServiceException e) {
       xLogger.warn("Exception when adding inventory: {0}", e.getMessage(), e);
-      message = backendMessages.getString("error") + ": " + e.getMessage();
+      message = messages.getString("error") + ": " + e.getMessage();
     }
     req.setAttribute("nomenu",
         "true"); // ensure menu does not show in return message (in popup window)
@@ -873,7 +873,7 @@ public class CreateEntityServlet extends SgServlet {
   @SuppressWarnings("unchecked")
   private void addMaterial(HttpServletRequest req, HttpServletResponse resp,
                            MaterialCatalogService mc,
-                           ResourceBundle backendMessages, ResourceBundle messages)
+                           ResourceBundle messages)
       throws ServiceException, IOException {
     Map<String, String[]> materialDetails = req.getParameterMap();
     materialDetails = cleanMap(materialDetails);
@@ -1022,9 +1022,9 @@ public class CreateEntityServlet extends SgServlet {
     if (message.isEmpty()) {
       Long matID = mc.addMaterial(domainId, m);
       message =
-          MsgUtil.bold(name) + backendMessages.getString("created.success")
+          MsgUtil.bold(name) + messages.getString("created.success")
               + " &nbsp;[<a href=\"/s/setup/setup.jsp?subview=materials&form=materialdetails&id="
-              + matID.toString() + "\">" + backendMessages.getString("material.view")
+              + matID.toString() + "\">" + messages.getString("material.view")
               + "</a>] &nbsp; [<a href=\"/s/setup/setup.jsp?subview=materials&form=addmaterial\">"
               + messages.getString("add") + " " + messages.getString("new") + " " + messages
               .getString(MATERIAL) + "</a>]";
@@ -1040,7 +1040,7 @@ public class CreateEntityServlet extends SgServlet {
   @SuppressWarnings("unchecked")
   private void removeMaterials(HttpServletRequest req,
                                HttpServletResponse resp,
-                               MaterialCatalogService mc, ResourceBundle backendMessages,
+                               MaterialCatalogService mc,
                                ResourceBundle messages)
       throws ServiceException, IOException {
     xLogger.fine("Entered removeMaterials");
@@ -1078,7 +1078,7 @@ public class CreateEntityServlet extends SgServlet {
         message =
             messages.getString(SCHEDULED_TASKS) + " " + messages.getString(REMOVE) + " <b>"
                 + matIDArr.length + "</b>" + " " + messages.getString(MATERIALS)
-                + " &nbsp;[<a href=\"/s/setup/setup.jsp?subview=materials\">" + backendMessages
+                + " &nbsp;[<a href=\"/s/setup/setup.jsp?subview=materials\">" + messages
                 .getString("materials.view") + "</a>]";
         message +=
             "<br/><br/>NOTE: It may take some time for a material(s) and all its associated objects to be removed.";
@@ -1102,7 +1102,7 @@ public class CreateEntityServlet extends SgServlet {
   private void removeMaterialsFromKiosk(HttpServletRequest req,
                                         HttpServletResponse resp, EntitiesService as,
                                         InventoryManagementService ims,
-                                        ResourceBundle backendMessages, ResourceBundle messages)
+                                        ResourceBundle messages)
       throws ServiceException, IOException {
     xLogger.fine("Entering removeMaterialsFromKiosk");
     String kioskIdStr = req.getParameter(KIOSKID); //materialDetails.get(KIOSKID)[0];
@@ -1146,11 +1146,11 @@ public class CreateEntityServlet extends SgServlet {
             url += "&tag=" + tag;
           }
           message =
-              MsgUtil.bold(String.valueOf(numMaterials)) + backendMessages
+              MsgUtil.bold(String.valueOf(numMaterials)) + messages
                   .getString("deleted.success") + " " + messages.getString("in") + " '" + kioskName
-                  + "' &nbsp;[<a href=\"" + url + "\">" + backendMessages
-                  .getString("materials.view") + "</a>]<br/><br/>" + backendMessages
-                  .getString("note") + ": " + backendMessages.getString("deleted.delaynote") + ".";
+                  + "' &nbsp;[<a href=\"" + url + "\">" + messages
+                  .getString("materials.view") + "</a>]<br/><br/>" + messages
+                  .getString("note") + ": " + messages.getString("deleted.delaynote") + ".";
         }
       }
     } catch (ServiceException e) {
@@ -1231,7 +1231,7 @@ public class CreateEntityServlet extends SgServlet {
   @SuppressWarnings("unchecked")
   private void disableOrEnableKioskOwner(HttpServletRequest req,
                                          HttpServletResponse resp, AuthenticationService as,
-                                         boolean enable, ResourceBundle backendMessages,
+                                         boolean enable,
                                          ResourceBundle messages)
       throws ServiceException, IOException {
     Map<String, String[]> userDetails = req.getParameterMap();
@@ -1248,7 +1248,7 @@ public class CreateEntityServlet extends SgServlet {
         }
         //message = "Successfully " + ( enable ? "enabled" : "disabled" ) + " user '" + userId + "'";
         message =
-            messages.getString("user") + " '" + userId + "' " + backendMessages
+            messages.getString("user") + " '" + userId + "' " + messages
                 .getString("updated.success");
       }
     } else {
@@ -1257,7 +1257,7 @@ public class CreateEntityServlet extends SgServlet {
 
     message +=
         " &nbsp;[<a href=\"/s/setup/setup.jsp?subview=users&form=userdetails&id=" + userId + "\">"
-            + backendMessages.getString("user.view") + "</a>]";
+            + messages.getString("user.view") + "</a>]";
 
     writeToSetupScreen(req, resp, message, Constants.VIEW_USERS);
   }
@@ -1600,7 +1600,7 @@ public class CreateEntityServlet extends SgServlet {
   @SuppressWarnings("unchecked")
   private void createKioskOwner(HttpServletRequest req,
                                 HttpServletResponse resp, UsersService as,
-                                ResourceBundle backendMessages, ResourceBundle messages)
+                                ResourceBundle messages)
       throws ServiceException, IOException {
     Map<String, String[]> userDetails = req.getParameterMap();
     userDetails = cleanMap(userDetails);
@@ -1758,18 +1758,18 @@ public class CreateEntityServlet extends SgServlet {
       try {
         as.addAccount(domainId, u);
         message =
-            MsgUtil.bold(u.getFullName()) + backendMessages.getString("created.success")
+            MsgUtil.bold(u.getFullName()) + messages.getString("created.success")
                 + " &nbsp;[<a href=\"/s/setup/setup.jsp?subview=users&form=userdetails&id=" + u
                 .getUserId()
-                + "\">" + backendMessages.getString("user.view") + "</a>]"
+                + "\">" + messages.getString("user.view") + "</a>]"
                 + "&nbsp;&nbsp;&nbsp;[<a href=\"/s/setup/setup.jsp?subview=users&form=addkioskowner\">"
                 + messages.getString("add") + " " + messages.getString("new") + " " + messages
                 .getString("user") + "</a>]";
       } catch (ServiceException e) {
         xLogger.severe("Exception when adding account: {0}", e.getMessage());
         message =
-            backendMessages.getString("error") + ": " + e.getMessage()
-                + " [<a href=\"/s/setup/setup.jsp?subview=users\">" + backendMessages
+            messages.getString("error") + ": " + e.getMessage()
+                + " [<a href=\"/s/setup/setup.jsp?subview=users\">" + messages
                 .getString("users.view") + "</a>]";
       }
     } else {
@@ -2079,7 +2079,7 @@ public class CreateEntityServlet extends SgServlet {
 
   @SuppressWarnings("unchecked")
   private void createKiosk(HttpServletRequest req, HttpServletResponse resp,
-                           EntitiesService as, UsersService usersService, ResourceBundle backendMessages,
+                           EntitiesService as, UsersService usersService,
                            ResourceBundle messages) throws ServiceException, IOException {
     Map<String, String[]> kioskDetails = req.getParameterMap();
     kioskDetails = cleanMap(kioskDetails);
@@ -2215,9 +2215,9 @@ public class CreateEntityServlet extends SgServlet {
       k.setRegisteredBy(sUser.getUsername());
       Long kioskID = as.addKiosk(domainId, k);
       message =
-          MsgUtil.bold(k.getName()) + backendMessages.getString("created.success")
+          MsgUtil.bold(k.getName()) + messages.getString("created.success")
               + " &nbsp;[<a href=\"/s/setup/setup.jsp?subview=kiosks&form=kioskdetails&id="
-              + kioskID.toString() + "\">" + backendMessages.getString("kiosk.view") + "</a>]"
+              + kioskID.toString() + "\">" + messages.getString("kiosk.view") + "</a>]"
               + "&nbsp;&nbsp;&nbsp;[<a href=\"/s/setup/setup.jsp?subview=kiosks&form=addkiosk\">"
               + messages.getString("add") + " " + messages.getString("new") + " " + messages
               .getString(KIOSK) + "</a>]";
@@ -2235,7 +2235,6 @@ public class CreateEntityServlet extends SgServlet {
   private void addOrRemoveMaterialsForMultipleKiosks(HttpServletRequest req,
                                                      HttpServletResponse resp,
                                                      EntitiesService as,
-                                                     ResourceBundle backendMessages,
                                                      ResourceBundle messages)
       throws ServiceException, IOException {
     xLogger.fine("Enter addOrRemoveMaterialsForMultipleKiosks");
@@ -2353,7 +2352,7 @@ public class CreateEntityServlet extends SgServlet {
               .getString("close") + "</a>]";
       if (!add) {
         message +=
-            "<br/><br/>" + backendMessages.getString("note") + ": " + backendMessages
+            "<br/><br/>" + messages.getString("note") + ": " + messages
                 .getString("deleted.delaynote") + ".";
       }
     }
@@ -2366,7 +2365,7 @@ public class CreateEntityServlet extends SgServlet {
 
   @SuppressWarnings("unchecked")
   private void removeKiosk(HttpServletRequest req, HttpServletResponse resp,
-                           EntitiesService as, ResourceBundle backendMessages,
+                           EntitiesService as,
                            ResourceBundle messages) throws ServiceException, IOException {
     Map<String, String[]> kioskDetails = req.getParameterMap();
     kioskDetails = cleanMap(kioskDetails);
@@ -2406,7 +2405,7 @@ public class CreateEntityServlet extends SgServlet {
               message =
               messages.getString(SCHEDULED_TASKS) + " " + messages.getString(REMOVE) + " <b>"
                   + kioskIDs.length + "</b>" + " " + messages.getString("kiosks")
-                  + " &nbsp;[<a href=\"/s/setup/setup.jsp?subview=kiosks\">" + backendMessages
+                  + " &nbsp;[<a href=\"/s/setup/setup.jsp?subview=kiosks\">" + messages
                   .getString("kiosks.view") + "</a>]";
           message +=
               "<br/><br/>NOTE: It may take some time for an entity and all its associated objects to be removed.";
@@ -2619,7 +2618,7 @@ public class CreateEntityServlet extends SgServlet {
    ***/
   @SuppressWarnings("unchecked")
   private void createOrModifyKioskLink(HttpServletRequest req, HttpServletResponse resp,
-                                       EntitiesService as, ResourceBundle backendMessages,
+                                       EntitiesService as,
                                        ResourceBundle messages)
       throws ServiceException, IOException, NumberFormatException, ObjectNotFoundException {
     xLogger.fine("Entered createOrModifyKioskLink");
@@ -2728,16 +2727,16 @@ public class CreateEntityServlet extends SgServlet {
       as.updateKioskLink(kioskLink);
       req.setAttribute("nomenu", "true");
       msg =
-          backendMessages.getString("relationship.updated")
+          messages.getString("relationship.updated")
               + "&nbsp;[<a href=\"javascript:window.close()\">" + messages.getString("close")
               + "</a>]"
-              + "<br/><br/>" + backendMessages.getString("refreshlistmsg");
+              + "<br/><br/>" + messages.getString("refreshlistmsg");
     } else {
       as.addKioskLinks(domainId, links);
       msg =
-          backendMessages.getString("relationship.created")
+          messages.getString("relationship.created")
               + " &nbsp;[<a href=\"/s/setup/setup.jsp?subview=kiosks&form=kiosklinks&kioskid="
-              + kioskIdStr + "&linktype=" + linkType + "\">" + backendMessages
+              + kioskIdStr + "&linktype=" + linkType + "\">" + messages
               .getString("relationships.view") + "</a>]";
     }
     writeToSetupScreen(req, resp, msg, Constants.VIEW_KIOSKS);
@@ -2746,7 +2745,7 @@ public class CreateEntityServlet extends SgServlet {
 
   @SuppressWarnings("unchecked")
   private void setKioskPermissions(HttpServletRequest req, HttpServletResponse resp,
-                                   EntitiesService as, ResourceBundle backendMessages,
+                                   EntitiesService as,
                                    ResourceBundle messages)
       throws ServiceException, IOException, NumberFormatException, ObjectNotFoundException {
     xLogger.fine("Entered createOrModifyKioskLink");
@@ -2800,11 +2799,11 @@ public class CreateEntityServlet extends SgServlet {
     as.updateKiosk(k, domainId);
     String
         msg =
-        messages.getString("permissions") + " " + backendMessages.getString("updated.success");
+        messages.getString("permissions") + " " + messages.getString("updated.success");
 
     writeToSetupScreen(req, resp,
         msg + " &nbsp;[<a href=\"/s/setup/setup.jsp?subview=kiosks&form=kiosklinks&kioskid="
-            + kioskIdStr + "\">" + backendMessages.getString("relationships.view") + "</a>]",
+            + kioskIdStr + "\">" + messages.getString("relationships.view") + "</a>]",
         Constants.VIEW_KIOSKS);
     xLogger.fine("Exiting createOrModifyKioskLink");
   }
@@ -2986,7 +2985,7 @@ public class CreateEntityServlet extends SgServlet {
   // Add inventory transactions (from Service Manager)
   @SuppressWarnings("unchecked")
   private void createTransactions(HttpServletRequest req, HttpServletResponse resp,
-                                  InventoryManagementService ims, ResourceBundle backendMessages,
+                                  InventoryManagementService ims,
                                   ResourceBundle messages)
       throws ServiceException, IOException {
     xLogger.fine("Entered createTransactions");
@@ -3088,7 +3087,7 @@ public class CreateEntityServlet extends SgServlet {
         // Get quantity by batch if necessary
         BigDecimal quantity = quantityByBatch.get(batchId);
         // Check for transaction errors
-        message += checkTransactionErrors(transType, quantity, inv, backendMessages);
+        message += checkTransactionErrors(transType, quantity, inv, messages);
         if (message.isEmpty()) {
           // Create an inventory transaction
           ITransaction trans = JDOUtils.createInstance(ITransaction.class);
@@ -3144,7 +3143,7 @@ public class CreateEntityServlet extends SgServlet {
           xLogger
               .severe("{0} when creating transactions in domain {1} by user {2}: {3}", e.getClass(),
                   domainId, userId, e.getMessage(), e);
-          message = backendMessages.getString("error") + ": " + e.getMessage() + "<br/>";
+          message = messages.getString("error") + ": " + e.getMessage() + "<br/>";
         }
       } else {
         message += " - No quantities were specified. Hence, no transactions have been added.";
@@ -3158,20 +3157,20 @@ public class CreateEntityServlet extends SgServlet {
     if (message.isEmpty()) { // success
       message =
           MsgUtil.bold(String.valueOf(transList.size())) + messages.getString("transactions") + " "
-              + backendMessages.getString("updated.success") + " &nbsp;[<a href=\""
-              + inventoryUpdatesUrl + "\">" + backendMessages.getString("transactions.view")
+              + messages.getString("updated.success") + " &nbsp;[<a href=\""
+              + inventoryUpdatesUrl + "\">" + messages.getString("transactions.view")
               + "</a>]";
     } else { // errors
       if (updateErrors) {
         message =
-            backendMessages.getString("errors.oneormore") + ":<br/>" + message + "<br/><br/>"
-                + backendMessages.getString("transactions.omitted") + " &nbsp;[<a href=\""
-                + inventoryUpdatesUrl + "\">" + backendMessages.getString("transactions.view")
+            messages.getString("errors.oneormore") + ":<br/>" + message + "<br/><br/>"
+                + messages.getString("transactions.omitted") + " &nbsp;[<a href=\""
+                + inventoryUpdatesUrl + "\">" + messages.getString("transactions.view")
                 + "</a>]";
       } else {
         message =
-            backendMessages.getString("errors.oneormore") + ":<br/>" + message + "<br/><br/>"
-                + backendMessages.getString("browser.goback") + ".";
+            messages.getString("errors.oneormore") + ":<br/>" + message + "<br/><br/>"
+                + messages.getString("browser.goback") + ".";
       }
     }
 
@@ -3239,7 +3238,7 @@ public class CreateEntityServlet extends SgServlet {
   private void createOrders(HttpServletRequest req, HttpServletResponse resp,
                             OrderManagementService oms, InventoryManagementService ims,
                             MaterialCatalogService mcs,
-                            ResourceBundle backendMessages, ResourceBundle messages)
+                            ResourceBundle messages)
       throws LogiException, IOException {
     xLogger.fine("Entered createOrders");
     String message = "";
@@ -3291,11 +3290,11 @@ public class CreateEntityServlet extends SgServlet {
       if (quantityStr != null && !quantityStr.isEmpty()) {
         try {
           quantity = new BigDecimal(quantityStr);
-          message += checkOrderErrors(quantity, inv, backendMessages);
+          message += checkOrderErrors(quantity, inv, messages);
         } catch (NumberFormatException e) {
           message +=
               " - " + quantityStr + " " + mcs.getMaterial(materialId).getName() + ": "
-                  + backendMessages.getString("quantity.invalid") + "<br/>";
+                  + messages.getString("quantity.invalid") + "<br/>";
         }
         if (message.isEmpty()) {
           // Form the inventory transaction
@@ -3332,7 +3331,7 @@ public class CreateEntityServlet extends SgServlet {
       String strPrice = null; // get price statement
       if (order != null && BigUtil.greaterThanZero(order.getTotalPrice())) {
         strPrice =
-            backendMessages.getString("order.price") + " <b>" + order.getPriceStatement() + "</b>.";
+            messages.getString("order.price") + " <b>" + order.getPriceStatement() + "</b>.";
       }
       xLogger.fine("strPrice: " + strPrice);
       String
@@ -3343,20 +3342,20 @@ public class CreateEntityServlet extends SgServlet {
         ordersUrl += "&show=true";
         message =
             messages.getString("order") + " " + MsgUtil.bold(String.valueOf(order.getOrderId()))
-                + backendMessages.getString("created.successwith") +
+                + messages.getString("created.successwith") +
                 " " + MsgUtil.bold(String.valueOf(or.getOrder().size()))
                 + messages.getString("items") + ". " + (strPrice == null ? "" : strPrice)
-                + "  [<a href=\"" + ordersUrl + "\">" + backendMessages.getString("items.view")
+                + "  [<a href=\"" + ordersUrl + "\">" + messages.getString("items.view")
                 + "</a>]";
       } else {
         message =
-            MsgUtil.bold(String.valueOf(transactions.size())) + backendMessages.getString("items.created")
-                + " &nbsp;[<a href=\"" + ordersUrl + "\">" + backendMessages.getString("items.view")
+            MsgUtil.bold(String.valueOf(transactions.size())) + messages.getString("items.created")
+                + " &nbsp;[<a href=\"" + ordersUrl + "\">" + messages.getString("items.view")
                 + "</a>]";
       }
     } else {
-      message = backendMessages.getString("errors.oneormore") + ":<br/>" + message +
-          "<br/><br/>" + backendMessages.getString("browser.goback") + ".";
+      message = messages.getString("errors.oneormore") + ":<br/>" + message +
+          "<br/><br/>" + messages.getString("browser.goback") + ".";
     }
 
     xLogger.fine("Existing createOrders");

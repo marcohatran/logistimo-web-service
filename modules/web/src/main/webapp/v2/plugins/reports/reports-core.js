@@ -29,6 +29,7 @@ var reportsPluginCore = angular.module('reportsPluginCore', ['reportsServiceCore
 var reportWidgets;
 var assetWidgets = undefined;
 
+
 function registerWidget(id, widget, report, subReport, helpFilePath) {
     if (checkNullEmpty(reportWidgets)) {
         reportWidgets = {};
@@ -65,6 +66,10 @@ function getReportWidgetById(id) {
 
         var configLoadCount = 0;
         $scope.loadingConfig = false;
+        var userLocale = 'en';
+        if (checkNotNullEmpty($scope.i18n)) {
+            userLocale = $scope.i18n.language.locale;
+        }
         function showLoadConfig(){
             configLoadCount++;
             $scope.loadingConfig = true;
@@ -78,6 +83,12 @@ function getReportWidgetById(id) {
         if (!assetWidgets) {
             assetWidgets = angular.copy(reportWidgets['Assets']);
         }
+        $scope.getReportSubMenuLabel = function(reportId) {
+            return $scope.resourceBundle['reports.submenu.' + reportId];
+        };
+        $scope.getReportMenuLabel = function(key) {
+            return $scope.resourceBundle['reports.menu.' + key.replace(/ /g, ".").toLowerCase()];
+        };
         showLoadConfig();
         domainCfgService.getAssetCfg().then(function (data) {
             switch (data.data.enable) {
@@ -164,8 +175,8 @@ function getReportWidgetById(id) {
             $scope.widget = '';
             $scope.helpURL = undefined;
             if ($scope.rptid == 'cr') {
-                $scope.heading = 'Custom report';
-                $scope.report = 'Custom Report';
+                $scope.heading = $scope.resourceBundle['report.customreports'];
+                $scope.report = $scope.resourceBundle['report.customreports'];
             } else if (checkNullEmpty($scope.rptid)) {
                 $scope.hideMenu = false;
             } else {
@@ -173,11 +184,11 @@ function getReportWidgetById(id) {
                     var found = reportWidgets[w].some(function (data) {
                         if (data.id == $scope.rptid) {
                             $scope.widget = data.widget;
-                            $scope.heading = data.subReport;
+                            $scope.heading = $scope.getReportSubMenuLabel(data.id);
                             if (checkNotNullEmpty(data.helpFile)) {
-                                $scope.helpURL = "/v2/help/report/" + data.helpFile + ".html";
+                                $scope.helpURL = "/v2/help/report/" + userLocale + "/" + data.helpFile + ".html";
                             }
-                            $scope.report = w;
+                            $scope.report = $scope.getReportMenuLabel(w);
                             return true;
                         }
                     });
@@ -298,7 +309,7 @@ function getReportWidgetById(id) {
                 }
             }
             return data;
-        }
+        };
     }
 
     reportsPluginCore.directive('rptLocationFilter', locationFilter);
@@ -371,11 +382,12 @@ function getReportWidgetById(id) {
                 reportType: '='
             },
             controller: AggregationLastRunTimeController,
-            template: '<div ng-if="lastRuntime" class="form-label gray-text">As of {{lastRuntime}}</div>'
+            template: '<div ng-if="lastRuntime" class="form-label gray-text">{{asofLabel}} {{lastRuntime}}</div>'
         };
     }
 
     function AggregationLastRunTimeController($scope, reportCoreService) {
+        $scope.asofLabel = $scope.$parent.resourceBundle.asof;
         reportCoreService.getAggregatedTime($scope.reportType).then(function (data) {
             $scope.lastRuntime = data.data;
         }).catch(function error() {
@@ -391,7 +403,7 @@ function getReportWidgetById(id) {
                 callback: '&'
             },
             controller: ExportController,
-            template: '<div><button class="btn btn-primary pull-right" ng-click="confirmExport()">Export</button></div>'
+            template: '<div><button class="btn btn-primary pull-right" ng-click="confirmExport()">{{$parent.resourceBundle.export}}</button></div>'
         };
     }
 
@@ -405,18 +417,18 @@ function getReportWidgetById(id) {
         $scope.close = function () {
             $scope.modalInstance.dismiss('cancel');
         };
-        const FILTER_TEMPLATE = "You have chosen to export '{0}' report with filters as specified below. Exported data will be emailed to {1}. Continue?";
+        const FILTER_TEMPLATE = $scope.$parent.resourceBundle['report.export.filter.template'];
 
         var exportModal = '<div class="modal-header ws">' +
-            '<h3 class="modal-title">Export data</h3>' +
+            '<h3 class="modal-title">' + $scope.$parent.resourceBundle['export.data'] + '</h3>' +
             '</div>' +
             '<div class="modal-body ws">' +
             '<p>{{message}}</p>' +
-            '<p ng-if="exportFilters" class="litetext word-wrap" style="white-space: pre-wrap"><b>Filters:</b> {{exportFilters}}</p>' +
+            '<p ng-if="exportFilters" class="litetext word-wrap" style="white-space: pre-wrap"><b>' + $scope.$parent.resourceBundle['filters.uppercase'] + ':</b> {{exportFilters}}</p>' +
             '</div>' +
             '<div class="modal-footer ws">' +
-            '<button class="btn btn-primary" ng-click="startExport()">OK</button>' +
-            '<button class="btn btn-default" ng-click="close()">Cancel</button>' +
+            '<button class="btn btn-primary" ng-click="startExport()">' + $scope.$parent.resourceBundle['ok'] + '</button>' +
+            '<button class="btn btn-default" ng-click="close()">' + $scope.$parent.resourceBundle['cancel'] + '</button>' +
             '</div>';
 
         function messageFormat(text) {

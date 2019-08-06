@@ -203,7 +203,7 @@ public class AuthController {
       locale = new Locale("en");
     }
     try {
-      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+      ResourceBundle backendMessages = Resources.getBundle(locale);
       model.isError = true;
       model.ec = status;
       if (status == INVALID_USERNAME) {
@@ -363,7 +363,6 @@ public class AuthController {
           String.valueOf(optionalToken.get().getExpires().getTime()));
     }
     return tokenDetails;
-
   }
 
   @RequestMapping(value = "/captcha-config", method = RequestMethod.GET)
@@ -389,7 +388,7 @@ public class AuthController {
         if (isWithinTimeLimit && resetKey.equals(memcacheService.get("RESET_" + userId))) {
           IUserAccount account = usersService.getUserAccount(userId);
           Locale locale = account.getLocale();
-          ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+          ResourceBundle backendMessages = Resources.getBundle("BackendMessages", locale);
           if (WEB.equalsIgnoreCase(src)) {
             response.sendRedirect(
                 "/v2/password-request.html?key=" + token + role + "&user=" + userId);

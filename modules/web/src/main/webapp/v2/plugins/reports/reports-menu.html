@@ -42,17 +42,17 @@
                                             <span class="pt5 codegray small glyphicons glyphicons-question-sign"></span>
                                         </a>
                                     </span>
-                                    <span ng-if="!hideMenu">Reports</span>
+                                    <span ng-if="!hideMenu">{{resourceBundle['reports']}}</span>
                                 </div>
                             </div>
                             <div class="row" ng-if="!loadingConfig">
                                 <div class="col-sm-3">
                                     <ul class="accordion">
                                         <li ng-repeat="(key,value) in getReportMenu(1)">
-                                            <div class="link">{{key}}</div>
+                                            <div class="link">{{getReportMenuLabel(key)}}</div>
                                             <ul class="submenu">
                                                 <li ng-repeat="item in value">
-                                                    <a ng-class="{'current-report-menu': item.id == rptid}" href="#/newreports/{{item.id}}">{{item.subReport}}</a>
+                                                    <a ng-class="{'current-report-menu': item.id == rptid}" href="#/newreports/{{item.id}}">{{getReportSubMenuLabel(item.id)}}</a>
                                                 </li>
                                             </ul>
                                         </li>
@@ -61,10 +61,10 @@
                                 <div class="col-sm-3">
                                     <ul class="accordion">
                                         <li ng-repeat="(key,value) in getReportMenu(2)">
-                                            <div class="link">{{key}}</div>
+                                            <div class="link">{{getReportMenuLabel(key)}}</div>
                                             <ul class="submenu">
                                                 <li ng-repeat="item in value">
-                                                    <a ng-class="{'current-report-menu': item.id == rptid}" href="#/newreports/{{item.id}}">{{item.subReport}}</a>
+                                                    <a ng-class="{'current-report-menu': item.id == rptid}" href="#/newreports/{{item.id}}">{{getReportSubMenuLabel(item.id)}}</a>
                                                 </li>
                                             </ul>
                                         </li>
@@ -73,10 +73,10 @@
                                 <div class="col-sm-3">
                                     <ul class="accordion">
                                         <li ng-repeat="(key,value) in getReportMenu(3)">
-                                            <div class="link">{{key}}</div>
+                                            <div class="link">{{getReportMenuLabel(key)}}</div>
                                             <ul class="submenu">
                                                 <li ng-repeat="item in value">
-                                                    <a ng-class="{'current-report-menu': item.id == rptid}" href="#/newreports/{{item.id}}">{{item.subReport}}</a>
+                                                    <a ng-class="{'current-report-menu': item.id == rptid}" href="#/newreports/{{item.id}}">{{getReportSubMenuLabel(item.id)}}</a>
                                                 </li>
                                             </ul>
                                         </li>
@@ -85,10 +85,10 @@
                                 <div class="col-sm-3">
                                     <ul class="accordion">
                                         <li ng-repeat="(key,value) in getReportMenu(4)">
-                                            <div class="link">{{key}}</div>
+                                            <div class="link">{{getReportMenuLabel(key)}}</div>
                                             <ul class="submenu">
                                                 <li ng-repeat="item in value">
-                                                    <a ng-class="{'current-report-menu': item.id == rptid}" href="#/newreports/{{item.id}}">{{item.subReport}}</a>
+                                                    <a ng-class="{'current-report-menu': item.id == rptid}" href="#/newreports/{{item.id}}">{{getReportSubMenuLabel(item.id)}}</a>
                                                 </li>
                                             </ul>
                                         </li>
@@ -100,10 +100,10 @@
                                     <div class="pt10">
                                         <ul class="accordion">
                                             <li>
-                                                <div class="link">Custom reports</div>
+                                                <div class="link">{{resourceBundle['report.customreports']}}</div>
                                                 <ul class="submenu">
                                                     <li>
-                                                        <a ng-class="{'current-report-menu': rptid == 'cr'}" href="#/newreports/cr">Custom reports</a>
+                                                        <a ng-class="{'current-report-menu': rptid == 'cr'}" href="#/newreports/cr">{{resourceBundle['report.customreports']}}</a>
                                                     </li>
                                                 </ul>
                                             </li>

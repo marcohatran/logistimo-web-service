@@ -135,6 +135,7 @@ public class RestConstantsZ {
   public static final String STATUS_CHANGED = "ch";
   public static final String STATUS_COMPLETED = "cm";
   public static final String STATUS_CONFIRMED = "cf";
+  public static final String STATUS_READY_FOR_DISPATCH = "rd";
   public static final String STATUS_FULFILLED = "fl";
   public static final String STATUS_PENDING = "pn";
 

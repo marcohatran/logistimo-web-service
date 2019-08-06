@@ -23,7 +23,7 @@
 
 <div class="panel panel-default">
     <div class="panel-heading">
-        <b>Status history</b>
+        <b>{{resourceBundle['orders.status.history']}}</b>
     </div>
     <div class="panel-body" ng-show="loading">
         <span class="glyphicons glyphicons-cogwheel spin"></span>
@@ -36,16 +36,16 @@
                         <span class="glyphicons glyphicons-ok-circle pt2 pr5"></span>
                     </div>
                     <div style="display: inline-block">
-                        <span ng-show="data.objectType == 'ORDER'">Order</span>
-                        <span ng-show="data.objectType == 'RETURNS'">Return</span>
-                        <span ng-show="data.objectType == 'SHIPMENT'">Shipment
+                        <span ng-show="data.objectType == 'ORDER'">{{resourceBundle['order']}}</span>
+                        <span ng-show="data.objectType == 'RETURNS'">{{resourceBundle['return']}}</span>
+                        <span ng-show="data.objectType == 'SHIPMENT'">{{resourceBundle['shipment']}}
                             <a ng-hide="isShip" href="#orders/shipment/detail/{{data.objectId}}" target="_blank">({{data.objectId}})</a>
                         </span>
-                        <b ng-if="!$last && data.newValue == 'pn'">re-opened</b>
-                        <b ng-if="$last || data.newValue == 'op'">opened</b>
+                        <b ng-if="!$last && data.newValue == 'pn'">{{resourceBundle['orders.reopened']}}</b>
+                        <b ng-if="$last || data.newValue == 'op'">{{resourceBundle['orders.opened']}}</b>
                         <b ng-if="isReturns && data.newValue != 'op'" class="text-lowercase">{{RETURNS.statusLabel[data.newValue]}}</b>
                         <b ng-if="!isReturns && ORDER.statusTxt[data.newValue] != 'Pending'" class="text-lowercase">{{ORDER.statusTxt[data.newValue]}}</b>
-                        on {{data.createDate}} by
+                        {{resourceBundle['on']}} {{data.createDate}} {{resourceBundle['by']}}
                         <a href="#/setup/users/all/details?userId={{data.userId}}" target="_blank">{{data.userName}}</a>
                         <br/>
                         <span class="codegray">{{data.message}}</span>

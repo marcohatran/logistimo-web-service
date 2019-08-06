@@ -89,7 +89,7 @@ public class ClearAllocationAction {
       model = new InventoryAllocationModel();
       model.setOrderId(Long.valueOf((String)obj[0]));
       model.setMaterialId(((BigInteger)obj[1]).longValue());
-      model.setKioskId(((BigInteger)obj[1]).longValue());
+      model.setKioskId(((BigInteger)obj[2]).longValue());
       model.setQuantity(((BigDecimal)obj[3]).doubleValue());
       model.setCreatedOn(((Timestamp)obj[4]).toString());
       model.setUpdatedOn(((Timestamp)obj[5]).toString());

@@ -82,11 +82,11 @@ public class StockLevelData extends ReportData {
     DataTable data = new DataTable();
     // Add the column descriptions
     ArrayList<ColumnDescription> cd = new ArrayList<ColumnDescription>();
-    cd.add(new ColumnDescription("d", ValueType.DATE, jsMessages.getString("date")));
+    cd.add(new ColumnDescription("d", ValueType.DATE, messages.getString("date")));
     cd.add(new ColumnDescription("s", ValueType.NUMBER, messages.getString("stock")));
     cd.add(
         new ColumnDescription("r", ValueType.NUMBER, messages.getString("inventory.reorderlevel")));
-    cd.add(new ColumnDescription("a", ValueType.TEXT, jsMessages.getString("annotation")));
+    cd.add(new ColumnDescription("a", ValueType.TEXT, messages.getString("annotation")));
     // Add columns to data
     data.addColumns(cd);
     // Add rows

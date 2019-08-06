@@ -59,7 +59,6 @@ public abstract class ReportData {
   // any warning message about data (e.g. "data is truncated to 500 records")
   protected String cursor = null; // pagination cursor pointing to next set of results
   protected ResourceBundle messages = null;
-  protected ResourceBundle jsMessages = null;
   protected Integer numFound = null;
 
   @SuppressWarnings("rawtypes")
@@ -86,14 +85,10 @@ public abstract class ReportData {
     this.numFound = numFound;
     try {
       this.messages =
-          Resources.get()
-              .getBundle("Messages", locale); /// Resources.get().getBundle( "Messages", locale );
-      this.jsMessages =
-          Resources.get().getBundle("JSMessages",
-              locale); ///Resources.get().getBundle( "JSMessages", locale );
+          Resources.getBundle(locale);
     } catch (Exception e) {
       xLogger.severe(
-              "Exception when loading resource bundle - Messages and JSMessages: {0} : {1}",
+              "Exception when loading resource bundle: {0} : {1}",
           e.getClass().getName(), e.getMessage());
     }
   }

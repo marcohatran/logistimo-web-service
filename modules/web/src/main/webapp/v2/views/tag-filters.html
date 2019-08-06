@@ -26,8 +26,8 @@
     <label class="cbx filter-label ml10">{{$parent.resourceBundle[name] + ' ' + $parent.resourceBundle['tags.lower'] + ':'}}</label>
     <span ng-show="$parent.isDef(includedTags)"><span ng-repeat="tag in includedTags.split(',') track by $index"
                                                       class="label label-default mt5 dinline" style="padding:.2em;">{{tag}}</span></span>
-    <span ng-show="$parent.isUndef(includedTags)" class="cbx" style="margin-top: 20px">All</span>
-    <span ng-show="$parent.isDef(excludedTags)" class="codegray">(Exclude: <span
+    <span ng-show="$parent.isUndef(includedTags)" class="cbx" style="margin-top: 20px">{{$parent.resourceBundle['all']}}</span>
+    <span ng-show="$parent.isDef(excludedTags)" class="codegray">({{$parent.resourceBundle['exclude']}}: <span
             ng-repeat="tag in excludedTags.split(',') track by $index" class="label label-default mt5 dinline"
             style="padding:.2em;">{{tag}}</span>)</span>
     <span ng-click="toggleFilter()" class="caret pt5"></span>
@@ -39,7 +39,7 @@
                     {{$parent.resourceBundle['include']}} {{$parent.resourceBundle['multiple.tags']}}
                 </label>
                 <span class="col-sm-8 noLRpad lPad5">
-                    <tag-select tags-model="inTags" place-holder="All" type="type"
+                    <tag-select tags-model="inTags" place-holder="{{$parent.resourceBundle['all']}}" type="type"
                                 multiple="'true'" force-no-udf="'true'" disabled="disabled">
                     </tag-select>
                 </span>
@@ -51,7 +51,7 @@
                     {{$parent.resourceBundle['exclude']}} {{$parent.resourceBundle['multiple.tags']}}
                 </label>
                 <span class="col-sm-8 noLRpad lPad5">
-                    <tag-select tags-model="exTags" place-holder="None" type="type"
+                    <tag-select tags-model="exTags" place-holder="{{$parent.resourceBundle['none']}}" type="type"
                                 multiple="'true'" force-no-udf="'true'" disabled="disabled">
                     </tag-select>
                 </span>
@@ -61,8 +61,8 @@
             <div class="col-sm-12">
                 <span class="pull-right">
                     <span href="#" ng-click="resetFilters()" class="filter-check-box mr10">{{$parent.resourceBundle['reset']}}</span>
-                    <input type="button" class="btn btn-sm btn-primary" ng-click="applyTagFilters()" value="Save">
-                    <input type="button" class="btn btn-sm btn-default" ng-click="toggleFilter(true)" value="Cancel">
+                    <input type="button" class="btn btn-sm btn-primary" ng-click="applyTagFilters()" value="{{$parent.resourceBundle['save']}}">
+                    <input type="button" class="btn btn-sm btn-default" ng-click="toggleFilter(true)" value="{{$parent.resourceBundle['cancel']}}">
                 </span>
             </div>
         </div>

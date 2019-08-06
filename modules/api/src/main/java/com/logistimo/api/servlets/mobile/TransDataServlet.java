@@ -82,7 +82,7 @@ public class TransDataServlet extends JsonRestServlet {
   private static final XLog xLogger = XLog.getLog(TransDataServlet.class);
 
   public void processGet(HttpServletRequest req, HttpServletResponse res,
-                         ResourceBundle backendMessages, ResourceBundle messages)
+                         ResourceBundle messages)
       throws ServletException, IOException, ServiceException {
     xLogger.fine("Entering processGet");
     // Get the request parameters
@@ -90,9 +90,9 @@ public class TransDataServlet extends JsonRestServlet {
     if (RestConstantsZ.ACTION_GETTRANSACTIONAGGREGATE.equalsIgnoreCase(action)) {
       getTransAggregate(req, res);
     } else if (RestConstantsZ.ACTION_GETTRANSACTIONS_OLD.equalsIgnoreCase(action)) {
-      getTransactionsOld(req, res, backendMessages);
+      getTransactionsOld(req, res, messages);
     } else if (RestConstantsZ.ACTION_GETTRANSACTIONS.equalsIgnoreCase(action)) {
-      getTransactions(req, res, backendMessages);
+      getTransactions(req, res, messages);
     } else {
       throw new ServiceException("Invalid action: " + action);
     }
@@ -101,10 +101,10 @@ public class TransDataServlet extends JsonRestServlet {
   }
 
   public void processPost(HttpServletRequest req, HttpServletResponse res,
-                          ResourceBundle backendMessages, ResourceBundle messages)
+                          ResourceBundle messages)
       throws ServletException, IOException, ServiceException {
     xLogger.fine("Entering processPost");
-    processGet(req, res, backendMessages, messages);
+    processGet(req, res, messages);
     xLogger.fine("Exiting processPost");
   }
 

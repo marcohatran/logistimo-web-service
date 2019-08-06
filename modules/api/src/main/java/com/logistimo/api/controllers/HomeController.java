@@ -78,7 +78,7 @@ public class HomeController {
                                    @RequestParam(required = false) String reportType) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     Long domainId = sUser.getCurrentDomainId();
     if (domainId == null) {
       xLogger.severe("Error in fetching Monthly/Daily Status");

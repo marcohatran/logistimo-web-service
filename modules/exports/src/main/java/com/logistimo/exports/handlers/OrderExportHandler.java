@@ -367,41 +367,40 @@ public class OrderExportHandler implements IExportHandler {
 
   @Override
   public String getCSVHeader(Locale locale, DomainConfig dc, String type) {
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-    ResourceBundle jsMessages = Resources.get().getBundle("JSMessages", locale);
+    ResourceBundle messages = Resources.getBundle(locale);
     StringBuilder headerSb = new StringBuilder();
     headerSb.append(messages.getString("order")).append(CharacterConstants.COMMA)
         .append(messages.getString("sales.reference.id")).append(CharacterConstants.COMMA)
         .append(messages.getString("purchase.reference.id")).append(CharacterConstants.COMMA)
         .append(messages.getString("status")).append(CharacterConstants.COMMA)
         .append(messages.getString("customer")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("id")).append(CharacterConstants.COMMA)
+        .append(messages.getString("id")).append(CharacterConstants.COMMA)
         .append(messages.getString("customid.customer")).append(CharacterConstants.COMMA)
         .append(messages.getString("customer")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("name.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("name.lower")).append(CharacterConstants.COMMA)
         .append(messages.getString("vendor")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("id")).append(CharacterConstants.COMMA)
+        .append(messages.getString("id")).append(CharacterConstants.COMMA)
         .append(messages.getString("customid.vendor")).append(CharacterConstants.COMMA)
         .append(messages.getString("vendor")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("name.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("name.lower")).append(CharacterConstants.COMMA)
         .append(messages.getString("item")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("id")).append(CharacterConstants.COMMA)
+        .append(messages.getString("id")).append(CharacterConstants.COMMA)
         .append(messages.getString("customid.material")).append(CharacterConstants.COMMA)
         .append(messages.getString("item")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("name.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("name.lower")).append(CharacterConstants.COMMA)
         .append(messages.getString("order.reasons")).append(CharacterConstants.COMMA)
         .append(messages.getString("quantity")).append(CharacterConstants.COMMA);
     if (!dc.isDisableOrdersPricing()) {
       headerSb.append(messages.getString("currency")).append(CharacterConstants.COMMA)
           .append(messages.getString("item")).append(CharacterConstants.SPACE)
-          .append(jsMessages.getString("price.lower")).append(CharacterConstants.COMMA)
-          .append(jsMessages.getString("discount.upper")).append(CharacterConstants.SPACE)
+          .append(messages.getString("price.lower")).append(CharacterConstants.COMMA)
+          .append(messages.getString("discount.upper")).append(CharacterConstants.SPACE)
           .append(CharacterConstants.O_BRACKET)
           .append(CharacterConstants.PERCENT).append(CharacterConstants.C_BRACKET)
           .append(CharacterConstants.COMMA)
           .append(messages.getString("amount")).append(CharacterConstants.COMMA)
           .append(messages.getString("order")).append(CharacterConstants.SPACE)
-          .append(jsMessages.getString("price.lower")).append(CharacterConstants.COMMA)
+          .append(messages.getString("price.lower")).append(CharacterConstants.COMMA)
           .append(messages.getString("tax")).append(CharacterConstants.SPACE)
           .append(CharacterConstants.O_BRACKET).append(CharacterConstants.PERCENT)
           .append(CharacterConstants.C_BRACKET).append(CharacterConstants.COMMA);
@@ -409,10 +408,10 @@ public class OrderExportHandler implements IExportHandler {
         headerSb.append(messages.getString("payment.paymentoption"))
             .append(CharacterConstants.COMMA)
             .append(messages.getString("payment.paidsofar")).append(CharacterConstants.COMMA)
-            .append(jsMessages.getString("paid.upper")).append(CharacterConstants.SPACE)
-            .append(jsMessages.getString("status.lower")).append(CharacterConstants.COMMA)
+            .append(messages.getString("paid.upper")).append(CharacterConstants.SPACE)
+            .append(messages.getString("status.lower")).append(CharacterConstants.COMMA)
             .append(messages.getString("payment")).append(CharacterConstants.SPACE)
-            .append(jsMessages.getString("history.lower")).append(CharacterConstants.COMMA);
+            .append(messages.getString("history.lower")).append(CharacterConstants.COMMA);
       }
     }
     headerSb.append(messages.getString("order.processingtime")).append(CharacterConstants.SPACE)
@@ -436,46 +435,38 @@ public class OrderExportHandler implements IExportHandler {
         .append(CharacterConstants.O_BRACKET)
         .append(messages.getString("meters")).append(CharacterConstants.C_BRACKET)
         .append(CharacterConstants.COMMA)
-        .append(jsMessages.getString("gps")).append(CharacterConstants.SPACE)
+        .append(messages.getString("gps")).append(CharacterConstants.SPACE)
         .append(messages.getString("errors.small")).append(CharacterConstants.COMMA)
         .append(messages.getString("material")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("tags.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("tags.lower")).append(CharacterConstants.COMMA)
         .append(messages.getString("kiosk")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("tags.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("tags.lower")).append(CharacterConstants.COMMA)
         .append(messages.getString("order")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("tags.lower")).append(CharacterConstants.COMMA)
-        .append(jsMessages.getString("createdby")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("id")).append(CharacterConstants.COMMA)
-        .append(jsMessages.getString("createdby")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("customid.lower")).append(CharacterConstants.COMMA)
-        .append(jsMessages.getString("createdby")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("fullname.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("tags.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("createdby")).append(CharacterConstants.SPACE)
+        .append(messages.getString("id")).append(CharacterConstants.COMMA)
+        .append(messages.getString("createdby")).append(CharacterConstants.SPACE)
+        .append(messages.getString("customid.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("createdby")).append(CharacterConstants.SPACE)
+        .append(messages.getString("fullname.lower")).append(CharacterConstants.COMMA)
         .append(messages.getString("createdon")).append(CharacterConstants.COMMA)
         .append(messages.getString("updatedon")).append(CharacterConstants.COMMA)
         .append(messages.getString("status")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("updatedby.lower"))
-        .append(CharacterConstants.SPACE).append(jsMessages.getString("id"))
+        .append(messages.getString("updatedby.lower"))
+        .append(CharacterConstants.SPACE).append(messages.getString("id"))
         .append(CharacterConstants.COMMA)
         .append(messages.getString("status")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("updatedby.lower"))
-        .append(CharacterConstants.SPACE).append(jsMessages.getString("customid.lower"))
+        .append(messages.getString("updatedby.lower"))
+        .append(CharacterConstants.SPACE).append(messages.getString("customid.lower"))
         .append(CharacterConstants.COMMA)
         .append(messages.getString("status")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("updatedby.lower"))
-        .append(CharacterConstants.SPACE).append(jsMessages.getString("fullname.lower"))
+        .append(messages.getString("updatedby.lower"))
+        .append(CharacterConstants.SPACE).append(messages.getString("fullname.lower"))
         .append(CharacterConstants.COMMA)
         .append(messages.getString("status")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("updatedon.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("updatedon.lower")).append(CharacterConstants.COMMA)
         .append(messages.getString("eda"));
 
-				/*if ( fc != null && !fc.isEmpty() ) {
-                                        Iterator<String> fields = fc.keys();
-					while ( fields.hasNext() ) {
-						String field = fields.next();
-						FieldsConfig.Field f = fc.getField( field );
-						header += "," + f.name;
-					}
-				}*/
     return headerSb.toString();
   }
 }

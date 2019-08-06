@@ -1251,10 +1251,10 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService', 'trnServic
         $scope.openReason = function (transType, index, item) {
             item.transType = transType;
             if (item.transType == 'p') {
-                item.title = "Stock count";
+                item.title = $scope.resourceBundle['transactions.stockcount.upper'];
                 item.atdConfig = $scope.tranDomainConfig.atdp;
             } else {
-                item.title = "Discard";
+                item.title = $scope.resourceBundle['batch.discard'];
                 item.atdConfig = $scope.tranDomainConfig.atdw;
             }
             $scope.reasonMandatory = $scope.tranDomainConfig.transactionTypesWithReasonMandatory.indexOf('p') != -1 || $scope.tranDomainConfig.transactionTypesWithReasonMandatory.indexOf('w') != -1;
@@ -1315,11 +1315,11 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService', 'trnServic
                 if (checkNotNullEmpty(atd)) {
                     ft['transactual'] = '' + formatDate(atd);
                 } else if (checkNullEmpty(atd) && $scope.atd == 2) {
-                    $scope.showWarning("Please select actual date of physical transaction.");
+                    $scope.showWarning($scope.resourceBundle['transaction.select.actual.date.of.transaction']);
                     return null;
                 }
                 if (checkNullEmpty(reason) && $scope.reasonMandatory) {
-                    $scope.showWarning("Please select a reason.");
+                    $scope.showWarning($scope.resourceBundle['transaction.select.reason']);
                     return null;
                 }
             }

@@ -22,7 +22,7 @@ public class ExceptionUtils {
   public static String constructMessage(String code, Locale locale, Object[] params) {
     ResourceBundle
         errors =
-        Resources.get().getBundle("errors", locale != null ? locale : Locale.ENGLISH);
+        Resources.getBundle("errors", locale != null ? locale : Locale.ENGLISH);
     String message;
     try {
       message = errors.getString(code);

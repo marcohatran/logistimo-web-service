@@ -199,7 +199,7 @@ public class EntityController {
   String delete(@RequestBody String entityIds) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     Long domainId = sUser.getCurrentDomainId();
     int delCnt = 0;
     StringBuilder entitiesNames = new StringBuilder();
@@ -239,7 +239,7 @@ public class EntityController {
   String create(@RequestBody EntityModel entityModel) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     IKiosk k =
         entityBuilder.buildKiosk(entityModel, sUser.getUsername(), true);
     try {
@@ -266,7 +266,7 @@ public class EntityController {
       throws ServiceException {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     try{
       IKiosk kiosk = entitiesService.getKiosk(model.entityId);
       List<IApprover> approversList =
@@ -300,7 +300,7 @@ public class EntityController {
   String updateEntity(@RequestBody EntityModel entityModel) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     Long domainId = sUser.getCurrentDomainId();
     try {
       IKiosk ksk = entitiesService.getKiosk(entityModel.id, false);
@@ -336,7 +336,7 @@ public class EntityController {
                             @RequestParam(required = false) Boolean skipAuthCheck) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     EntityModel model;
     try {
       Integer permission = EntityAuthoriser.authoriseEntityPerm(entityId);
@@ -416,7 +416,7 @@ public class EntityController {
                                  @RequestParam(required = false) String entityTag) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     int customerCount;
     int vendorsCount;
     try {
@@ -445,7 +445,7 @@ public class EntityController {
                          @RequestParam(required = false) Long srcEntityId) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     try {
       //TODO Extend behavior to check if the requested entity has a relation to user's entities. Temporarily commented.
       if (!EntityAuthoriser.authoriseEntityDomain(sUser, entityId, SecurityUtils.getDomainId())) {
@@ -479,7 +479,7 @@ public class EntityController {
                              HttpServletRequest request) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     String timezone = sUser.getTimezone();
     try {
       if (!EntityAuthoriser.authoriseEntity(entityId)) {
@@ -540,7 +540,7 @@ public class EntityController {
                            HttpServletRequest request) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     String timezone = sUser.getTimezone();
     try {
       //TODO: Temporary fix. Required for Order listing on a sales order.
@@ -587,7 +587,7 @@ public class EntityController {
     String userId = sUser.getUsername();
     Long domainId = sUser.getCurrentDomainId();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     Results kioskResults;
     Navigator
         navigator =
@@ -656,7 +656,7 @@ public class EntityController {
       navigator.setResultParams(kioskResults);
     } catch (ServiceException | ObjectNotFoundException se) {
       xLogger.warn("Error fetching entities for domain" + domainId, se);
-      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+      ResourceBundle backendMessages = Resources.getBundle(locale);
       throw new InvalidServiceException(
           backendMessages.getString("domain.kiosks.fetch.error") + " " + domainId);
     }
@@ -730,7 +730,7 @@ public class EntityController {
   String addRelation(@RequestBody RelationModel model) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     String userId = sUser.getUsername();
     Long domainId = sUser.getCurrentDomainId();
     StringBuilder linkNames = new StringBuilder();
@@ -777,7 +777,7 @@ public class EntityController {
   String updateRelation(@RequestBody RelationModel model) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     String role = sUser.getRole();
     Long domainId = sUser.getCurrentDomainId();
     String linkedKioskName;
@@ -828,7 +828,7 @@ public class EntityController {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Long domainId = sUser.getCurrentDomainId();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     if (per == null || per.eid == null) {
       throw new BadRequestException(backendMessages.getString("kiosk.id.unavailable"));
     }
@@ -848,7 +848,7 @@ public class EntityController {
   public
   @ResponseBody
   PermissionModel getPermission(@RequestParam Long eId) {
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
+    ResourceBundle backendMessages = Resources.getBundle(SecurityUtils.getLocale());
     try {
       IKiosk kiosk = entitiesService.getKiosk(eId, false);
       return entityBuilder.buildPermissionModel(kiosk, kiosk.getCustomerPerm(), kiosk.getVendorPerm());
@@ -868,7 +868,7 @@ public class EntityController {
       HttpServletRequest request) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     try {
       Long domainId = sUser.getCurrentDomainId();
       Navigator navigator =
@@ -904,7 +904,7 @@ public class EntityController {
     Map<String, Integer> counts = new HashMap<>(2);
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     try {
       if (!EntityAuthoriser.authoriseEntity(entityId)) {
         throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
@@ -927,7 +927,7 @@ public class EntityController {
   List<EntitySummaryModel> getMonthlyStats(@PathVariable Long entityId) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     Long domainId = sUser.getCurrentDomainId();
     Results results;
     Date startDate = new Date();
@@ -959,7 +959,7 @@ public class EntityController {
       addMaterialsRequestObj.domainId = sUser.getCurrentDomainId();
       addMaterialsRequestObj.execute = true;
       locale = sUser.getLocale();
-      backendMessages = Resources.get().getBundle("BackendMessages", locale);
+      backendMessages = Resources.getBundle(locale);
       try {
 
         AppFactory.get().getTaskService().schedule(ITaskService.QUEUE_DEFAULT, ADD_MATERIALS_TASKS,
@@ -968,7 +968,7 @@ public class EntityController {
             addMaterialsRequestObj.materials.size() + " " +
             backendMessages.getString("materials.for") + " " +
             (addMaterialsRequestObj.entityIds != null && !addMaterialsRequestObj.entityIds.isEmpty()
-                ? addMaterialsRequestObj.entityIds.size() : backendMessages.getString("all")) +
+                ? addMaterialsRequestObj.entityIds.size() : backendMessages.getString("all.lower")) +
             " " + backendMessages.getString("kiosks") + "." + MsgUtil.newLine() + MsgUtil.newLine()
             +
             backendMessages.getString("note") + ":" + MsgUtil.newLine() +
@@ -1077,7 +1077,7 @@ public class EntityController {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Long domainId = sUser.getCurrentDomainId();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     int addCnt = 0;
     Results kioskResults;
     if (removeMaterialsRequestObj.entityIds == null || removeMaterialsRequestObj.entityIds
@@ -1183,7 +1183,7 @@ public class EntityController {
                                @RequestBody EditMaterialsReqObj editMaterialsReqObj) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     Long domainId = sUser.getCurrentDomainId();
     List<InventoryModel> materials = editMaterialsReqObj.materials;
     int matCnt, errCnt = 0;
@@ -1245,7 +1245,7 @@ public class EntityController {
   String updateEntityOrder(@RequestBody ReorderEntityRequestObj obj) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     try {
       Long domainId = sUser.getCurrentDomainId();
       String noRouteTag = "--notag--";
@@ -1326,7 +1326,7 @@ public class EntityController {
   String updateManagedEntityOrder(@RequestBody ReorderEntityRequestObj obj) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     try {
       Long domainId = sUser.getCurrentDomainId();
       String noRouteTag = "--notag--";
@@ -1394,7 +1394,7 @@ public class EntityController {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Long domainId = sUser.getCurrentDomainId();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     try {
       entitiesService.deleteKioskLinks(domainId, linkIds, sUser.getUsername());
     } catch (ServiceException e) {
@@ -1414,7 +1414,7 @@ public class EntityController {
                           HttpServletRequest request) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     try {
       if (!GenericAuthoriser.authoriseUser(userId)) {
         throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
@@ -1452,7 +1452,7 @@ public class EntityController {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Long domainId = sUser.getCurrentDomainId();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     try {
       if (entitiesService.getKioskByName(domainId, enm) != null) {
         return true;
@@ -1471,7 +1471,7 @@ public class EntityController {
   String setStockBoard(@RequestBody StockBoardModel model) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     IConfig c;
     KioskConfig kc;
     StockboardConfig sbConfig;
@@ -1536,7 +1536,7 @@ public class EntityController {
     StockBoardModel model = new StockBoardModel();
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     try {
       if (entityId != null) {
         kc = KioskConfig.getInstance(entityId);
@@ -1559,7 +1559,7 @@ public class EntityController {
                     @RequestParam(required = false) String sDid, HttpServletRequest request) {
     ResourceBundle backendMessages = null;
     try {
-      backendMessages = Resources.get().getBundle("BackendMessages", Locale.ENGLISH);
+      backendMessages = Resources.getBundle(Locale.ENGLISH);
       if (StringUtils.isBlank(kids)) {
         throw new ServiceException(
             "No " + backendMessages.getString("kiosk.lowercase") + " is selected for moving");
@@ -1632,7 +1632,7 @@ public class EntityController {
   String removeDomain(@RequestParam Long did, @RequestParam Long kid, HttpServletRequest request) {
     ResourceBundle backendMessages = null;
     try {
-      backendMessages = Resources.get().getBundle("BackendMessages", Locale.ENGLISH);
+      backendMessages = Resources.getBundle(Locale.ENGLISH);
       if (kid == null) {
         throw new ServiceException(
             "Please select " + backendMessages.getString("kiosk.lowercase") + " to remove domain.");
@@ -1689,14 +1689,14 @@ public class EntityController {
     Locale locale = sUser.getLocale();
     try {
       if (!EntityAuthoriser.authoriseEntity(eId)) {
-        ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+        ResourceBundle backendMessages = Resources.getBundle(locale);
         throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
       IKiosk k = entitiesService.getKiosk(eId);
       return entityBuilder.buildEntityDomainData(k);
     } catch (ServiceException se) {
       xLogger.warn("Error fetching Entity's domain details for " + eId, se);
-      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+      ResourceBundle backendMessages = Resources.getBundle(locale);
       throw new InvalidServiceException(
           backendMessages.getString("kiosk.detail.fetch.error") + " " + eId);
     }
@@ -1709,7 +1709,7 @@ public class EntityController {
                                @RequestParam String type, HttpServletRequest request) {
     ResourceBundle backendMessages = null;
     try {
-      backendMessages = Resources.get().getBundle("BackendMessages", Locale.ENGLISH);
+      backendMessages = Resources.getBundle(Locale.ENGLISH);
       if (eIds == null) {
         throw new ServiceException("Please select " + backendMessages.getString("kiosk.lowercase")
             + " to add/remove domain to it.");
@@ -1815,7 +1815,7 @@ public class EntityController {
     Locale locale = sUser.getLocale();
     try {
       if (!EntityAuthoriser.authoriseEntity(eId)) {
-        ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+        ResourceBundle backendMessages = Resources.getBundle(locale);
         throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
       IKiosk k = entitiesService.getKiosk(eId);
@@ -1858,7 +1858,7 @@ public class EntityController {
       }
     } catch (ServiceException se) {
       xLogger.warn("Error fetching Entity's domain details for " + eId, se);
-      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+      ResourceBundle backendMessages = Resources.getBundle(locale);
       throw new InvalidServiceException(
           backendMessages.getString("kiosk.detail.fetch.error") + " " + eId);
     }

@@ -66,7 +66,7 @@
                                                 ng-focus="hidePopBatch(item,$index,'sm')"
                                                 ng-blur="item.isVisitedStatus = true; validateBatch(item,$index,'sm')">
                                             <option ng-repeat="status in matstatus" value="{{status}}"
-                                                    ng-selected="item.fmst == status">{{status|| resourceBundle['pleaseselect']}}
+                                                    ng-selected="item.fmst == status">{{status|| resourceBundle['select'] + " " + resourceBundle['status.lower']}}
                                             </option>
                                         </select>
                                         <select class="form-control" ng-model="item.fmst" ng-show="isDef(tempmatstatus) && tm"
@@ -90,7 +90,7 @@
                                                 ng-blur="validateBatch(item,$index,'r')"
                                                 ng-change="item.mrsn = ''"
                                                 ng-model="item.frsn" ng-show="isDef(fulfilReasons)">
-                                            <option ng-repeat="reason in fulfilReasons" value="{{reason}}" ng-selected="item.frsn == reason">{{reason|| resourceBundle['pleaseselect']}}</option>
+                                            <option ng-repeat="reason in fulfilReasons" value="{{reason}}" ng-selected="item.frsn == reason">{{reason|| resourceBundle['select'] + ' ' + resourceBundle['reason.lowercase']}}</option>
                                         </select>
                                         <textarea type="text" class="form-control mt5" ng-show="isUndef(fulfilReasons) || item.frsn == 'Others'"
                                                   id="fr{{mid}}{{$index}}"
@@ -148,7 +148,7 @@
                                                 ng-blur="item.isVisitedStatus = true;
                                                 validateBatch(item,$index,'nsm')">
                                             <option ng-repeat="status in matstatus" value="{{status}}"
-                                                    ng-selected="item.fmst == status">{{status|| resourceBundle['pleaseselect']}}
+                                                    ng-selected="item.fmst == status">{{status|| resourceBundle['select'] + " " + resourceBundle['status.lower']}}
                                             </option>
                                         </select>
                                         <select class="form-control" ng-model="item.fmst"
@@ -161,7 +161,7 @@
                                                 ng-blur="item.isVisitedStatus = true;
                                                 validateBatch(item,$index,'nsmt')">
                                             <option ng-repeat="status in tempmatstatus" value="{{status}}"
-                                                    ng-selected="item.fmst == status">{{status|| resourceBundle['pleaseselect']}}
+                                                    ng-selected="item.fmst == status">{{status|| resourceBundle['select'] + " " + resourceBundle['status.lower']}}
                                             </option>
                                         </select>
                                     </div>
@@ -175,7 +175,7 @@
                                                 ng-blur="validateBatch(item,$index,'n')"
                                                 ng-change="item.mrsn = ''"
                                                 ng-model="item.frsn" ng-show="isDef(fulfilReasons)">
-                                            <option ng-repeat="reason in fulfilReasons" value="{{reason}}" ng-selected="item.frsn == reason">{{reason || resourceBundle['pleaseselect']}}</option>
+                                            <option ng-repeat="reason in fulfilReasons" value="{{reason}}" ng-selected="item.frsn == reason">{{reason || resourceBundle['select'] + ' ' + resourceBundle['reason.lowercase']}}</option>
                                         </select>
                                         <textarea type="text" class="form-control mt5" ng-show="isUndef(fulfilReasons) || item.frsn == 'Others'"
                                                   id="nr{{mid}}{{$index}}"

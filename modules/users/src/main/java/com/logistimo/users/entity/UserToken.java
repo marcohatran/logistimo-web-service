@@ -27,6 +27,7 @@ import org.apache.commons.lang.StringUtils;
 
 import java.util.Date;
 
+import javax.jdo.annotations.Column;
 import javax.jdo.annotations.IdentityType;
 import javax.jdo.annotations.NotPersistent;
 import javax.jdo.annotations.PersistenceCapable;
@@ -53,6 +54,17 @@ public class UserToken implements IUserToken {
 
   @NotPersistent
   private String rawToken;
+
+  @Persistent
+  @Column(name = "TOKEN_TYPE")
+  private TokenType tokenType;
+
+  @Persistent
+  @Column(name = "CREATED_ON")
+  private Date createdOn;
+
+  @Persistent
+  private String description;
 
   public String getUserId() {
     return userId;
@@ -108,6 +120,36 @@ public class UserToken implements IUserToken {
 
   @Override
   public boolean hasAccessKey() {
-    return StringUtils.isNotEmpty(accessKey);
+    return StringUtils.isNotEmpty(accessKey) && !"NULL".equals(accessKey);
+  }
+
+  @Override
+  public void setTokenType(TokenType tokenType) {
+    this.tokenType = tokenType;
+  }
+
+  @Override
+  public TokenType getTokenType() {
+    return tokenType;
+  }
+
+  @Override
+  public Date getCreatedOn() {
+    return createdOn;
+  }
+
+  @Override
+  public void setCreatedOn(Date createdOn) {
+    this.createdOn = createdOn;
+  }
+
+  @Override
+  public String getDescription() {
+    return description;
+  }
+
+  @Override
+  public void setDescription(String description) {
+    this.description = description;
   }
 }

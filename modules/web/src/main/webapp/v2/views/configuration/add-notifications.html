@@ -30,17 +30,17 @@
         <div>
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <b ng-show="title != '' ">{{title}}</b>&nbsp;<b ng-show="count != '' ">({{message}} = {{count}})</b>&nbsp;<b ng-show="extraParamsSelect != '' ">({{extraParamsMessage}} = {{extraParamsSelect}})</b>
+                    <b ng-show="title != '' ">{{getLabelFromResourceBundle(title)}}</b>&nbsp;<b ng-show="count != '' ">({{getLabelFromResourceBundle(message)}} = {{isOrderOrShipmentStatus(notif) ? getLabelFromResourceBundle(count) : count}})</b>&nbsp;<b ng-show="extraParamsSelect != '' ">({{getLabelFromResourceBundle(extraParamsMessage)}} = {{extraParamsSelect}})</b>
                 </div>
                 <div class="panel-body">
                     <div class="row">
                         <div class="col-sm-12 w95" ng-hide="!showMaterialTags && !showEntityTags && !showOrderTags">
-                            <p>Specify the tags to exclude while notifying the event.</p>
+                            <p>{{resourceBundle['notification.tagfilter.message']}}</p>
                         </div>
                     </div>
                     <div class="row mb10" ng-show="showMaterialTags">
                         <div class="col-sm-12 w95">
-                            <label class="col-sm-2 control-label">Material tags</label>
+                            <label class="col-sm-2 control-label">{{resourceBundle['material.tags']}}</label>
                             <div class="col-sm-10">
                                 <tag-select  tags-model="notif.emts" type="'material'" force-no-udf="'true'"></tag-select>
                             </div>
@@ -48,7 +48,7 @@
                     </div>
                     <div class="row mb10" ng-show="showEntityTags">
                         <div class="col-sm-12 w95">
-                            <label class="col-sm-2 control-label">{{resourceBundle.kiosk}} tags</label>
+                            <label class="col-sm-2 control-label">{{resourceBundle['kiosk.tags']}}</label>
                             <div class="col-sm-10">
                                 <tag-select  tags-model="notif.eets" type="'entity'" force-no-udf="'true'"></tag-select>
                             </div>
@@ -56,7 +56,7 @@
                     </div>
                     <div class="row mb10" ng-show="showOrderTags">
                         <div class="col-sm-12 w95">
-                            <label class="col-sm-2 control-label">Order tags</label>
+                            <label class="col-sm-2 control-label">{{resourceBundle['order.tags']}}</label>
                             <div class="col-sm-10">
                                 <tag-select  tags-model="notif.eots" type="'order'" force-no-udf="'true'"></tag-select>
                             </div>

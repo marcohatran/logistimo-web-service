@@ -71,17 +71,16 @@ public class InvntryWithBatchInfoExportHandler implements IExportHandler {
 
   @Override
   public String getCSVHeader(Locale locale, DomainConfig dc, String type) {
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-    ResourceBundle jsMessages = Resources.get().getBundle("JSMessages", locale);
+    ResourceBundle messages = Resources.getBundle(locale);
     StringBuilder header = new StringBuilder();
     String mcrUnits = getMCRUnits(locale);
     String mmd = DomainConfigUtil.getMinMaxDuration(dc);
     header.append(messages.getString("kiosk")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("id")).append(CharacterConstants.COMMA)
+        .append(messages.getString("id")).append(CharacterConstants.COMMA)
         .append(messages.getString("customid.entity")).append(CharacterConstants.COMMA)
         .append(messages.getString("kiosk.name")).append(CharacterConstants.COMMA)
         .append(messages.getString("material")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("id")).append(CharacterConstants.COMMA)
+        .append(messages.getString("id")).append(CharacterConstants.COMMA)
         .append(messages.getString("customid.material")).append(CharacterConstants.COMMA)
         .append(messages.getString("material.name")).append(CharacterConstants.COMMA)
         .append(messages.getString("country")).append(CharacterConstants.COMMA)
@@ -96,12 +95,12 @@ public class InvntryWithBatchInfoExportHandler implements IExportHandler {
         .append(messages.getString("accuracy")).append(CharacterConstants.SPACE)
         .append(CharacterConstants.O_BRACKET).append(messages.getString("meters"))
         .append(CharacterConstants.C_BRACKET).append(CharacterConstants.COMMA)
-        .append(jsMessages.getString("gps")).append(CharacterConstants.SPACE)
+        .append(messages.getString("gps")).append(CharacterConstants.SPACE)
         .append(messages.getString("errors.small")).append(CharacterConstants.COMMA)
         .append(messages.getString("kiosk")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("tags.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("tags.lower")).append(CharacterConstants.COMMA)
         .append(messages.getString("material")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("tags.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("tags.lower")).append(CharacterConstants.COMMA)
         .append(messages.getString("material.stockonhand")).append(CharacterConstants.COMMA)
         .append(messages.getString("inventory.reorderlevel")).append(CharacterConstants.COMMA)
         .append(messages.getString("max")).append(CharacterConstants.COMMA);
@@ -110,8 +109,8 @@ public class InvntryWithBatchInfoExportHandler implements IExportHandler {
           .append(CharacterConstants.COMMA)
           .append(messages.getString("max")).append(mmd).append(CharacterConstants.COMMA);
     }
-    header.append(jsMessages.getString("abnormality.type")).append(CharacterConstants.COMMA)
-        .append(jsMessages.getString("abnormality.duration")).append("-")
+    header.append(messages.getString("abnormality.type")).append(CharacterConstants.COMMA)
+        .append(messages.getString("abnormality.duration")).append("-")
         .append(messages.getString("days")).append(CharacterConstants.COMMA)
         .append(messages.getString("material.retailerprice")).append(CharacterConstants.COMMA)
         .append(messages.getString("inventory.policy")).append(CharacterConstants.COMMA)
@@ -119,13 +118,13 @@ public class InvntryWithBatchInfoExportHandler implements IExportHandler {
         .append(messages.getString("batchid")).append(CharacterConstants.COMMA)
         .append(messages.getString("stockinbatch")).append(CharacterConstants.COMMA)
         .append(messages.getString("batch")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("expiry.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("expiry.lower")).append(CharacterConstants.COMMA)
         .append(messages.getString("batch")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("manufacturer.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("manufacturer.lower")).append(CharacterConstants.COMMA)
         .append(messages.getString("batch")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("manufactured.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("manufactured.lower")).append(CharacterConstants.COMMA)
         .append(messages.getString("batch")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("updatedon.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("updatedon.lower")).append(CharacterConstants.COMMA)
             .append(mcrUnits).append(CharacterConstants.COMMA)
         .append(messages.getString("config.consumptionrates")).append(CharacterConstants.F_SLASH)
         .append(messages.getString("day")).append(CharacterConstants.COMMA)
@@ -135,7 +134,7 @@ public class InvntryWithBatchInfoExportHandler implements IExportHandler {
         .append(messages.getString("month")).append(CharacterConstants.COMMA)
         .append(messages.getString("demandforecast")).append(CharacterConstants.COMMA)
         .append(messages.getString("inventory.safetystock")).append(CharacterConstants.SPACE)
-        .append(CharacterConstants.O_BRACKET).append(jsMessages.getString("computed.lower"))
+        .append(CharacterConstants.O_BRACKET).append(messages.getString("computed.lower"))
         .append(CharacterConstants.C_BRACKET).append(CharacterConstants.COMMA)
         .append(messages.getString("order.optimalorderquantity")).append(CharacterConstants.COMMA)
         .append(messages.getString("order.leadtimedemand")).append(CharacterConstants.COMMA)
@@ -146,22 +145,22 @@ public class InvntryWithBatchInfoExportHandler implements IExportHandler {
         .append(messages.getString("order.stddevleadtime")).append(CharacterConstants.COMMA)
         .append(messages.getString("createdon")).append(CharacterConstants.COMMA)
         .append(messages.getString("updatedby")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("id")).append(CharacterConstants.COMMA)
+        .append(messages.getString("id")).append(CharacterConstants.COMMA)
         .append(messages.getString("updatedby")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("customid.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("customid.lower")).append(CharacterConstants.COMMA)
         .append(messages.getString("updatedby")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("fullname.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("fullname.lower")).append(CharacterConstants.COMMA)
         .append(messages.getString("updatedon")).append(CharacterConstants.COMMA)
         .append(messages.getString("min")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("updatedon.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("updatedon.lower")).append(CharacterConstants.COMMA)
         .append(messages.getString("max")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("updatedon.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("updatedon.lower")).append(CharacterConstants.COMMA)
         .append(messages.getString("material.retailerprice")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("updatedon.lower")).append(CharacterConstants.COMMA)
-        .append(jsMessages.getString("pands")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("updatedon.lower")).append(CharacterConstants.COMMA)
-        .append(jsMessages.getString("dandq")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("updatedon.lower"));
+        .append(messages.getString("updatedon.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("pands")).append(CharacterConstants.SPACE)
+        .append(messages.getString("updatedon.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("dandq")).append(CharacterConstants.SPACE)
+        .append(messages.getString("updatedon.lower"));
 
     return header.toString();
   }
@@ -307,8 +306,7 @@ public class InvntryWithBatchInfoExportHandler implements IExportHandler {
   }
 
   private String getMCRUnits(Locale locale) {
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-    ResourceBundle jsMessages = Resources.get().getBundle("JSMessages", locale);
+    ResourceBundle messages = Resources.getBundle(locale);
     Long domainId = invntryWithBatchInfo.getDomainId();
     DomainConfig dc = DomainConfig.getInstance(domainId);
     InventoryConfig ic = dc.getInventoryConfig();
@@ -321,11 +319,11 @@ public class InvntryWithBatchInfoExportHandler implements IExportHandler {
     if (manualCrUnits == null || manualCrUnits.isEmpty() || manualCrUnits
         .equalsIgnoreCase(messages.getString("days"))) {
       manualCrUnits =
-          jsMessages.getString("daysofstock"); // Default the manual consumption rate units to Days.
+          messages.getString("daysofstock"); // Default the manual consumption rate units to Days.
     } else if (manualCrUnits.equalsIgnoreCase(messages.getString("weeks"))) {
-      manualCrUnits = jsMessages.getString("weeksofstock");
+      manualCrUnits = messages.getString("weeksofstock");
     } else if (manualCrUnits.equalsIgnoreCase(messages.getString("months"))) {
-      manualCrUnits = jsMessages.getString("monthsofstock");
+      manualCrUnits = messages.getString("monthsofstock");
     }
     return manualCrUnits;
   }

@@ -299,9 +299,9 @@ entityControllers.controller('EntityDetailMenuController', ['$scope', 'entitySer
                 $scope.pieOpt = [];
                 $scope.entDashboardData = [];
                 $scope.pieOpt[0] = angular.copy($scope.pOpt);
-                $scope.p1caption = "Inventory";
+                $scope.p1caption = $scope.resourceBundle['inventory'];
                 $scope.pieOpt[1] = angular.copy($scope.pOpt);
-                $scope.p2caption = "Temperature";
+                $scope.p2caption = $scope.resourceBundle['temperature'];
                 constructInvMetaData(data.invDomain);
                 constructTempMetaData(data.tempDomain);
             }
@@ -316,11 +316,11 @@ entityControllers.controller('EntityDetailMenuController', ['$scope', 'entitySer
                 if(total > 0) {
                     if(availableData > 0) {
                         $scope.entDashboardData[0] = ((availableData / total) * 100).toFixed(2);
-                        $scope.invNrmlTT = $scope.resourceBundle['available'] + ": " + availableData + " of " + total + " " + $scope.resourceBundle['inventory'] + " " + $scope.resourceBundle['order.items'];
+                        $scope.invNrmlTT = $scope.resourceBundle['available'] + ": " + availableData + " " + $scope.resourceBundle['of'] + " " + total + " " + $scope.resourceBundle['inventory'] + " " + $scope.resourceBundle['order.items'];
                     }
                     if(data['200'] > 0) {
                         $scope.entDashboardData[1] = ((data['200'] / total) * 100).toFixed(2);
-                        $scope.invZeroTT = $scope.resourceBundle['report.zerostock'] + ": " + data['200'] + " of " + total + " " + $scope.resourceBundle['inventory'] + " " + $scope.resourceBundle['order.items'];
+                        $scope.invZeroTT = $scope.resourceBundle['report.zerostock'] + ": " + data['200'] + " " + $scope.resourceBundle['of'] + " " + total + " " + $scope.resourceBundle['inventory'] + " " + $scope.resourceBundle['order.items'];
                     }
                 } else {
                     $scope.hideInvData = true;
@@ -346,7 +346,7 @@ entityControllers.controller('EntityDetailMenuController', ['$scope', 'entitySer
                     for(var key in tempStatus) {
                         if((checkNullEmpty(excludeTempSt) || !excludeTempSt.includes(tempStatus[key])) && data[key] > 0) {
                             $scope.entDashboardData[index] = ((data[key] / total) * 100).toFixed(2);
-                            $scope.tempTooltip[key] = tempStatus[key] + ": " + data[key] + " of " + total + " asset(s)";
+                            $scope.tempTooltip[key] = tempStatus[key] + ": " + data[key] + " " + $scope.resourceBundle['of'] + " " + total + " " + $scope.resourceBundle['one.or.more.assets.lowercase'];
                         }
                         index++;
                     }
@@ -430,10 +430,10 @@ entityControllers.controller('EntityDetailMenuController', ['$scope', 'entitySer
             var subCaption = undefined;
             var tSubCaption = undefined;
             if(checkNotNullEmpty(mTag) && checkNullEmpty(ets)) {
-                $scope.subcaption = "<b> Material tag(s): </b>" + mTag ;
+                $scope.subcaption = "<b> " + $scope.resourceBundle['one.or.more.material.tags'] + ": </b>" + mTag ;
             }
             if(checkNotNullEmpty(ets) && checkNotNullEmpty(excludeTempSt)) {
-                $scope.tsubcaption = "<b> Exclude temperature state(s): </b>" + excludeTempSt;
+                $scope.tsubcaption = "<b> " + $scope.resourceBundle['dashboard.exclude.one.or.more.temperature.states'] + ": </b>" + excludeTempSt;
             }
             var pSubCaption = undefined;
             if (pieId == "p1") {

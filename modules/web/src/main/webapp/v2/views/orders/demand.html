@@ -24,7 +24,7 @@
 <div ng-controller="SimpleMenuController" ng-init="init('orders.demand')">
 	<ul class="nav nav-tabs subnav-tabs">
 		<li ng-class="{ active: subview == 'list'}"><a href="#/orders/demand/">{{resourceBundle.demand}}</a></li>
-		<li ng-hide="generalconfig.dcs" ng-class="{ active: subview == 'backorder'}"><a href="#/orders/backorder/">Backorder</a></li>
+		<li ng-hide="generalconfig.dcs" ng-class="{ active: subview == 'backorder'}"><a href="#/orders/backorder/">{{resourceBundle['backorder']}}</a></li>
 	</ul>
   <div ng-include="'loader-template.html'"></div>
   <div ng-switch="subview">

@@ -27,7 +27,7 @@
             <a ng-click="loadMessages()" ng-disabled="mLoading">
                         <span class="loadbutton">
                         <p><span
-                                ng-hide="mLoading">{{messages.numFound - messages.results.length}} older message(s)</span>
+                                ng-hide="mLoading">{{messages.numFound - messages.results.length}} {{resourceBundle['conversations.one.or.more.older.messages']}}</span>
                             <span ng-show="mLoading" class="cbx"><span
                                     class="glyphicons glyphicons-cogwheel spin"></span></span></p>
                     </span>
@@ -42,22 +42,22 @@
                 <a ng-href="#/setup/users/all/details?userId={{message.userId}}" target="_blank">
                     <span class="glyphicons glyphicons-user"></span>
                     {{message.userName}}</a>
-                <span class="litetext"> added a message - {{message.createDate}}</span>
+                <span class="litetext"> {{resourceBundle['conversations.message.added']}} - {{message.createDate}}</span>
 
                 <p class="msg" style="">{{message.message}}</p>
             </div>
         </div>
         <div ng-if="messages.results.length == 0 && !addMsg">
-            <p class="alert alert-warning">There are no comments yet.</p>
+            <p class="alert alert-warning">{{resourceBundle['conversations.no.comments']}}.</p>
         </div>
     </div>
     <div class="col-sm-12 mt10">
         <button ng-hide="addMsg || mLoading || dp.vp" type="button" class="btn btn-sm btn-primary mb5 pull-right"
-                ng-click="addMessage()">Add comment
+                ng-click="addMessage()">{{resourceBundle['conversations.add.comment']}}
         </button>
         <form role="form" name="addMessageForm" ng-show="addMsg">
             <div class="row">
-                <label class="col-sm-12 control-label">Comment</label>
+                <label class="col-sm-12 control-label">{{resourceBundle['comment']}}</label>
             </div>
             <div class="row">
                 <div class="col-sm-12">

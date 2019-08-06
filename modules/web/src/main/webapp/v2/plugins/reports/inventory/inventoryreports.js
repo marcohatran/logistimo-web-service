@@ -51,9 +51,9 @@ function InventoryReportController(s, timeout, getData, reportsServiceCore) {
 
     s.activeMetric = "ot";
     s.metricHeadings.push({name: s.resourceBundle['overview'], code: "ot"});
-    s.metricHeadings.push({name: 'By materials', code: "mt"});
-    s.metricHeadings.push({name: 'By ' + s.resourceBundle['kiosks.lower'], code: "kt"});
-    s.metricHeadings.push({name: 'By locations', code: "rt"});
+    s.metricHeadings.push({name: s.resourceBundle['reports.by.materials'], code: "mt"});
+    s.metricHeadings.push({name: s.resourceBundle['reports.by.entities'], code: "kt"});
+    s.metricHeadings.push({name: s.resourceBundle['reports.by.locations'], code: "rt"});
 
     s.locationOptions = [
         {text: s.resourceBundle['show.by'] + ' ' + s.resourceBundle['district'], value: "dis"},
@@ -431,9 +431,9 @@ function InventoryReportController(s, timeout, getData, reportsServiceCore) {
 
     s.getBreakDownCaption = function () {
         if (s.filter.periodicity == "m") {
-            return 'Daily trends in ' + FormatDate_MMM_YYYY(s.qFilter.from)
+            return s.resourceBundle['reports.daily.trends.monthly.caption'] + ' ' + FormatDate_MMM_YYYY(s.qFilter.from)
         } else {
-            return 'Daily trends in the week of ' + FormatDate_MMM_DD_YYYY(s.qFilter.from)
+            return s.resourceBundle['reports.daily.trends.weekly.caption'] + ' ' + FormatDate_MMM_DD_YYYY(s.qFilter.from)
         }
     };
 
@@ -447,9 +447,9 @@ function InventoryReportController(s, timeout, getData, reportsServiceCore) {
             } else {
                 fromDate.setDate(fromDate.getDate() - 6);
             }
-            return "From: " + s.formatReportDate(fromDate) + "   To: " + s.formatReportDate(s.filter.to) + "   " + s.getFilterLabel()
+            return s.resourceBundle['from.upper'] + ": " + s.formatReportDate(fromDate) + "   " + s.resourceBundle['to.upper'] + ": " + s.formatReportDate(s.filter.to) + "   " + s.getFilterLabel()
         } else {
-            return "From: " + s.formatReportDate(s.filter.from) + "   To: " + s.formatReportDate(s.filter.to) + "   " + s.getFilterLabel()
+            return s.resourceBundle['from.upper'] + ": " + s.formatReportDate(s.filter.from) + "   " + s.resourceBundle['to.upper'] + ": " + s.formatReportDate(s.filter.to) + "   " + s.getFilterLabel()
         }
     };
 
@@ -488,7 +488,7 @@ function InventoryReportController(s, timeout, getData, reportsServiceCore) {
             weekly: s.resourceBundle['weekly'],
             monthly: s.resourceBundle['monthly']
         };
-        var filterTitles = "Periodicity: " + reportCoreFunction().getPeriodicityDisplay(s.filter.periodicity, periodicityDisplays) + "   " + s.tableCaption;
+        var filterTitles = s.resourceBundle['periodicity'] + ": " + reportCoreFunction().getPeriodicityDisplay(s.filter.periodicity, periodicityDisplays) + "   " + s.tableCaption;
         selectedFilters['titles']['filters'] = filterTitles;
         selectedFilters['titles']['metrics'] = s.tableMetric;
         selectedFilters['titles']['viewtype'] = s.activeMetric;
@@ -716,7 +716,7 @@ function InventoryReportController(s, timeout, getData, reportsServiceCore) {
                         period = ' weeks';
                         maxPeriod = s.MAX_WEEKS;
                     }
-                    toastr.warning('<b>From</b> and <b>To</b> periods should be in a range of ' + maxPeriod + period + '. <b>To</b> date has been adjusted to fit within the range.');
+                    toastr.warning(messageFormat(s.resourceBundle['reports.filters.from.to.range'], maxPeriod, period));
                 }
             }
         }

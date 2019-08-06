@@ -57,10 +57,8 @@ public class CollaborationMessageUtil {
   }
 
   private static String getParameterizedMessage(String key, Locale locale) {
-    ResourceBundle
-        resourceBundle =
-        Resources.get()
-            .getBundle("CollaborationMessages", locale != null ? locale : Locale.ENGLISH);
+    ResourceBundle resourceBundle =
+        Resources.getBundle(locale != null ? locale : Locale.ENGLISH);
     return resourceBundle.getString(key);
   }
 }

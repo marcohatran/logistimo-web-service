@@ -183,7 +183,7 @@
                             <div class="row">
                                 <div class="col-sm-12">
                                     <div class="title-heading">
-                                        Domain photos
+                                        {{resourceBundle['configuration.general.domain.photos']}}
                                     </div>
                                 </div>
                                 <div class="col-sm-12 pt15 pb20"
@@ -197,13 +197,13 @@
                                         <span ng-show="(iSU || dp.ce) && hoverEdit"
                                               class="btn btn-primary image-add-button img-tr"
                                               ng-click="addDomainImage()"
-                                              uib-tooltip="Add image">
+                                              uib-tooltip="{{resourceBundle['addimage']}}">
                                             <span class="glyphicons glyphicons-plus"></span>
                                         </span>
                                         <span ng-show="(iSU || dp.ce) && hoverEdit"
                                               class="text-center btn btn-primary image-close-button ml25"
                                               ng-click="removeDomainImage(image.id)"
-                                              uib-tooltip="Remove image">
+                                              uib-tooltip="{{resourceBundle['removeimage']}}">
                                             <span class="glyphicons glyphicons-bin"></span>
                                         </span>
                                                 <a href="{{image.servingUrl}}" target="_blank">
@@ -218,7 +218,7 @@
                                     <div ng-show="(isUnDef(domainImages.items) || domainImages.items.length == 0) && !loadingImage">
                                         <div class="bgr imageBox">
                                     <span ng-show="iSU || dp.ce" class="btn btn-primary image-add-button no-img-tr"
-                                          ng-click="addImage=true" uib-tooltip="Add image">
+                                          ng-click="addImage=true" uib-tooltip="{{resourceBundle['addimage']}}">
                                         <span class="glyphicons glyphicons-plus"></span>
                                     </span>
 
@@ -251,7 +251,7 @@
                     <div class="row">
                         <div class="col-sm-12">
                             <div class="title-heading">
-                                Support settings
+                                {{resourceBundle['configuration.general.support.settings']}}
                             </div>
                         </div>
                     </div>
@@ -284,16 +284,16 @@
                                         <p ng-show="item.role == 'ROLE_sm'">{{resourceBundle['role.servicemanager']}}</p>
                                         <p ng-show="item.role == 'ROLE_do'">{{resourceBundle['role.domainowner']}}</p>
                                     </td>
-                                    <td ng-show="item.role=='ROLE_ko'" class="br1"><div class="col-sm-12" style="top:8px;padding-left: 0;"><user-select users-model="item.modelusr" on-select="userPopulate(data, $index)" blur-callback="checkUserModel($index)" place-holder="Type to get suggestions" multiple="'false'" ng-disabled="item.userpopulate" class="user-select" only-active="true"></user-select></div></td>
-                                    <td ng-show="item.role=='ROLE_sm'" class="br1"><div class="col-sm-12" style="top:8px;padding-left: 0;"><user-select users-model="item.modelusr" on-select="userPopulate(data, $index)" blur-callback="checkUserModel($index)" place-holder="Type to get suggestions" multiple="'false'" ng-disabled="item.userpopulate" class="user-select" only-active="true"></user-select></div></td>
-                                    <td ng-show="item.role=='ROLE_do'" class="br1"><div class="col-sm-12" style="top:8px;padding-left: 0;"><user-select users-model="item.modelusr" on-select="userPopulate(data, $index)" blur-callback="checkUserModel($index)" place-holder="Type to get suggestions" multiple="'false'" ng-disabled="item.userpopulate" class="user-select" only-active="true"></user-select></div></td>
+                                    <td ng-show="item.role=='ROLE_ko'" class="br1"><div class="col-sm-12" style="top:8px;padding-left: 0;"><user-select users-model="item.modelusr" on-select="userPopulate(data, $index)" blur-callback="checkUserModel($index)" place-holder="{{resourceBundle['typetogetsuggestions']}}" multiple="'false'" ng-disabled="item.userpopulate" class="user-select" only-active="true"></user-select></div></td>
+                                    <td ng-show="item.role=='ROLE_sm'" class="br1"><div class="col-sm-12" style="top:8px;padding-left: 0;"><user-select users-model="item.modelusr" on-select="userPopulate(data, $index)" blur-callback="checkUserModel($index)" place-holder="{{resourceBundle['typetogetsuggestions']}}" multiple="'false'" ng-disabled="item.userpopulate" class="user-select" only-active="true"></user-select></div></td>
+                                    <td ng-show="item.role=='ROLE_do'" class="br1"><div class="col-sm-12" style="top:8px;padding-left: 0;"><user-select users-model="item.modelusr" on-select="userPopulate(data, $index)" blur-callback="checkUserModel($index)" place-holder="{{resourceBundle['typetogetsuggestions']}}" multiple="'false'" ng-disabled="item.userpopulate" class="user-select" only-active="true"></user-select></div></td>
                                     <td ng-if="!item[$index].userpopulate" style="vertical-align: middle;">
                                         <input type="text" class="form-control" id="usrName"
                                                autocomplete="off"
                                                ng-model="item.usrname"
                                                maxlength="100"
                                                width="180"
-                                               placeholder="Enter name"
+                                               placeholder="{{resourceBundle['enter.name']}}"
                                                ng-disabled="item.userpopulate">
                                     </td>
                                     <td ng-if="!item[$index].userpopulate" style="vertical-align: middle;">
@@ -356,7 +356,7 @@
                                         <div class="col-sm-12" style="top:8px;padding-left: 0;">
                                             <user-select users-model="pUser" on-select="getUser(data, 'p')"
                                                          blur-callback="checkAdminUser(pUser,'p')"
-                                                         place-holder="Type to get suggestions" multiple="'false'"
+                                                         place-holder="{{resourceBundle['typetogetsuggestions']}}" multiple="'false'"
                                                          ng-disabled="item.userpopulate" class="user-select"
                                                          only-active="true"></user-select>
                                         </div>
@@ -373,7 +373,7 @@
                                         <div class="col-sm-12" style="top:8px;padding-left: 0;">
                                             <user-select users-model="sUser" on-select="getUser(data, 's')"
                                                          blur-callback="checkAdminUser(sUser,'s')"
-                                                         place-holder="Type to get suggestions" multiple="'false'"
+                                                         place-holder="{{resourceBundle['typetogetsuggestions']}}" multiple="'false'"
                                                          ng-disabled="item.userpopulate" class="user-select"
                                                          only-active="true"></user-select>
                                         </div>

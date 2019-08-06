@@ -37,7 +37,7 @@
                         <span ng-show="isDef(excludeETag)" class="codegray">({{resourceBundle['exclude']}}: <span
                                 ng-repeat="tag in eeTagObj track by $index" class="label label-default mt5 dinline"
                                 style="padding:.2em;">{{tag.text}}</span>)</span>
-                        <span uib-tooltip="Filters" ng-click="toggleFilter('e')"
+                        <span uib-tooltip="{{resourceBundle['filters.uppercase']}}" ng-click="toggleFilter('e')"
                               class="glyphicons glyphicons-filter codegray pt10"></span>
                         </div>
                         <div class="pop_filter_box col-sm-4 ws " id="filter_e"
@@ -46,12 +46,12 @@
                                 <div class="col-sm-12">
                                     <label class="col-sm-4 noLRpad filter-label cbx">{{resourceBundle['include']}}
                                         {{resourceBundle['multiple.tags']}}
-                                        <span uib-tooltip="Select&nbsp;the&nbsp;{{resourceBundle['kiosk.lowercase']}}&nbsp;tags&nbsp;to&nbsp;be included in the data for the dashboard view. If selected, only {{resourceBundle['kiosks.lowercase']}} with these tags are included in the computation of metrics for this view. Only one of Include or Exclude tags can be selected at a given time."
+                                        <span uib-tooltip="{{resourceBundle['assets.dashboard.include.entity.tags.info']}}"
                                               style="display: inline" class="litetext glyphicons glyphicons-info-sign">
                                     </span>
                                     </label>
                                     <span class="col-sm-8 noLRpad lPad5">
-                                    <tag-select tags-model="eTag" place-holder="All"
+                                    <tag-select tags-model="eTag" place-holder="{{resourceBundle['all']}}"
                                                 type="'entity'"
                                                 multiple="'true'"
                                                 force-no-udf="'true'">
@@ -63,12 +63,12 @@
                                 <div class="col-sm-12">
                                     <label class="col-sm-4 noLRpad filter-label cbx">{{resourceBundle['exclude']}}
                                         {{resourceBundle['multiple.tags']}}
-                                        <span uib-tooltip="Select&nbsp;the&nbsp;{{resourceBundle['kiosk.lowercase']}}&nbsp;tags&nbsp;to&nbsp;be excluded in the data for the dashboard view. If selected, {{resourceBundle['kiosks.lowercase']}} with these tags are not included in the computation of metrics for this view. Only one of Include or Exclude tags can be selected at a given time."
+                                        <span uib-tooltip="{{resourceBundle['assets.dashboard.exclude.entity.tags.info']}}"
                                               style="display: inline" class="litetext glyphicons glyphicons-info-sign">
                                     </span>
                                     </label>
                                     <span class="col-sm-8 noLRpad lPad5">
-                                    <tag-select tags-model="excludeTag" place-holder="All"
+                                    <tag-select tags-model="excludeTag" place-holder="{{resourceBundle['all']}}"
                                                 type="'entity'"
                                                 multiple="'true'"
                                                 force-no-udf="'true'">
@@ -80,9 +80,9 @@
                                 <div class="col-sm-12">
                                     <span class="pull-right">
                                         <input type="button" class="btn btn-sm btn-primary" ng-click="applyFilters()"
-                                               value="Filter">
+                                               value="{{resourceBundle['filter']}}">
                                         <input type="button" class="btn btn-sm btn-default" ng-click="cancelFilter('e')"
-                                               value="Cancel">
+                                               value="{{resourceBundle['cancel']}}">
                                     </span>
                                 </div>
                             </div>
@@ -120,7 +120,7 @@
                         <h4 class="text-center mb0">{{pCaption}} <span
                                 uib-tooltip="{{resourceBundle['asset.dashboard.help']}}"
                                 style="display: inline" class="litetext glyphicons glyphicons-info-sign"></span>
-                <span uib-tooltip="Filters" ng-click="toggleFilter('a')"
+                <span uib-tooltip="{{resourceBundle['filters.uppercase']}}" ng-click="toggleFilter('a')"
                       class="glyphicons glyphicons-filter codegray pull-right" style="cursor: pointer;"></span>
                         </h4>
 
@@ -147,7 +147,7 @@
                                     <label class="col-sm-4 noLRpad control-label cbx">{{resourceBundle['asset.type']}}</label>
                                     <span class="col-sm-8 noLRpad lPad5">
                                     <lg-uib-select multiple="'multiple" query="filterAssets(q)" ui-model="at.mna"
-                                                   place-holder="All"></lg-uib-select>
+                                                   place-holder="{{resourceBundle['all']}}"></lg-uib-select>
                                 </span>
                                 </div>
                             </div>
@@ -156,7 +156,7 @@
                                     <label class="col-sm-4 noLRpad control-label cbx">{{resourceBundle['asset.type']}}</label>
                                     <span class="col-sm-8 noLRpad lPad5">
                                     <lg-uib-select multiple="'multiple" query="filterAssets(q)" ui-model="at.mda"
-                                                   place-holder="All"></lg-uib-select>
+                                                   place-holder="{{resourceBundle['all']}}"></lg-uib-select>
                                 </span>
                                 </div>
                             </div>
@@ -178,11 +178,11 @@
 
                                     <div class="col-sm-8 noLRpad lPad5">
                                         <select ng-model="period" class="form-control">
-                                            <option value="0">Now</option>
-                                            <option value="7">7 days</option>
-                                            <option value="15">15 days</option>
-                                            <option value="30">30 days</option>
-                                            <option value="60">60 days</option>
+                                            <option value="0">{{resourceBundle['now.uppercase']}}</option>
+                                            <option value="7">7 {{resourceBundle['days']}}</option>
+                                            <option value="15">15 {{resourceBundle['days']}}</option>
+                                            <option value="30">30 {{resourceBundle['days']}}</option>
+                                            <option value="60">60 {{resourceBundle['days']}}</option>
                                         </select>
                                     </div>
                                 </div>
@@ -191,9 +191,9 @@
                                 <div class="col-sm-12">
                                 <span class="pull-right">
                                     <input type="button" class="btn btn-sm btn-primary" ng-click="applyFilters()"
-                                           value="Filter">
+                                           value="{{resourceBundle['filter']}}">
                                     <input type="button" class="btn btn-sm btn-default" ng-click="cancelFilter('a')"
-                                           value="Cancel">
+                                           value="{{resourceBundle['cancel']}}">
                                 </span>
                                 </div>
                             </div>
@@ -217,7 +217,7 @@
                         <div class="text-center text-bold">{{resourceBundle['by.location']}}
                             <div class="btn-group float-right" ng-show="showSwitch">
                                 <label class="btn btn-sm btn-default" ng-click="setShowMap(true)" ng-model="showMap" uib-btn-radio="true" uib-tooltip="{{resourceBundle['map.view']}}"><span style="padding-top: 3px" class="glyphicons glyphicons-globe"></span></label>
-                                <label class="btn btn-sm btn-default" ng-click="setShowMap(false)" ng-model="showMap" uib-btn-radio="false" uib-tooltip="Bar&nbsp;view"><span style="padding-top: 3px" class="glyphicons glyphicons-paragraph"></span></label>
+                                <label class="btn btn-sm btn-default" ng-click="setShowMap(false)" ng-model="showMap" uib-btn-radio="false" uib-tooltip="{{resourceBundle['bar.view']}}"><span style="padding-top: 3px" class="glyphicons glyphicons-paragraph"></span></label>
                             </div>
                         </div>
                     </div>

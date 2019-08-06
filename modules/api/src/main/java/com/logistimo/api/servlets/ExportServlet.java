@@ -181,7 +181,7 @@ public class ExportServlet extends SgServlet {
 
   @Override
   protected void processGet(HttpServletRequest request, HttpServletResponse response,
-                            ResourceBundle backendMessages, ResourceBundle messages)
+                            ResourceBundle messages)
       throws ServletException, IOException, ServiceException {
     xLogger.fine("Entered doGet");
     String action = request.getParameter("action");
@@ -195,15 +195,15 @@ public class ExportServlet extends SgServlet {
     } else if (ACTION_DOWNLOAD.equals(action)) {
       serveFile(request, response);
     } else if (ACTION_SCHEDULEBATCHEXPORT.equals(action)) {
-      scheduleBatchExport(request, response, backendMessages, messages);
+      scheduleBatchExport(request, response, messages);
     } else if (ACTION_BATCHEXPORT.equals(action)) {
       batchExport(request);
     } else if (ACTION_BULKUPLOADFORMATEXPORT.equals(action)) {
       exportBulkUploadFormat(request, response, messages);
     } else if (ACTION_SCHEDULEREPORTEXPORT.equals(action)) {
-      scheduleReportExport(request, response, backendMessages);
+      scheduleReportExport(request, response, messages);
     } else if (ACTION_FINALIZEEXPORT.equals(action)) {
-      finalizeExport(request, backendMessages, messages);
+      finalizeExport(request, messages);
     } else {
       xLogger.severe("Unknown action: " + action);
     }
@@ -212,10 +212,10 @@ public class ExportServlet extends SgServlet {
 
   @Override
   protected void processPost(HttpServletRequest request, HttpServletResponse response,
-                             ResourceBundle backendMessages, ResourceBundle messages)
+                             ResourceBundle messages)
       throws ServletException, IOException,
       ServiceException {
-    processGet(request, response, backendMessages, messages);
+    processGet(request, response, messages);
   }
 
   // Export orders in the specified format
@@ -275,7 +275,7 @@ public class ExportServlet extends SgServlet {
 
   // Schedule a batch export as a task (typically done from a UI)
   private void scheduleBatchExport(HttpServletRequest req, HttpServletResponse resp,
-                                   ResourceBundle backendMessages, ResourceBundle messages) {
+                                   ResourceBundle messages) {
     xLogger.fine("Entered scheduleBatchExport");
     // View params.
     String view = req.getParameter("view");
@@ -299,8 +299,8 @@ public class ExportServlet extends SgServlet {
       IUserAccount sourceUser = as.getUserAccount(sourceUserId);
       // Write message to screen
       message =
-          backendMessages.getString("export.success1") + " <b>" + sourceUser.getEmail() + "</b> "
-              + backendMessages.getString("export.success2");
+          messages.getString("export.success1") + " <b>" + sourceUser.getEmail() + "</b> "
+              + messages.getString("export.success2");
       message += " [<a href=\"javascript:history.go(-1)\">" + messages.getString("back") + "</a>]";
     } catch (Exception e) {
       xLogger.severe("{0} when scheduling export task with params {1}: {2}", e.getClass().getName(),
@@ -775,7 +775,7 @@ public class ExportServlet extends SgServlet {
 
   // Finalize an export and send the email notification
   private void finalizeExport(HttpServletRequest req,
-                              ResourceBundle backendMessages, ResourceBundle messages) {
+                              ResourceBundle messages) {
     xLogger.fine("Entered finalizeExport");
     // Get the export parms. posted by the page-exed'ed export task
     String exportParamsJson = req.getParameter("output");
@@ -829,7 +829,7 @@ public class ExportServlet extends SgServlet {
       notifyNoData(emailCSV, type, formattedTime, u, exportParams.domainId, exportParams.kioskId,
           exportParams.materialId, es, messages, exportParams.assetId, exportParams.sensorName);
       JobUtil.setJobCompleted(exportParams.jobId, IJobStatus.TYPE_EXPORT, exportParams.size,
-          exportParams.gcsFilename, backendMessages);
+          exportParams.gcsFilename, messages);
       return;
     }
     // Finalize the exported file
@@ -871,7 +871,7 @@ public class ExportServlet extends SgServlet {
     // Send exported data via email
     // notifyExport( req, emailCSV, exportParams.type, formattedTime, uploaded, u, true, exportParams.domainId, exportParams.kioskId, exportParams.materialId, as, backendMessages, messages );
     notifyExport(req, emailCSV, type, formattedTime, uploaded, u, true, exportParams.domainId,
-        exportParams.kioskId, exportParams.materialId, es, backendMessages, messages,
+        exportParams.kioskId, exportParams.materialId, es, messages,
         exportParams.assetId, exportParams.sensorName);
     // Store uploaded
     try {
@@ -888,7 +888,7 @@ public class ExportServlet extends SgServlet {
       uploads.add(uploaded);
       us.addNewUpload(uploads);
       JobUtil.setJobCompleted(exportParams.jobId, IJobStatus.TYPE_EXPORT, exportParams.size,
-          exportParams.gcsFilename, backendMessages);
+          exportParams.gcsFilename, messages);
     } catch (Exception e) {
       xLogger.severe("{0} when storing Uploaded with key {1} in domain {2}: {3}",
           e.getClass().getName(), uploadedKey, exportParams.domainId, e.getMessage(), e);
@@ -901,7 +901,7 @@ public class ExportServlet extends SgServlet {
   private void notifyExport(HttpServletRequest req, String addressCSV, String type,
                             String formattedTime, IUploaded uploaded, IUserAccount u,
                             boolean attachToEmail, Long domainId, Long kioskId, Long materialId,
-                            EntitiesService as, ResourceBundle backendMessages,
+                            EntitiesService as,
                             ResourceBundle messages, String deviceId, String sensorName) {
     xLogger.fine("Entered notifyExport, type: {0}", type);
     // Form the subject
@@ -920,7 +920,7 @@ public class ExportServlet extends SgServlet {
         sendEmailWithAttachment(((EmailService) ms), userIds, type, subject, uploaded, messages);
       } else {
         // Content
-        String content = backendMessages.getString("export.notifymessage");
+        String content = messages.getString("export.notifymessage");
         try {
           content += " " + messages.getString(type);
         } catch (Exception e) {

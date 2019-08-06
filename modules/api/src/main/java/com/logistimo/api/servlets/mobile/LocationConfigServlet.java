@@ -67,7 +67,7 @@ public class LocationConfigServlet extends SgServlet {
 
   @Override
   protected void processGet(HttpServletRequest request,
-                            HttpServletResponse response, ResourceBundle backendMessages,
+                            HttpServletResponse response,
                             ResourceBundle messages) throws ServletException, IOException,
       ServiceException {
     String action = request.getParameter(RestConstantsZ.ACTION);
@@ -158,7 +158,7 @@ public class LocationConfigServlet extends SgServlet {
 
   @Override
   protected void processPost(HttpServletRequest request,
-                             HttpServletResponse response, ResourceBundle backendMessages,
+                             HttpServletResponse response,
                              ResourceBundle messages) throws ServletException, IOException,
       ServiceException {
   }

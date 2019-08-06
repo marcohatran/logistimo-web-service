@@ -100,7 +100,7 @@
                                             <td class="text-center">
                                                                     <span>
                                                                         <span class="glyphicons glyphicons-bin"
-                                                                              uib-tooltip="Delete"
+                                                                              uib-tooltip="{{resourceBundle['delete']}}"
                                                                               ng-click="deleteRow($index, 'e')"></span>
                                                                     </span>
                                             </td>
@@ -125,7 +125,7 @@
                                     {{resourceBundle['source.destination.geo.fencing']}}
                                 </label>
                                 <div class="col-sm-8">
-                                    <input type="text" ng-model="stockRebalancing.geoFencing" class="form-control" autocomplete="off" placeholder="" maxlength="20" style="width: 15%; display: inline-block;" only-digits>&nbsp;&nbsp;km(s)
+                                    <input type="text" ng-model="stockRebalancing.geoFencing" class="form-control" autocomplete="off" placeholder="" maxlength="20" style="width: 15%; display: inline-block;" only-digits>&nbsp;&nbsp;{{resourceBundle['one.or.more.kilometres']}}
                                 </div>
 
                             </div>
@@ -162,7 +162,7 @@
                                             </label>
                                             <div class="col-sm-4">
                                                 <input type="text" ng-model="stockRebalancing.acceptableLeadTime" class="form-control" autocomplete="off" placeholder=""
-                                                       maxlength="20" style="width: 50%; display: inline-block;" only-digits>&nbsp;&nbsp;day(s)
+                                                       maxlength="20" style="width: 50%; display: inline-block;" only-digits>&nbsp;&nbsp;{{resourceBundle['one.or.more.days']}}
                                             </div>
                                         </div>
                                     </div>
@@ -207,7 +207,7 @@
                                             </label>
                                             <div class="col-sm-4">
                                                 <input type="text" ng-model="stockRebalancing.maxStockDays" class="form-control" autocomplete="off" placeholder=""
-                                                       maxlength="20" style="width: 50%; display: inline-block;" only-digits>&nbsp;&nbsp;day(s)
+                                                       maxlength="20" style="width: 50%; display: inline-block;" only-digits>&nbsp;&nbsp;{{resourceBundle['one.or.more.days']}}
                                             </div>
                                         </div>
                                     </div>
@@ -237,7 +237,7 @@
                                 <label class="col-sm-3 control-label">{{resourceBundle['transportation.cost']}}</label>
                                 <div class="col-sm-6">
                                     <input type="text" ng-model="stockRebalancing.transportationCost" class="form-control" autocomplete="off" placeholder=""
-                                           maxlength="20" style="width: 50%; display: inline-block;" only-digits>&nbsp;&nbsp;per km
+                                           maxlength="20" style="width: 50%; display: inline-block;" only-digits>&nbsp;&nbsp;{{resourceBundle['stock.rebalancing.per.kilometre']}}
                                 </div>
                             </div>
                         </div>

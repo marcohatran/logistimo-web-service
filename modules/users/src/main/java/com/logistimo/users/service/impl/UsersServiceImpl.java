@@ -68,7 +68,6 @@ import com.logistimo.users.entity.UserAccount;
 import com.logistimo.users.models.ExtUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.utils.Counter;
-import com.logistimo.utils.MessageUtil;
 import com.logistimo.utils.PasswordEncoder;
 import com.logistimo.utils.QueryUtil;
 import com.logistimo.utils.StringUtil;
@@ -212,18 +211,18 @@ public class UsersServiceImpl implements UsersService {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Transaction tx = pm.currentTransaction();
     final Locale locale = ThreadLocalUtil.get().getSecureUserDetails().getLocale();
-    ResourceBundle messages = Resources.get().getBundle(Constants.MESSAGES, locale);
-    ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
+    ResourceBundle messages = Resources.getBundle(locale);
+
     try {
       try {
         if (!authorizationService.authoriseUpdateKiosk(
             account.getRegisteredBy(), domainId)) {
-          throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
+          throw new ForbiddenAccessException(messages.getString("permission.denied"));
         }
         tx.begin();
         IUserAccount registeringUser = getUserAccount(account.getRegisteredBy());
         if(SecurityUtil.compareRoles(registeringUser.getRole(),account.getRole()) < 0){
-          throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
+          throw new ForbiddenAccessException(messages.getString("permission.denied"));
         }
         @SuppressWarnings("unused")
         IUserAccount user = JDOUtils.getObjectById(IUserAccount.class, accountId, pm);
@@ -240,9 +239,9 @@ public class UsersServiceImpl implements UsersService {
           xLogger.warn("addAccount: FAILED!! Cannot add account {0}. Custom ID {1} already exists",
               account.getUserId(), account.getCustomId());
           throw new ServiceException(
-              backendMessages.getString("error.cannotadd") + " '" + account.getUserId() + "'. "
+              messages.getString("error.cannotadd") + " '" + account.getUserId() + "'. "
                   + messages.getString("customid") + " " + account.getCustomId() + " "
-                  + backendMessages.getString("error.alreadyexists") + ".");
+                  + messages.getString("error.alreadyexists") + ".");
         }
         setNewUserPassword(account);
         if (account.getTags() != null) {
@@ -276,7 +275,7 @@ public class UsersServiceImpl implements UsersService {
     }
     if (userExists) {
       errMsg =
-          messages.getString("user") + " '" + account.getUserId() + "' " + backendMessages
+          messages.getString("user") + " '" + account.getUserId() + "' " + messages
               .getString("user.exists");
     }
     xLogger.fine("Exiting addAccount");
@@ -552,18 +551,18 @@ public class UsersServiceImpl implements UsersService {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Transaction tx = pm.currentTransaction();
     final Locale locale = ThreadLocalUtil.get().getSecureUserDetails().getLocale();
-    ResourceBundle messages = Resources.get().getBundle(Constants.MESSAGES, locale);
-    ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
+    ResourceBundle messages = Resources.getBundle(locale);
+
     try {
       if (!authorizationService.authoriseUpdateKiosk(updatedBy, account.getDomainId())) {
-        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(messages.getString("permission.denied"));
       }
       tx.begin();
       //First check if the user already exists in the database
       IUserAccount user = JDOUtils.getObjectById(IUserAccount.class, account.getUserId(), pm);
       IUserAccount registeringUser = getUserAccount(updatedBy);
       if(SecurityUtil.compareRoles(registeringUser.getRole(),user.getRole()) < 0){
-        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(messages.getString("permission.denied"));
       }
       //location check
       int locindex = new LocationComparator().compare(user, account);
@@ -618,9 +617,9 @@ public class UsersServiceImpl implements UsersService {
             "updateUserAccount: FAILED!! Cannot update account {0}. Custom ID {1} already exists",
             account.getUserId(), account.getCustomId());
         throw new ServiceException(
-            backendMessages.getString("error.cannotupdate") + " '" + account.getUserId() + "'. "
+            messages.getString("error.cannotupdate") + " '" + account.getUserId() + "'. "
                 + messages.getString("customid") + " " + account.getCustomId() + " "
-                + backendMessages.getString("error.alreadyexists") + ".");
+                + messages.getString("error.alreadyexists") + ".");
       }
       user.setCustomId(account.getCustomId());
       user.setTgs(tagDao.getTagsByNames(account.getTags(), ITag.USER_TAG));
@@ -678,7 +677,7 @@ public class UsersServiceImpl implements UsersService {
         final Locale locale = ThreadLocalUtil.get().getSecureUserDetails().getLocale();
         ResourceBundle
             backendMessages =
-            Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
+            Resources.getBundle(locale);
         xLogger
             .warn("Error while adding accessible domains for user {0}, uAccDids is null ", userId);
         throw new InvalidServiceException(
@@ -739,7 +738,7 @@ public class UsersServiceImpl implements UsersService {
         final Locale locale = ThreadLocalUtil.get().getSecureUserDetails().getLocale();
         ResourceBundle
             backendMessages =
-            Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
+            Resources.getBundle(locale);
         throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
       for (String accountId : accountIds) {
@@ -1249,11 +1248,8 @@ public class UsersServiceImpl implements UsersService {
     }
     if (!userExists) {
       final Locale locale = ThreadLocalUtil.get().getSecureUserDetails().getLocale();
-      ResourceBundle messages = Resources.get().getBundle(Constants.MESSAGES, locale);
-      ResourceBundle
-          backendMessages =
-          Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
-      errMsg = messages.getString("user") + " '" + userId + "' " + backendMessages
+      ResourceBundle messages = Resources.getBundle(locale);
+      errMsg = messages.getString("user") + " '" + userId + "' " + messages
           .getString("error.notfound");
     }
     if (errMsg != null) {
@@ -1478,9 +1474,9 @@ public class UsersServiceImpl implements UsersService {
 
     List<String> parameters = new ArrayList<>();
     List<ExtUserAccount> users = new ArrayList<>();
-    String querystr = "SELECT U.USERID, U.SDID, U.MOBILEPHONENUMBER, U.EMAIL, UD.TOKEN FROM USERACCOUNT U,"
-        + " USERDEVICE UD WHERE U.USERID = UD.USERID AND U.SDID = ? AND UD.APPNAME = ? AND U.USERID IN "
-        + " (SELECT USERID FROM USERLOGINHISTORY WHERE LGSRC = ? AND STATUS = ?)";
+    String querystr = "SELECT DISTINCT U.USERID, U.SDID, U.MOBILEPHONENUMBER, U.EMAIL, UD.TOKEN FROM "
+        + "USERACCOUNT U, USERDEVICE UD, USERLOGINHISTORY UL WHERE "
+        + "U.USERID = UD.USERID AND U.USERID = UL.USERID AND U.SDID = ? AND UD.APPNAME = ? AND UL.LGSRC = ? AND UL.STATUS = ? ";
     parameters.add(String.valueOf(domainId));
     parameters.add(MMA);
     parameters.add(String.valueOf(SourceConstants.MMA));

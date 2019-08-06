@@ -76,7 +76,7 @@ public class BulletinBoardController {
   String create(@RequestBody BulletinBoardModel model) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     long domainId = SecurityUtils.getDomainId();
     String msg;
     try {
@@ -134,7 +134,7 @@ public class BulletinBoardController {
     String name;
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    java.util.ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    java.util.ResourceBundle backendMessages = Resources.getBundle(locale);
     try {
       name = bulletinBoardService.deleteBulletinBoard(bulletinBoardId);
     } catch (Exception e) {

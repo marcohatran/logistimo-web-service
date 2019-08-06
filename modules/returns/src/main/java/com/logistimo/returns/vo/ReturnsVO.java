@@ -56,6 +56,7 @@ public class ReturnsVO {
   private String comment;
   private String orderType;
   private ReturnsTrackingDetailsVO returnsTrackingDetailsVO;
+  private Long updatedTime;
 
   public Status getStatusValue() {
     return status.getStatus();

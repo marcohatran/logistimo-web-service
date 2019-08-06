@@ -108,7 +108,7 @@ public class RejectOldMobileTransactionsPolicy implements InventoryUpdatePolicy 
   protected ITransaction buildStockCountTrans(ITransaction trans) {
     ResourceBundle
         backendMessages =
-        Resources.get().getBundle("BackendMessages", Locale.getDefault());
+        Resources.getBundle(Locale.getDefault());
       ITransaction scTrans = trans.clone();
       // Set the entry time of this stock count transaction to 1 ms less than the entry time of trans
       Date et = trans.getEntryTime();

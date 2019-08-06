@@ -40,6 +40,8 @@ import com.logistimo.materials.entity.IHandlingUnit;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.IHandlingUnitService;
 import com.logistimo.materials.service.MaterialCatalogService;
+import com.logistimo.models.shipments.ConsignmentModel;
+import com.logistimo.models.shipments.PackageDimensions;
 import com.logistimo.models.shipments.ShipmentItemBatchModel;
 import com.logistimo.models.shipments.ShipmentItemModel;
 import com.logistimo.models.shipments.ShipmentModel;
@@ -50,6 +52,7 @@ import com.logistimo.orders.service.OrderManagementService;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ServiceException;
 import com.logistimo.shipments.ShipmentStatus;
+import com.logistimo.shipments.entity.IConsignment;
 import com.logistimo.shipments.entity.IShipment;
 import com.logistimo.shipments.entity.IShipmentItem;
 import com.logistimo.shipments.entity.IShipmentItemBatch;
@@ -148,12 +151,17 @@ public class ShipmentBuilder {
         xLogger.warn("Order not available for shipment.", e);
         return null;
       }
+      model.consignment = buildConsignmentModel(s.getConsignmentDetails());
       model.sId = s.getShipmentId();
       model.status = s.getStatus() == ShipmentStatus.OPEN ? ShipmentStatus.PENDING : s.getStatus();
       model.statusCode = s.getStatus().toString();
       model.noi = s.getNumberOfItems();
       model.transporter = s.getTransporter();
+      model.transporterId = s.getTransporterId();
       model.trackingId = s.getTrackingId();
+      model.phonenum = s.getTrackingContactNumber();
+      model.isCustomerPickup = s.getIsCustomerPickup();
+      model.vehicle = s.getVehicleDetails();
       model.ps = s.getPackageSize();
       model.reason = s.getReason();
       model.cdrsn = s.getCancelledDiscrepancyReasons();
@@ -256,10 +264,10 @@ public class ShipmentBuilder {
       DomainConfig dc = DomainConfig.getInstance(s.getDomainId());
 
       List<IShipmentItem> items = (List<IShipmentItem>) s.getShipmentItems();
-      boolean isOpen = s.getStatus() == ShipmentStatus.OPEN;
+      boolean isEditable = ShipmentStatus.PRE_SHIP_STATUSES.contains(s.getStatus());
       Map<String, BigDecimal> orderAllocations = null;
       Map<Long, BigDecimal> availableQuantity = null;
-      if (isOpen) {
+      if (isEditable) {
         List<IDemandItem> dItems = demandService.getDemandItems(model.orderId);
         availableQuantity = new HashMap<>(dItems.size());
         for (IDemandItem dItem : dItems) {
@@ -297,7 +305,7 @@ public class ShipmentBuilder {
           ShipmentItemModel sim = new ShipmentItemModel();
           sim.mId = mid;
           sim.q = item.getQuantity();
-          if (isOpen) {
+          if (isEditable) {
             sim.aaq = availableQuantity.get(mid);
           }
           sim.mnm = m.getName();
@@ -311,7 +319,7 @@ public class ShipmentBuilder {
           }
           List<IInvAllocation> allocationList = null;
           List<IShipmentItemBatch> bList = null;
-          if (isOpen) {
+          if (isEditable) {
             allocationList =
                 inventoryManagementService.getAllocationsByTypeId(model.vendorId, item.getMaterialId(),
                     IInvAllocation.Type.SHIPMENT, model.sId);
@@ -323,9 +331,9 @@ public class ShipmentBuilder {
           sim.aq = BigDecimal.ZERO;
           if (sim.isBa) {
             sim.bq =
-                new ArrayList<>(isOpen ? (allocationList == null ? 0 : allocationList.size())
+                new ArrayList<>(isEditable ? (allocationList == null ? 0 : allocationList.size())
                     : (bList == null ? 0 : bList.size()));
-            if (isOpen) {
+            if (isEditable) {
               if (allocationList != null && allocationList.size() > 0) {
                 for (IInvAllocation iInvAllocation : allocationList) {
                   ShipmentItemBatchModel sibm = getShipmentItemBatchModel(model.vendorId,
@@ -353,11 +361,11 @@ public class ShipmentBuilder {
               }
             }
           } else {
-            if (isOpen && allocationList.size() > 0) {
+            if (isEditable && allocationList.size() > 0) {
               sim.aq = allocationList.get(0).getQuantity();
               sim.smst = allocationList.get(0).getMaterialStatus();
               String key = String.valueOf(item.getMaterialId());
-              if (orderAllocations.containsKey(key)) {
+              if (orderAllocations != null && orderAllocations.containsKey(key)) {
                 sim.oastk = orderAllocations.get(key);
               }
             }
@@ -395,6 +403,21 @@ public class ShipmentBuilder {
       xLogger.warn("Error while building shipment model", e);
     }
     return null;
+  }
+
+  private ConsignmentModel buildConsignmentModel(IConsignment consignment) {
+    ConsignmentModel.ConsignmentModelBuilder builder = ConsignmentModel.builder();
+    if(consignment != null) {
+      builder.id(consignment.getId())
+          .declaration(consignment.getDeclaration())
+          .packageCount(consignment.getNumberOfPackages())
+          .value(consignment.getValue())
+          .weightInKg(consignment.getWeightInKg() != null
+              ? consignment.getWeightInKg().doubleValue() : 0d)
+          .dimension(new PackageDimensions(consignment.getLength(),
+              consignment.getBreadth(), consignment.getHeight()));
+    }
+    return builder.build();
   }
 
   private ShipmentItemBatchModel getShipmentItemBatchModel(Long vendorId, Long customerId,

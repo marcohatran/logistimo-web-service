@@ -25,9 +25,9 @@
      ng-init="init('setup.handlingunits.all')">
     <ul class="nav nav-tabs subnav-tabs">
         <li ng-if="iSU || (iAdm && dp.mv)" ng-class="{active: subview == 'list' || subview == 'edit' || subview == 'detail'}"><a
-                href="#/setup/handlingunits/">Handling units</a></li>
+                href="#/setup/handlingunits/">{{resourceBundle['handling.units']}}</a></li>
         <li ng-if="iSU || dp.ma" ng-class="{active: subview == 'create' }"><a
-                href="#/setup/handlingunits/all/create/">{{resourceBundle['create']}} handling units</a></li>
+                href="#/setup/handlingunits/all/create/">{{resourceBundle['create']}} {{resourceBundle['handling.units'] | lowercase}}</a></li>
     </ul>
     <div ng-include="'loader-template.html'"></div>
     <div ng-switch="subview">

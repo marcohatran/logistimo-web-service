@@ -308,7 +308,7 @@ domainControllers.controller('ConfigDashboardController', ['$scope', 'requestCon
         var removeProcessedPanes = [];
 
         $scope.removeWidget = function (wid) {
-            if (!confirm("Do you want to remove this widget from dashboard?")) {
+            if (!confirm($scope.resourceBundle['config.custom.dashboard.remove.widget.confirm.message'])) {
                 return;
             }
             var ind = 0;
@@ -1305,7 +1305,7 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                     o.isSliced = 1;
                 }
                 o.value = dd || 0;
-                o.toolText = "$label: $value of $unformattedSum" + " " + label;
+                o.toolText = "$label: $value " + $scope.resourceBundle['of'] + " $unformattedSum" + " " + label;
                 if (data[or]) {
                     isOneDataAvailable = true;
                 }
@@ -1315,28 +1315,28 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                 }
                 d.push(o);
             }
-            var subCaption = "<b>Monitoring type: </b>";
-            subCaption += $scope.mtype == 1 ? "Monitoring assets" : "Monitored assets";
+            var subCaption = "<b>" + $scope.resourceBundle['monitoring.type'] + ": </b>";
+            subCaption += $scope.mtype == 1 ? $scope.resourceBundle['da.monitoring.assets'] : $scope.resourceBundle['da.monitored.assets'];
 
             var period = $scope.period;
 
             if (checkNotNullEmpty($scope.eTag)) {
-                subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ',  ') + "<b>" + $scope.resourceBundle.kiosk + " tag(s): </b>" + $scope.eTagText;
+                subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ',  ') + "<b>" + $scope.resourceBundle['one.or.more.kiosk.tags'] + ": </b>" + $scope.eTagText;
             }
             if (checkNotNullEmpty($scope.status) && $scope.status > 0 && checkNotNullEmpty(period)) {
-                subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ',  ') + "<b>Period: </b>" + period + " day(s)";
+                subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ',  ') + "<b>" + $scope.resourceBundle['period'] + ": </b>" + period + " " + $scope.resourceBundle['one.or.more.days'];
             }
 
             var assets = getAssetType();
-            subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ',  ') + "<b>Asset type: </b>";
+            subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ',  ') + "<b>" + $scope.resourceBundle['asset.type'] + ": </b>";
             if(checkNullEmpty(assets)) {
-                subCaption += "All";
+                subCaption += $scope.resourceBundle['all'];
             } else {
                 subCaption += constructModel(assets, false, true);
             }
 
-            subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ',  ') + "<b>Status: </b>";
-            subCaption += $scope.status * 1 == 0 ? "All" : $scope.captions[$scope.status * 1 - 1];
+            subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ',  ') + "<b>" + $scope.resourceBundle['status'] + ": </b>";
+            subCaption += $scope.status * 1 == 0 ? $scope.resourceBundle['all'] : $scope.captions[$scope.status * 1 - 1];
 
             if (pieId == "p1") {
                 $scope.pCaption = $scope.resourceBundle['asset.status.lower'];
@@ -1397,7 +1397,7 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
             "showAxisLines": "0",
             "valueFontColor":"#000000",
             "theme": "fint",
-            "yAxisName": "Percentage",
+            "yAxisName": $scope.resourceBundle['yaxis.name.percentage'],
             "yAxisNameFontSize": 12,
             "exportEnabled": 1,
             "caption": ' ',
@@ -1430,7 +1430,7 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                         if (n == bd.label) {
                             bd.value = per;
                             bd.displayValue = bd.value.toFixed(1) + "%";
-                            bd.toolText = value + " of " + den + " assets";
+                            bd.toolText = value + " " + $scope.resourceBundle['of'] + " " + den + " " + $scope.resourceBundle['assets'];
 
                             for (var r = 1; r < mapRange[event].length; r++) {
                                 if (per <= mapRange[event][r]) {
@@ -1481,24 +1481,24 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                 return;
             }
             $scope.mloading = true;
-            $scope.subCaption = "<b>Monitoring type: </b>";
-            $scope.subCaption += $scope.mtype == 1 ? "Monitoring assets" : "Monitored assets";
+            $scope.subCaption = "<b>" + $scope.resourceBundle['monitoring.type'] + ": </b>";
+            $scope.subCaption += $scope.mtype == 1 ? $scope.resourceBundle['da.monitoring.assets'] : $scope.resourceBundle['da.monitored.assets'];
             var subData = $scope.dashboardView.asset[event];
 
             var allSubData = subData;
             var fPeriod = $scope.period == undefined ? "0" : $scope.period;
-            $scope.subCaption += ($scope.subCaption == '' ? '' : ',  ') + "<b>Period:</b> " + fPeriod + " day(s)";
+            $scope.subCaption += ($scope.subCaption == '' ? '' : ',  ') + "<b>" + $scope.resourceBundle['period'] + ":</b> " + fPeriod + " " + $scope.resourceBundle['one.or.more.days'];
 
             if (checkNotNullEmpty($scope.eTag)) {
-                $scope.subCaption += ($scope.subCaption == '' ? '' : ',  ') + "<b>" + $scope.resourceBundle.kiosk + " tag(s): </b>" + $scope.eTagText;
+                $scope.subCaption += ($scope.subCaption == '' ? '' : ',  ') + "<b>" + $scope.resourceBundle['one.or.more.kiosk.tags'] + ": </b>" + $scope.eTagText;
             }
-            $scope.subCaption += ($scope.subCaption == '' ? '' : ',  ') + "<b>Asset Type: </b>";
+            $scope.subCaption += ($scope.subCaption == '' ? '' : ',  ') + "<b>" + $scope.resourceBundle['asset.type'] + ": </b>";
             if (checkNotNullEmpty($scope.asset)) {
                 $scope.subCaption += constructModel($scope.asset, false, true);
             } else {
-                $scope.subCaption += "All";
+                $scope.subCaption += $scope.resourceBundle['all'];
             }
-            $scope.subCaption = (checkNullEmpty($scope.subCaption ) ? '' : $scope.subCaption ) + ',  ' + "<b>Status: </b>";
+            $scope.subCaption = (checkNullEmpty($scope.subCaption ) ? '' : $scope.subCaption ) + ',  ' + "<b>" + $scope.resourceBundle['status'] + ": </b>";
             $scope.subCaption += $scope.captions[event];
             $scope.subCaption = $sce.trustAsHtml($scope.subCaption);
             var addLink = false;
@@ -1541,7 +1541,7 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                         o.label = n;
                         o.value = per;
                         o.displayValue = o.label + "<br/>" + per.toFixed(1) + "%";
-                        o.toolText = o.label + ": " + value + " of " + den + " " + " assets";
+                        o.toolText = o.label + ": " + value + " " + $scope.resourceBundle['of'] + " "+ den + " " + " " + $scope.resourceBundle['assets'];
                         o.showLabel = "1";
                         if (checkNotNullEmpty(value)) {
                             o.link = "JavaScript:callFunctionByName('addFilter','" + filter + "','" + level + "')";
@@ -1695,10 +1695,10 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
 
             var sData = {results: []};
 
-            sData.results[0] = {id:'tn',text:"Normal"};
-            sData.results[1] = {id:'tl',text:"Low"};
-            sData.results[2] = {id:'th',text:"High"};
-            sData.results[3] = {id:'tu',text:"Unknown"};
+            sData.results[0] = {id:'tn',text:$scope.resourceBundle['overview.temperature.dashboard.status.normal']};
+            sData.results[1] = {id:'tl',text:$scope.resourceBundle['overview.temperature.dashboard.status.low']};
+            sData.results[2] = {id:'th',text:$scope.resourceBundle['overview.temperature.dashboard.status.high']};
+            sData.results[3] = {id:'tu',text:$scope.resourceBundle['overview.temperature.dashboard.status.unknown']};
 
             query.callback(sData);
         }
@@ -1726,39 +1726,39 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
 
                 var o = {};
                 if (dd == INVENTORY.stock.STOCKOUT) {
-                    o.label = "Zero stock";
+                    o.label = $scope.resourceBundle['inventory.dashboard.status.zerostock'];
                     o.color = color[0];
                 } else if (dd == INVENTORY.stock.UNDERSTOCK) {
-                    o.label = "Min";
+                    o.label = $scope.resourceBundle['inventory.dashboard.status.min'];
                     o.color = color[1];
                 } else if (dd == INVENTORY.stock.OVERSTOCK) {
-                    o.label = "Max";
+                    o.label = $scope.resourceBundle['inventory.dashboard.status.max'];
                     o.color = color[2];
                 } else if (dd == "n") {
-                    o.label = "Normal";
+                    o.label = $scope.resourceBundle['inventory.dashboard.status.normal'];
                     o.color = color[3];
                 } else if (dd == "a") {
-                    o.label = "Active";
+                    o.label = $scope.resourceBundle['active'];
                     o.color = color[0];
                     iEntEvent = true;
                 } else if (dd == "i") {
-                    o.label = "Inactive";
+                    o.label = $scope.resourceBundle['inactive'];
                     o.color = color[1];
                     iEntEvent = true;
                 } else if (dd == "tn") {
-                    o.label = "Normal";
+                    o.label = $scope.resourceBundle['overview.temperature.dashboard.status.normal'];
                     o.color = color[0];
                     iTempEvent = true;
                 } else if (dd == "tl") {
-                    o.label = "Low";
+                    o.label = $scope.resourceBundle['overview.temperature.dashboard.status.low'];
                     o.color = color[1];
                     iTempEvent = true;
                 } else if (dd == "th") {
-                    o.label = "High";
+                    o.label = $scope.resourceBundle['overview.temperature.dashboard.status.high'];
                     o.color = color[2];
                     iTempEvent = true;
                 } else if (dd == "tu") {
-                    o.label = "Unknown";
+                    o.label = $scope.resourceBundle['overview.temperature.dashboard.status.unknown'];
                     o.color = color[3];
                     iTempEvent = true;
                 } else {
@@ -1768,7 +1768,7 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
                     o.isSliced = 1;
                 }
                 o.value = data[dd] || 0;
-                o.toolText = "$label: $value of $unformattedSum" + " " + label;
+                o.toolText = "$label: $value " + $scope.resourceBundle['of'] + " $unformattedSum" + " " + label;
                 if (data[dd]) {
                     isOneDataAvailable = true;
                 }
@@ -1781,9 +1781,9 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
             var tSubCaption = undefined;
             if (checkNotNullEmpty($scope.exFilter)) {
                 if ($scope.exType == "mTag") {
-                    subCaption = "<b>Material tag(s): </b>" + $scope.exFilterText;
+                    subCaption = "<b>" + $scope.resourceBundle['one.or.more.material.tags'] + ": </b>" + $scope.exFilterText;
                 } else if ($scope.exType == "mId") {
-                    subCaption = "<b>Material: </b>" + $scope.exFilterText;
+                    subCaption = "<b>" + $scope.resourceBundle['material'] + ": </b>" + $scope.exFilterText;
                 }
             }
             var fPeriod;
@@ -1793,19 +1793,19 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
                 fPeriod = $scope.tperiod;
             }
             if (checkNotNullEmpty($scope.eTag)) {
-                subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ', ') + "<b>" + $scope.resourceBundle.kiosk + " tag(s): </b>" + $scope.eTagText;
+                subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ', ') + "<b>" + $scope.resourceBundle['one.or.more.kiosk.tags'] + ": </b>" + $scope.eTagText;
             }
             pSubCaption = subCaption;
             if (checkNotNullEmpty(fPeriod)) {
-                subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ', ') + "<b>Period: </b>" + fPeriod + " day(s)";
+                subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ', ') + "<b>" + $scope.resourceBundle['period'] + ": </b>" + fPeriod + " " + $scope.resourceBundle['one.or.more.days'];
                 if(iTempEvent && fPeriod != 'M_0') {
                     var fp = fPeriod.substr(2);
-                    tSubCaption = "<b>Period: </b>" + (fPeriod.indexOf('M') == 0 ? fp + " Minutes(s)" : (fPeriod.indexOf('H') == 0 ? fp + " Hour(s)" : fp + " Day(s)"));
+                    tSubCaption = "<b>" + $scope.resourceBundle['period'] + ": </b>" + (fPeriod.indexOf('M') == 0 ? fp + " " + $scope.resourceBundle['one.or.more.minutes'] : (fPeriod.indexOf('H') == 0 ? fp + " " + $scope.resourceBundle['one.or.more.hours'] : fp + " " + $scope.resourceBundle['one.or.more.days.uppercase']));
                 }
             }
 
             if (checkNotNullEmpty($scope.asset) && $scope.asset.length > 0) {
-                tSubCaption = (checkNullEmpty(tSubCaption) ? '' : tSubCaption + ', ') + "<b>Asset type: </b>";
+                tSubCaption = (checkNullEmpty(tSubCaption) ? '' : tSubCaption + ', ') + "<b>" + $scope.resourceBundle['asset.type'] + ": </b>";
                 var first = true;
                 $scope.asset.forEach(function(data) {
                     if(!first) {
@@ -1818,7 +1818,7 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
             }
 
             if (checkNotNullEmpty(ets) && ets.length > 0) {
-                tSubCaption = (checkNullEmpty(tSubCaption) ? '' : tSubCaption + ', ') + "<b>Exclude temperature state: </b>";
+                tSubCaption = (checkNullEmpty(tSubCaption) ? '' : tSubCaption + ', ') + "<b>" + $scope.resourceBundle['exclude.temp.state'] + ": </b>";
                 var first = true;
                 ets.forEach(function(data) {
                     if(!first) {
@@ -1846,7 +1846,7 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
                 stackSeries.data = [{}];
                 stackSeries.data[0].value = data;
                 stackSeries.data[0].color = barColor;
-                stackSeries.data[0].toolText = seriesName + ": " + ((data / denominator) * 100).toFixed(2) + "% (" + data + " of " + denominator + " " + $scope.resourceBundle['kiosks.lower'] + ")";
+                stackSeries.data[0].toolText = seriesName + ": " + ((data / denominator) * 100).toFixed(2) + "% (" + data + " " + $scope.resourceBundle['of'] + " " + denominator + " " + $scope.resourceBundle['kiosks.lower'] + ")";
                 stackSeries.data[0].link = "JavaScript:callFunctionByName('constructMapData','" + code + "')";
             }
             return stackSeries;
@@ -1857,7 +1857,7 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
                 var entDomainTotal = (data.entDomain.a || 0) + (data.entDomain.i || 0);
                 $scope.pieData = [];
                 $scope.pieData[0] = constructPie(data.invDomain, invPieColors, invPieOrder, "p1", $scope.resourceBundle['inventory'] + " " + $scope.resourceBundle['order.items'] + " (" + $scope.resourceBundle['across'] + " " + entDomainTotal + " " + $scope.resourceBundle['kiosks.lowercase'] + ")");
-                $scope.pieData[1] = constructPie(data.tempDomain, tempPieColors, tempPieOrder, "p2", "assets", $scope.exTempState);
+                $scope.pieData[1] = constructPie(data.tempDomain, tempPieColors, tempPieOrder, "p2", $scope.resourceBundle['assets.lowercase'], $scope.exTempState);
             }
         }
 
@@ -1879,11 +1879,11 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
         function constructStackData(data) {
             var entDomainTotal = (data.a || 0) + (data.i || 0);
             $scope.stackData = [];
-            var sData = constructStack(data.a, "Active", entPieColors[0], entDomainTotal, "a");
+            var sData = constructStack(data.a, $scope.resourceBundle['active'], entPieColors[0], entDomainTotal, "a");
             if(!checkNullEmptyObject(sData)) {
                 $scope.stackData[0] = sData;
             }
-            sData = constructStack(data.i, "Inactive", entPieColors[1], entDomainTotal,"i");
+            sData = constructStack(data.i, $scope.resourceBundle['inactive'], entPieColors[1], entDomainTotal,"i");
             if(!checkNullEmptyObject(sData)) {
                 $scope.stackData[1] = sData;
             }
@@ -2227,7 +2227,7 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
         };
         $scope.pieOpt = [];
         $scope.pieOpt[0] = angular.copy($scope.pOpt);
-        $scope.p1caption = "Inventory";
+        $scope.p1caption = $scope.resourceBundle['inventory'];
 
         $scope.stackBarOptions = angular.copy($scope.pOpt);
         $scope.stackBarOptions.stack100Percent = 1;
@@ -2241,7 +2241,7 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
         $scope.stackBarOptions.valueFontColor = '#ffffff';
 
 
-        $scope.p2caption = "Temperature";
+        $scope.p2caption = $scope.resourceBundle['temperature'];
         $scope.pieOpt[1] = angular.copy($scope.pOpt);
 
         $scope.mapOpt = {
@@ -2282,7 +2282,7 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
             "showAxisLines": "0",
             "valueFontColor":"#000000",
             "theme": "fint",
-            "yAxisName": "Percentage",
+            "yAxisName": $scope.resourceBundle['yaxis.name.percentage'],
             "yAxisNameFontSize": 12,
             "exportEnabled": 1,
             "caption": ' ',
@@ -2314,11 +2314,11 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
                             bd.value = per;
                             bd.displayValue = bd.value + "%";
                             if(event == '200' || event == '201' || event == '202' || event == 'n') {
-                                bd.toolText = value + " of " + den + (level == undefined ? " materials" : " inventory items");
+                                bd.toolText = value + " " + $scope.resourceBundle['of'] + " " + den + (level == undefined ? " " + $scope.resourceBundle['materials.lowercase'] : " " + $scope.resourceBundle['inventory.items.lowercase']);
                             } else if(event == 'a' || event == 'i') {
-                                bd.toolText = value + " of " + den + " " + $scope.resourceBundle['kiosks.lower'];
+                                bd.toolText = value + " " + $scope.resourceBundle['of'] + " " + den + " " + $scope.resourceBundle['kiosks.lower'];
                             } else if(event == 'tu' || event == 'tl' || event == 'th' || event == 'tn') {
-                                bd.toolText = value + " of " + den + " assets";
+                                bd.toolText = value + " " + $scope.resourceBundle['of'] + " " + den + " " + $scope.resourceBundle['assets.lowercase'];
                             }
                             for (var r = 1; r < mapRange[event].length; r++) {
                                 if (per <= mapRange[event][r]) {
@@ -2413,7 +2413,7 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
                         if (n == bd.label) {
                             bd.value = Math.round(value / den  * 1000) / 10;
                             bd.displayValue = bd.value + "%";
-                            bd.toolText = value + " of " + den + " " + $scope.resourceBundle['kiosks.lower'];
+                            bd.toolText = value + " " + $scope.resourceBundle['of'] + " " + den + " " + $scope.resourceBundle['kiosks.lower'];
                             for (var r = 1; r < mapRange[event].length; r++) {
                                 if (bd.value <= mapRange[event][r]) {
                                     bd.color = mapColors[event][r - 1];
@@ -2477,49 +2477,49 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
             var iTempEvent = false;
             if (event == INVENTORY.stock.STOCKOUT) {
                 subData = $scope.dashboardView.inv[INVENTORY.stock.STOCKOUT];
-                $scope.caption = "Inventory";
-                $scope.subCaption = "<b>Stock:</b> Zero";
+                $scope.caption = $scope.resourceBundle['inventory'];
+                $scope.subCaption = "<b>" + $scope.resourceBundle['stock'] + ":</b> " + $scope.resourceBundle['zero'];
             } else if (event == INVENTORY.stock.UNDERSTOCK) {
                 subData = $scope.dashboardView.inv[INVENTORY.stock.UNDERSTOCK];
-                $scope.caption = "Inventory";
-                $scope.subCaption = "<b>Stock:</b> Min";
+                $scope.caption = $scope.resourceBundle['inventory'];
+                $scope.subCaption = "<b>" + $scope.resourceBundle['stock'] + ":</b> " + $scope.resourceBundle['inventory.dashboard.status.min'];
             } else if (event == INVENTORY.stock.OVERSTOCK) {
                 subData = $scope.dashboardView.inv[INVENTORY.stock.OVERSTOCK];
-                $scope.caption = "Inventory";
-                $scope.subCaption = "<b>Stock:</b> Max";
+                $scope.caption = $scope.resourceBundle['inventory'];
+                $scope.subCaption = "<b>" + $scope.resourceBundle['stock'] + ":</b> " + $scope.resourceBundle['inventory.dashboard.status.max'];
             } else if (event == 'n') {
                 subData = $scope.dashboardView.inv["n"];
-                $scope.caption = "Inventory";
-                $scope.subCaption = "<b>Stock:</b> Normal";
+                $scope.caption = $scope.resourceBundle['inventory'];
+                $scope.subCaption = "<b>" + $scope.resourceBundle['stock'] + ":</b> " + $scope.resourceBundle['inventory.dashboard.status.normal'] ;
             } else if (event == 'a') {
                 subData = $scope.dashboardView.ent["a"];
-                $scope.caption = "Activity";
-                $scope.subCaption = "<b>Status: </b> Active";
+                $scope.caption = $scope.resourceBundle['activity'];
+                $scope.subCaption = "<b>" + $scope.resourceBundle['status'] + ": </b> " + $scope.resourceBundle['active'];
                 iEntEvent = true;
             } else if (event == 'i') {
                 subData = $scope.dashboardView.ent["i"];
-                $scope.caption = "Activity";
-                $scope.subCaption = "<b>Status: </b> Inactive";
+                $scope.caption = $scope.resourceBundle['activity'];
+                $scope.subCaption = "<b>" + $scope.resourceBundle['status'] + ": </b> " + $scope.resourceBundle['inactive'];
                 iEntEvent = true;
             } else if (event == 'tn') {
                 subData = $scope.dashboardView.temp["tn"];
-                $scope.caption = "Temperature";
-                $scope.subCaption = "<b>Status: </b> Normal";
+                $scope.caption = $scope.resourceBundle['temperature'];
+                $scope.subCaption = "<b>" + $scope.resourceBundle['status'] + ": </b> " + $scope.resourceBundle['overview.temperature.dashboard.status.normal'];
                 iTempEvent = true;
             } else if (event == 'tl') {
                 subData = $scope.dashboardView.temp["tl"];
-                $scope.caption = "Temperature";
-                $scope.subCaption = "<b>Status: </b> Low";
+                $scope.caption = $scope.resourceBundle['temperature'];
+                $scope.subCaption = "<b>" + $scope.resourceBundle['status'] + ": </b> " + $scope.resourceBundle['overview.temperature.dashboard.status.low'];
                 iTempEvent = true;
             } else if (event == 'th') {
                 subData = $scope.dashboardView.temp["th"];
-                $scope.caption = "Temperature";
-                $scope.subCaption = "<b>Status: </b> High";
+                $scope.caption = $scope.resourceBundle['temperature'];
+                $scope.subCaption = "<b>" + $scope.resourceBundle['status'] + ": </b> " + $scope.resourceBundle['overview.temperature.dashboard.status.high'];
                 iTempEvent = true;
             } else if (event == 'tu') {
                 subData = $scope.dashboardView.temp["tu"];
-                $scope.caption = "Temperature";
-                $scope.subCaption = "<b>Status: </b> Unknown";
+                $scope.caption = $scope.resourceBundle['temperature'];
+                $scope.subCaption = "<b>" + $scope.resourceBundle['status'] + ": </b> " + $scope.resourceBundle['overview.temperature.dashboard.status.unknown'];
                 iTempEvent = true;
             }
             var allSubData = iEntEvent ? $scope.dashboardView.ent["i"] : (iTempEvent? subData : $scope.dashboardView.inv["n"]);
@@ -2531,26 +2531,26 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
             }
             if (checkNotNullEmpty($scope.exFilter) && !iTempEvent) {
                 if ($scope.exType == "mTag") {
-                    $scope.subCaption += ($scope.subCaption == '' ? '' : ', ') + "<b>Material tag(s):</b> " + $scope.exFilterText;
+                    $scope.subCaption += ($scope.subCaption == '' ? '' : ', ') + "<b>" + $scope.resourceBundle['one.or.more.material.tags'] + ": </b> " + $scope.exFilterText;
                 } else if ($scope.exType == "mId") {
-                    $scope.subCaption += ($scope.subCaption == '' ? '' : ', ') + "<b>Material:</b> " + $scope.exFilterText;
+                    $scope.subCaption += ($scope.subCaption == '' ? '' : ', ') + "<b>" + $scope.resourceBundle['material'] + ":</b> " + $scope.exFilterText;
                 }
             }
             if (checkNotNullEmpty(fPeriod)) {
                 if(iTempEvent) {
                     if (fPeriod != 'M_0') {
                         var fp = fPeriod.substr(2);
-                        $scope.subCaption += ($scope.subCaption == '' ? '' : ', ') + "<b>Period: </b>" + (fPeriod.indexOf('M') == 0 ? fp + " Minutes(s)" : (fPeriod.indexOf('H') == 0 ? fp + " Hour(s)" : fp + " Day(s)"));
+                        $scope.subCaption += ($scope.subCaption == '' ? '' : ', ') + "<b>" + $scope.resourceBundle['period'] + ": </b>" + (fPeriod.indexOf('M') == 0 ? fp + " " + $scope.resourceBundle['one.or.more.minutes'] : (fPeriod.indexOf('H') == 0 ? fp + " " + $scope.resourceBundle['one.or.more.hours'] : fp + " " + $scope.resourceBundle['one.or.more.days.uppercase']));
                     }
                 } else {
-                    $scope.subCaption += ($scope.subCaption == '' ? '' : ', ') + "<b>Period:</b> " + fPeriod + " day(s)";
+                    $scope.subCaption += ($scope.subCaption == '' ? '' : ', ') + "<b>" + $scope.resourceBundle['period'] + ":</b> " + fPeriod + " " + $scope.resourceBundle['one.or.more.days'];
                 }
             }
             if (checkNotNullEmpty($scope.eTag)) {
-                $scope.subCaption += ($scope.subCaption == '' ? '' : ', ') + "<b>" + $scope.resourceBundle.kiosk + " tag(s): </b>" + $scope.eTagText;
+                $scope.subCaption += ($scope.subCaption == '' ? '' : ', ') + "<b>" + $scope.resourceBundle['one.or.more.kiosk.tags'] + ": </b>" + $scope.eTagText;
             }
             if (checkNotNullEmpty($scope.asset) && iTempEvent) {
-                $scope.subCaption += ($scope.subCaption == '' ? '' : ', ') + "<b>Asset Type:</b> ";
+                $scope.subCaption += ($scope.subCaption == '' ? '' : ', ') + "<b>" + $scope.resourceBundle['asset.type'] + ":</b> ";
                 var first = true;
                 $scope.asset.forEach(function(data) {
                     if(!first) {
@@ -2603,11 +2603,11 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
                         o.value = per;
                         o.displayValue = o.label + "<br/>" + per + "%";
                         if(iEntEvent) {
-                            o.toolText = o.label + ": " + value + " of " + den + " " + $scope.resourceBundle['kiosks.lower'];
+                            o.toolText = o.label + ": " + value + " " + $scope.resourceBundle['of'] + " " + den + " " + $scope.resourceBundle['kiosks.lower'];
                         } else if(iTempEvent) {
-                            o.toolText = o.label + ": " + value + " of " + den + " " + " assets";
+                            o.toolText = o.label + ": " + value + " " + $scope.resourceBundle['of'] + " " + den + " " + " " + $scope.resourceBundle['assets.lowercase'];
                         } else {
-                            o.toolText = o.label + ": " + value + " of " + den + " " + " inventory items";
+                            o.toolText = o.label + ": " + value + " " + $scope.resourceBundle['of'] + " " + den + " " + " " + $scope.resourceBundle['inventory.items.lowercase'];
                         }
                         o.showLabel = "1";
                         if (checkNotNullEmpty(value)) {
@@ -2868,7 +2868,7 @@ domainControllers.controller('InvntryDashboardCtrl', ['$scope', 'invService', 'm
         $scope.filteredMaterials = [];
         $scope.period = "0";
         var loadingCount = 0;
-        $scope.updInvType = $scope.invType = {'text': 'Normal', 'id': 'n'};
+        $scope.updInvType = $scope.invType = {'text': $scope.resourceBundle['inventory.dashboard.status.normal'], 'id': 'n'};
         $scope.invByMatEmpty = false;
         domainCfgService.getDashboardCfg().then(function (data) {
             if (checkNotNullEmpty(data.data.dmtg)) {
@@ -2987,27 +2987,27 @@ domainControllers.controller('InvntryDashboardCtrl', ['$scope', 'invService', 'm
                         var mData = dimData[mKey];
                         mData.pieData = [{
                             value: mData.n,
-                            label: "Normal",
+                            label: $scope.resourceBundle['inventory.dashboard.status.normal'],
                             color: invPieColors[3],
-                            toolText: "$label: $value of $unformattedSum",
+                            toolText: "$label: $value " + $scope.resourceBundle['of'] + " $unformattedSum",
                             showValue: mData.n > 0 ? 1 : 0
                         }, {
                             value: mData.oos,
-                            label: "Zero stock",
+                            label: $scope.resourceBundle['inventory.dashboard.status.zerostock'],
                             color: invPieColors[0],
-                            toolText: "$label: $value of $unformattedSum",
+                            toolText: "$label: $value " + $scope.resourceBundle['of'] + " $unformattedSum",
                             showValue: mData.oos > 0 ? 1 : 0
                         }, {
                             value: mData.os,
-                            label: "Max",
+                            label: $scope.resourceBundle['inventory.dashboard.status.max'],
                             color: invPieColors[2],
-                            toolText: "$label: $value of $unformattedSum",
+                            toolText: "$label: $value " + $scope.resourceBundle['of'] + " $unformattedSum",
                             showValue: mData.os > 0 ? 1 : 0
                         }, {
                             value: mData.us,
-                            label: "Min",
+                            label: $scope.resourceBundle['inventory.dashboard.status.min'],
                             color: invPieColors[1],
-                            toolText: "$label: $value of $unformattedSum",
+                            toolText: "$label: $value " + $scope.resourceBundle['of'] + " $unformattedSum",
                             showValue: mData.us > 0 ? 1 : 0
                         }];
 
@@ -3034,29 +3034,29 @@ domainControllers.controller('InvntryDashboardCtrl', ['$scope', 'invService', 'm
                     var dimData = $scope.dbdata.invByMat[dimKey].assets;
                     $scope.dbdata.invByMat[dimKey].assetPieData = [{
                         value: dimData.tn,
-                        toolText: "$label: $value of $unformattedSum",
-                        label: "Normal",
+                        toolText: "$label: $value " + $scope.resourceBundle['of'] + " $unformattedSum",
+                        label: $scope.resourceBundle['overview.temperature.dashboard.status.normal'],
                         color: tempPieColors[0],
                         showValue: dimData.tn > 0 ? 1 : 0,
                         link: 'JavaScript:'
                     }, {
                         value: dimData.th,
-                        toolText: "$label: $value of $unformattedSum",
-                        label: "High",
+                        toolText: "$label: $value " + $scope.resourceBundle['of'] + " $unformattedSum",
+                        label: $scope.resourceBundle['overview.temperature.dashboard.status.high'],
                         color: tempPieColors[2],
                         showValue: dimData.th > 0 ? 1 : 0,
                         link: 'JavaScript:'
                     }, {
                         value: dimData.tl,
-                        toolText: "$label: $value of $unformattedSum",
-                        label: "Low",
+                        toolText: "$label: $value " + $scope.resourceBundle['of'] + " $unformattedSum",
+                        label: $scope.resourceBundle['overview.temperature.dashboard.status.low'],
                         color: tempPieColors[1],
                         showValue: dimData.tl > 0 ? 1 : 0,
                         link: 'JavaScript:'
                     }, {
                         value: dimData.tu,
-                        toolText: "$label: $value of $unformattedSum",
-                        label: "Unknown",
+                        toolText: "$label: $value " + $scope.resourceBundle['of'] + " $unformattedSum",
+                        label: $scope.resourceBundle['overview.temperature.dashboard.status.unknown'],
                         color: tempPieColors[3],
                         showValue: dimData.tu > 0 ? 1 : 0,
                         link: 'JavaScript:'
@@ -3218,10 +3218,10 @@ domainControllers.controller('InvntryDashboardCtrl', ['$scope', 'invService', 'm
         };
 
         var rData = {
-            results: [{'text': 'Normal', 'id': 'n'},
-                {'text': 'Zero stock', 'id': 'oos'},
-                {'text': 'Min', 'id': 'us'},
-                {'text': 'Max', 'id': 'os'}]
+            results: [{'text': $scope.resourceBundle['inventory.dashboard.status.normal'], 'id': 'n'},
+                {'text': $scope.resourceBundle['inventory.dashboard.status.zerostock'], 'id': 'oos'},
+                {'text': $scope.resourceBundle['inventory.dashboard.status.min'], 'id': 'us'},
+                {'text': $scope.resourceBundle['inventory.dashboard.status.max'], 'id': 'os'}]
         };
 
         $scope.getTypes = function (query) {
@@ -3484,10 +3484,10 @@ domainControllers.controller('PredictiveController', ['$scope', '$timeout', '$sc
                 var dd = order[or];
                 var o = {};
                  if (dd == "n") {
-                    o.label = "Normal";
+                    o.label = $scope.resourceBundle['normal'];
                     o.color = color[0];
                 } else if (dd == "so") {
-                    o.label = "Stock out";
+                    o.label = $scope.resourceBundle['stock.out'];
                     o.color = color[1];
                 } else {
                     o.label = dd;
@@ -3496,7 +3496,7 @@ domainControllers.controller('PredictiveController', ['$scope', '$timeout', '$sc
                     o.isSliced = 1;
                 }
                 o.value = data[dd] || 0;
-                o.toolText = "$label: $value of $unformattedSum" + " " + label;
+                o.toolText = "$label: $value " + $scope.resourceBundle['of'] + " $unformattedSum" + " " + label;
                 if (data[dd]) {
                     isOneDataAvailable = true;
                 }
@@ -3507,7 +3507,7 @@ domainControllers.controller('PredictiveController', ['$scope', '$timeout', '$sc
         }
 
         function constructPieData(data) {
-            $scope.soPieData = constructPie(data.invDomain, soPieColors, soPieOrder, "inventory items");
+            $scope.soPieData = constructPie(data.invDomain, soPieColors, soPieOrder, $scope.resourceBundle['inventory.items.lowercase']);
         }
 
         $scope.loading = true;
@@ -3729,7 +3729,7 @@ domainControllers.controller('PredictiveController', ['$scope', '$timeout', '$sc
             "exportEnabled": 1,
             "enableSlicing": 0
         };
-        $scope.predictiveCaption = "Stock-out for next week";
+        $scope.predictiveCaption = $scope.resourceBundle['inventory.dashboard.prediction.stock.out.for.next.week'];
 
         $scope.mapOpt = {
             "nullEntityColor": "#cccccc",
@@ -3769,7 +3769,7 @@ domainControllers.controller('PredictiveController', ['$scope', '$timeout', '$sc
             "showAxisLines": "0",
             "valueFontColor":"#000000",
             "theme": "fint",
-            "yAxisName": "Percentage",
+            "yAxisName": $scope.resourceBundle['yaxis.name.percentage'],
             "yAxisNameFontSize": 12,
             "exportEnabled": 1,
             "caption": ' ',
@@ -3801,7 +3801,7 @@ domainControllers.controller('PredictiveController', ['$scope', '$timeout', '$sc
                             bd.value = per;
                             bd.displayValue = bd.value + "%";
                             if(event == 'so' ||  event == 'n') {
-                                bd.toolText = value + " of " + den + (level == undefined ? " materials" : " inventory items");
+                                bd.toolText = value + " " + $scope.resourceBundle['of'] + " " + den + (level == undefined ? " " + $scope.resourceBundle['materials.lowercase'] : " " + $scope.resourceBundle['inventory.items.lowercase']);
                             }
                             for (var r = 1; r < mapRange[mapEvent].length; r++) {
                                 if (per <= mapRange[mapEvent][r]) {
@@ -3918,26 +3918,26 @@ domainControllers.controller('PredictiveController', ['$scope', '$timeout', '$sc
             $scope.subCaption = '';
             if (event == 'so') {
                 subData = $scope.dashboardView.inv["so"];
-                $scope.caption = "Likely to stock Out";
+                $scope.caption = $scope.resourceBundle['inventory.dashboard.prediction.likely.to.stockout'];
             } else if (event == 'n') {
                 subData = $scope.dashboardView.inv["n"];
-                $scope.caption = "No Stock out";
+                $scope.caption = $scope.resourceBundle['inventory.dashboard.prediction.no.stock.out'];
             }
             var allSubData = $scope.dashboardView.inv["n"];
 
             if (checkNotNullEmpty($scope.exFilter)) {
                 if ($scope.exType == "mTag") {
-                    $scope.subCaption += ($scope.subCaption == '' ? '' : ', ') + "<b>Material tag(s):</b> " + $scope.exFilterText;
+                    $scope.subCaption += ($scope.subCaption == '' ? '' : ', ') + "<b>" + $scope.resourceBundle['one.or.more.material.tags'] + ":</b> " + $scope.exFilterText;
                 } else if ($scope.exType == "mId") {
-                    $scope.subCaption += ($scope.subCaption == '' ? '' : ', ') + "<b>Material:</b> " + $scope.exFilterText;
+                    $scope.subCaption += ($scope.subCaption == '' ? '' : ', ') + "<b>" + $scope.resourceBundle['material.uppercase'] + ":</b> " + $scope.exFilterText;
                 }
             }
 
             if (checkNotNullEmpty($scope.eTag)) {
-                $scope.subCaption += ($scope.subCaption == '' ? '' : ', ') + "<b>" + $scope.resourceBundle.kiosk + " tag(s): </b>" + $scope.eTagText;
+                $scope.subCaption += ($scope.subCaption == '' ? '' : ', ') + "<b>" + $scope.resourceBundle['one.or.more.material.tags'] + ": </b>" + $scope.eTagText;
             }
 
-            $scope.subCaption = $sce.trustAsHtml("Within the next 7 days. " + $scope.subCaption);
+            $scope.subCaption = $sce.trustAsHtml($scope.resourceBundle['inventory.dashboard.prediction.within.next.seven.days'] + " " + $scope.subCaption);
             var addLink = false;
             if ($scope.showSwitch) {
                 var mData = [];
@@ -3978,7 +3978,7 @@ domainControllers.controller('PredictiveController', ['$scope', '$timeout', '$sc
                         o.label = n;
                         o.value = per;
                         o.displayValue = o.label + "<br/>" + per + "%";
-                        o.toolText = o.label + ": " + value + " of " + den + " " + " inventory items";
+                        o.toolText = o.label + ": " + value + " " + $scope.resourceBundle['of'] + " " + den + " " + " " + $scope.resourceBundle['inventory.items.lowercase'];
                         o.showLabel = "1";
                         if (checkNotNullEmpty(value)) {
                             o.link = "JavaScript: callFunctionByName('addFilter','" + filter + "','" + level + "')";

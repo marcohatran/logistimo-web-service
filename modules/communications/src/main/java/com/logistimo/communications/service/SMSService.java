@@ -329,13 +329,23 @@ public class SMSService extends MessageService {
   }
 
   // Get the status description
-  public String getStatusMessage(String statusCode, Locale locale) {
+  public String getStatusMessage(String statusCode, Locale locale, String providerId) {
+    SMSConfig.ProviderConfig providerConfig;
+    if (providerId != null && !providerId.equalsIgnoreCase(provider.getString(ProviderConfig.PROVIDER_ID))) {
+        try {
+            providerConfig = SMSConfig.getInstance().getProviderConfig(providerId);
+        } catch (ConfigurationException e) {
+            providerConfig = provider;
+        }
+    } else {
+      providerConfig = provider;
+    }
     if (statusCode == null || statusCode.isEmpty()) {
-      statusCode = provider.getString(ProviderConfig.STATUS_CODE_DEFAULT);
+      statusCode = providerConfig.getString(ProviderConfig.STATUS_CODE_DEFAULT);
       /// old: statusCode = "9"; // default code - message sent
     }
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-    String key = provider.getStatusResourceKey(statusCode);
+    ResourceBundle messages = Resources.getBundle(locale);
+    String key = providerConfig.getStatusResourceKey(statusCode);
     if (messages != null && key != null && !key.isEmpty()) {
       return messages.getString(key);
     }

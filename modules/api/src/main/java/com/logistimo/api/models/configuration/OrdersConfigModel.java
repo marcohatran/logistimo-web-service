@@ -71,6 +71,9 @@ public class OrdersConfigModel {
   public boolean corm; // Mark cancelling order reasons mandatory
   public boolean acs; // Allow creating shipments
   public boolean aafmsc; // Auto assign first material status to items, when order is confirmed
+  private boolean shipOnPickup; // Automatically mark an order as 'Shipped' on pick up of a consignment
+  private boolean fulfillOnDelivery; // Automatically mark an order as 'Fulfilled' on delivery of a consignment.
+  private boolean disableDeliveryReqByCustomer; // Disable the request for delivery by a customer.
   private String logo;
   private String logoName;
   private String invoiceTemplate;
@@ -117,6 +120,10 @@ public class OrdersConfigModel {
    */
   private boolean transfer;
 
+  /**
+   * At least one transport service provider is present
+   */
+  public boolean tspc;
 
   public String getLogo() {
     return logo;
@@ -210,5 +217,29 @@ public class OrdersConfigModel {
 
   public void setTransferReferenceIdMandatory(boolean transfer) {
     this.transfer = transfer;
+  }
+
+  public boolean getMarkShippedOnPickup() {
+    return shipOnPickup;
+  }
+
+  public void setMarkShippedOnPickup(boolean flag) {
+    this.shipOnPickup = flag;
+  }
+
+  public boolean getMarkFulfilledOnDelivery() {
+    return fulfillOnDelivery;
+  }
+
+  public void setMarkFulfilledOnDelivery(boolean flag) {
+    this.fulfillOnDelivery = flag;
+  }
+
+  public boolean getDisableDeliveryRequestByCustomer() {
+    return disableDeliveryReqByCustomer;
+  }
+
+  public void setDisableDeliveryRequestByCustomer(boolean flag) {
+    this.disableDeliveryReqByCustomer = flag;
   }
 }

@@ -58,11 +58,11 @@ function DashboardRepository(apiService, $q) {
         save: function (dashboard, $scope) {
             var deferred = $q.defer();
             if ($scope.isUndef(dashboard.name)) {
-                $scope.showWarning("Name is mandatory");
+                $scope.showWarning($scope.resourceBundle['config.custom.dashboard.name.is.mandatory']);
                 deferred.reject();
                 return deferred.promise;
             } else if ($scope.isUndef(dashboard.widgets) || checkNullEmptyObject(dashboard.widgets)) {
-                $scope.showWarning("Please configure widgets");
+                $scope.showWarning($scope.resourceBundle['config.custom.dashboard.configure.widgets.message']);
                 deferred.reject();
                 return deferred.promise;
             }

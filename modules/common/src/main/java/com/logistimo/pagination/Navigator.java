@@ -140,7 +140,7 @@ public class Navigator {
   }
 
   public String getNavigationHTML(Locale locale) {
-    ResourceBundle jsMessages = Resources.get().getBundle("JSMessages", locale);
+    ResourceBundle jsMessages = Resources.getBundle(locale);
     String html = "";
     if (getFirstUrl() != null) {
       html +=

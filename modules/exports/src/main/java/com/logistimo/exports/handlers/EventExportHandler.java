@@ -130,7 +130,7 @@ public class EventExportHandler implements IExportHandler {
   }
 
   public static String getEventObjectType(String oty, Locale locale) {
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+    ResourceBundle messages = Resources.getBundle(locale);
     if (JDOUtils.getImplClassName(IOrder.class).equals(oty)) {
       return messages.getString("order");
     } else if (JDOUtils.getImplClassName(IInvntry.class).equals(oty)) {

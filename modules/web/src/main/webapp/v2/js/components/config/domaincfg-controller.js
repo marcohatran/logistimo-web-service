@@ -2064,9 +2064,9 @@ domainCfgControllers.controller('TemperatureConfigurationController', ['$scope',
         $scope.vendors = false;
         $scope.loading = false;
         $scope.invalidStatusUrl = false;
-        $scope.configCommunicationChannel = [{id: 0, value: "SMS"}, {id: 1, value: "Internet"}, {
+        $scope.configCommunicationChannel = [{id: 0, value: $scope.resourceBundle['communication.channel.sms']}, {id: 1, value: $scope.resourceBundle['communication.channel.internet']}, {
             id: 2,
-            value: "Failover"
+            value: $scope.resourceBundle['communication.channel.failover']
         }];
         $scope.config = {};
         $scope.dc = {};
@@ -3314,6 +3314,7 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
             }
             return title;
         };
+
         $scope.getMessage = function (nofObject) {
             var message = "";
             if (checkNotNullEmpty(nofObject.os)) {
@@ -3384,9 +3385,9 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
 
             var buildmessage = $scope.buildNotify(title, message, count, extraParamsMessage, extraParamsSelect);
             $scope.buildmessage = buildmessage;
-            if ($scope.event != undefined && checkNotNullEmpty($scope.event)) {
+            if ($scope.eventDisplay != undefined && checkNotNullEmpty($scope.eventDisplay)) {
                 for (var i = 0; i < $scope.event.length; i++) {
-                    if (buildmessage.replace(/ /g, '').toLowerCase() == $scope.event[i].name.replace(/ /g, '').toLowerCase()) {
+                    if (buildmessage.replace(/ /g, '').toLowerCase() == $scope.eventDisplay[i].name.replace(/ /g, '').toLowerCase()) {
                         $scope.contin = false;
                         break;
                     }
@@ -3496,7 +3497,7 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
                         if (checkNotNullEmpty($scope.nof.temp)) {
                             if (checkNotNullEmpty($scope.nof.pr)) {
                                 if ($scope.nof.temp == "No data from device" && $scope.nof.pr == 0) {
-                                    $scope.showWarning($scope.alert);
+                                    $scope.showWarning($scope.resourceBundle[$scope.alert]);
                                     return;
                                 }
                             }
@@ -3505,7 +3506,7 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
                             || $scope.showStatus) {
                             $scope.showSubview = true;
                         } else {
-                            $scope.showWarning($scope.alert);
+                            $scope.showWarning($scope.resourceBundle[$scope.alert]);
                         }
                     } else {
                         $scope.showSubview = true;
@@ -3527,7 +3528,7 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
                         }
                     }
                 } else {
-                    $scope.showWarning($scope.resourceBundle['event.exists'] + '\"' + $scope.buildmessage + '\"' + '. ' + $scope.resourceBundle['event.edit']);
+                    $scope.showWarning($scope.resourceBundle['event.exists'] + ' \"' + $scope.buildmessage + '\"' + '. ' + $scope.resourceBundle['event.edit']);
                 }
             } else {
                 $scope.showWarning($scope.resourceBundle['select.event']);
@@ -3584,43 +3585,42 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
             if (notif.co) {
                 noSubscriberTypesChecked = false;
                 if (checkNullEmpty(notif.cot)) {
-                    $scope.showWarning($scope.resourceBundle['notifications.freqnotselected'] + ' ' + $scope.resourceBundle['customers']);
+                    $scope.showWarning(messageFormat($scope.resourceBundle['notifications.freqnotselected'], $scope.resourceBundle['customers']));
                     return false;
                 }
             }
             if (notif.vn) {
                 noSubscriberTypesChecked = false;
                 if (checkNullEmpty(notif.vnt)) {
-                    $scope.showWarning($scope.resourceBundle['notifications.freqnotselected'] + ' ' + $scope.resourceBundle['vendors']);
+                    $scope.showWarning(messageFormat($scope.resourceBundle['notifications.freqnotselected'], $scope.resourceBundle['vendors']));
                     return false;
                 }
             }
             if (notif.ad) {
                 noSubscriberTypesChecked = false;
                 if (checkNullEmpty(notif.adt)) {
-                    $scope.showWarning($scope.resourceBundle['notifications.freqnotselected'] + ' ' + $scope.resourceBundle['administrators']);
+                    $scope.showWarning(messageFormat($scope.resourceBundle['notifications.freqnotselected'], $scope.resourceBundle['administrators']));
                     return false;
                 }
             }
             if (notif.au) {
                 noSubscriberTypesChecked = false;
                 if (checkNullEmpty(notif.aut)) {
-                    $scope.showWarning($scope.resourceBundle['notifications.freqnotselected'] + ' ' + $scope.resourceBundle['asset']
-                        + ' ' + $scope.resourceBundle['owners'].toLowerCase() + ' / ' + $scope.resourceBundle['asset.maintainers'].toLowerCase());
+                    $scope.showWarning($scope.resourceBundle['notifications.freqnotselected.for.asset.owners.and.asset.maintainers']);
                     return false;
                 }
             }
             if (notif.cr) {
                 noSubscriberTypesChecked = false;
                 if (checkNullEmpty(notif.crt)) {
-                    $scope.showWarning($scope.resourceBundle['notifications.freqnotselected'] + ' ' + $scope.resourceBundle['creator']);
+                    $scope.showWarning(messageFormat($scope.resourceBundle['notifications.freqnotselected'], $scope.resourceBundle['creator']));
                     return false;
                 }
             }
             if (notif.usr) {
                 noSubscriberTypesChecked = false;
                 if (checkNullEmpty(notif.ust)) {
-                    $scope.showWarning($scope.resourceBundle['notifications.freqnotselected'] + ' ' + $scope.resourceBundle['users']);
+                    $scope.showWarning(messageFormat($scope.resourceBundle['notifications.freqnotselected'], $scope.resourceBundle['users']));
                     return false;
                 }
                 if (checkNullEmpty(notif.uids) && checkNullEmpty(notif.uTgs)) {
@@ -3796,14 +3796,15 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
                 $scope.accountKeys.push(event.id);
             });
         };
-        $scope.getNotify = function (nofObject) {
+
+        $scope.getNotify = function (nofObject, fromResourceBundle) {
             if (nofObject != null) {
                 var notif = "";
-                var title = $scope.getTitle(nofObject);
-                var message = $scope.getMessage(nofObject);
+                var title = checkNullEmpty(fromResourceBundle) || !fromResourceBundle ? $scope.getTitle(nofObject) : $scope.getLabelFromResourceBundle($scope.getTitle(nofObject));
+                var message = checkNullEmpty(fromResourceBundle) || !fromResourceBundle ? $scope.getMessage(nofObject) : $scope.getLabelFromResourceBundle($scope.getMessage(nofObject));
                 var isStatus = nofObject.temp == status;
-                var count = $scope.getCount(nofObject, isStatus);
-                var extraParamsMessage = $scope.getExtraParamsMessage(nofObject);
+                var count = checkNullEmpty(fromResourceBundle) || !fromResourceBundle || !$scope.isOrderOrShipmentStatus(nofObject) ?  $scope.getCount(nofObject, isStatus) : $scope.getLabelFromResourceBundle($scope.getCount(nofObject, isStatus));
+                var extraParamsMessage = checkNullEmpty(fromResourceBundle) || !fromResourceBundle ? $scope.getExtraParamsMessage(nofObject) : $scope.getLabelFromResourceBundle($scope.getExtraParamsMessage(nofObject));
                 var extraParamsSelect = $scope.getExtraParamsSelect(nofObject);
                 notif = title;
                 if (checkNotNullEmpty(message)) {
@@ -3812,7 +3813,6 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
                 if (checkNotNullEmpty(extraParamsMessage) && checkNullEmpty(nofObject.or) && checkNullEmpty(nofObject.ship)) {
                     notif += ' (' + extraParamsMessage + ' = ' + extraParamsSelect + ')';
                 }
-
                 return notif;
             }
             return null;
@@ -3821,12 +3821,12 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
         $scope.buildNotify = function (title, message, count, extraParamsMessage, extraParamsSelect) {
             var notif = "";
             if (checkNotNullEmpty(title)) {
-                notif = title;
+                notif = $scope.getLabelFromResourceBundle(title);
                 if (checkNotNullEmpty(message) && checkNotNullEmpty(count)) {
-                    notif += ' (' + message + ' = ' + count + ')';
+                    notif += ' (' + $scope.getLabelFromResourceBundle(message) + ' = ' + count + ')';
                 }
                 if (checkNotNullEmpty(extraParamsMessage) && checkNotNullEmpty(extraParamsSelect)) {
-                    notif += '(' + extraParamsMessage + ' = ' + extraParamsSelect + ')';
+                    notif += '(' + $scope.getLabelFromResourceBundle(extraParamsMessage) + ' = ' + extraParamsSelect + ')';
                 }
                 return notif;
             }
@@ -3855,7 +3855,7 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
                     }
                 }
                 if (nofObject.cr) {
-                    notifPerson = 'Creator';
+                    notifPerson = $scope.resourceBundle['creator'];
                     notifTime = $scope.notifyTime(nofObject.crt);
                     notifPeriod = notifPerson + ' (' + notifTime + ')';
                     if (checkNotNullEmpty(not)) {
@@ -3865,7 +3865,7 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
                     }
                 }
                 if (nofObject.usr) {
-                    notifPerson = "Users";
+                    notifPerson = $scope.resourceBundle['users'];
                     notifTime = $scope.notifyTime(nofObject.ust);
                     notifPeriod = notifPerson + ' (' + notifTime + ')';
                     if (checkNotNullEmpty(not)) {
@@ -3875,7 +3875,7 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
                     }
                 }
                 if (nofObject.ad) {
-                    notifPerson = "Administrators";
+                    notifPerson = $scope.resourceBundle['administrators'];
                     notifTime = $scope.notifyTime(nofObject.adt);
                     notifPeriod = notifPerson + ' (' + notifTime + ')';
                     if (checkNotNullEmpty(not)) {
@@ -3896,9 +3896,9 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
                 }
                 if (nofObject.bb) {
                     if (checkNotNullEmpty(not)) {
-                        not = not + ', ' + "Bulletin Board";
+                        not = not + ', ' + $scope.resourceBundle['bulletinboard'];
                     } else {
-                        not = "Bulletin Board";
+                        not = $scope.resourceBundle['bulletinboard'];
                     }
                 }
                 return not;
@@ -3909,13 +3909,13 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
             if (checkNotNullEmpty(timeStamp)) {
                 var time = "";
                 if (timeStamp == '0') {
-                    time = "SMS Immediately";
+                    time = $scope.resourceBundle['sms.immediately'];
                 } else if (timeStamp == '1') {
-                    time = "Email Daily";
+                    time = $scope.resourceBundle['email.daily'];
                 } else if (timeStamp == '2') {
-                    time = "Email Weekly";
+                    time = $scope.resourceBundle['email.weekly'];
                 } else if (timeStamp == '3') {
-                    time = "Email Monthly";
+                    time = $scope.resourceBundle['email.monthly'];
                 }
                 return time;
             }
@@ -3925,6 +3925,7 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
             if (notification != null) {
                 $scope.shownotf = false;
                 $scope.event = [];
+                $scope.eventDisplay = [];
                 $scope.nfy = [];
                 configKeys.forEach(function (key) {
                     $scope.nofObject = notification[key];
@@ -3933,6 +3934,7 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
                             $scope.nofObjt = $scope.nofObject[i];
                             if ($scope.nofObjt != null) {
                                 $scope.event.push({key: key, name: $scope.getNotify($scope.nofObjt)});
+                                $scope.eventDisplay.push({key: key, name: $scope.getNotify($scope.nofObjt, true)});
                                 $scope.nfy.push($scope.getNotifyTime($scope.nofObjt));
                             }
                         }
@@ -4090,6 +4092,10 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
             }
         };
 
+        $scope.isOrderOrShipmentStatus = function(object) {
+            return (object.or == 'Order status changed' || object.ship == 'Shipment status changed');
+        };
+
         $scope.setUserIds = function (eventNotification) {
             if (checkNotNullEmpty(eventNotification.uid)) {
                 eventNotification.uids = [];
@@ -4126,7 +4132,7 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
             }
         };
 
-        $scope.deleteNotification = function (msgkey, event) {
+        $scope.deleteNotification = function (msgkey, event, eventDisplay) {
             if ($scope.nof != null) {
                 if ($scope.subview == 'orders') {
                     $scope.orderKeys.forEach(function (key) {
@@ -4160,7 +4166,7 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
                     });
                 }
                 if (checkNotNullEmpty($scope.notif)) {
-                    if (!confirm($scope.resourceBundle['removenotification'] + ' ' + '"' + event + '"')) {
+                    if (!confirm($scope.resourceBundle['removenotification'] + ' ' + '"' + eventDisplay + '"')) {
                         return;
                     }
                     domainCfgService.deleteNotificationCfg($scope.notif).then(function (data) {
@@ -5124,3 +5130,45 @@ domainCfgControllers.controller('FormsConfigurationController', ['$scope', 'doma
         $scope.getFormsConfiguration();
     }
 ]);
+
+domainCfgControllers.controller('TransportersConfigurationController', ['$scope', 'domainCfgService',
+    function($scope, domainCfgService) {
+        function init() {
+            $scope.transportersConfig = {};
+            fetchApiEnabledTransporters();
+        };
+        init();
+
+        function fetchApiEnabledTransporters() {
+            $scope.showLoading();
+            domainCfgService.getTransportersConfig().then(function (data) {
+                $scope.transportersConfig = data.data;
+            }).catch(function err(msg) {
+                $scope.showErrorMsg(msg);
+            }).finally(function () {
+                $scope.hideLoading();
+            })
+        }
+
+        $scope.setTransportersConfiguration = function() {
+            $scope.loading = true;
+            $scope.showLoading();
+            domainCfgService.setTransportersConfig($scope.transportersConfig).then(function (data) {
+                if(checkNotNullEmpty(data.data)){
+                    $scope.showSuccess(data.data);
+                }
+            }).catch(function err(msg) {
+                $scope.showErrorMsg(msg, true);
+            }).finally(function () {
+                $scope.hideLoading();
+                $scope.loading = false;
+            });
+        };
+
+        $scope.onTransporterEnabledChange = function(transporterConfig) {
+            if(!transporterConfig.enabled) {
+                transporterConfig['df_ctg'] = ''; //setting default category
+            }
+        };
+
+    }]);

@@ -23,72 +23,68 @@
 
 package com.logistimo.bulkuploads.headers;
 
+import com.logistimo.auth.SecurityConstants;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.services.Resources;
+import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.utils.FieldLimits;
 
+import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.StringJoiner;
 
 /**
  * Created by charan on 06/03/17.
  */
 public class UsersHeader implements IHeader {
-
-  @Override
-  public String getUploadableCSVHeader(Locale locale, String type) {
-    ResourceBundle bundle = Resources.get().getBundle("Messages", locale);
-    String
-        format =
-        "Operation* (a = add / e = edit / d = delete; if empty it is defaulted to add; all operations MUST include User ID),"
-            + bundle.getString("user.id")
-            + "* (a unique username without any spaces; " + FieldLimits.USERID_MIN_LENGTH + CharacterConstants.HYPHEN + FieldLimits.USERID_MAX_LENGTH + " characters; Tip: prefix it with [say] your organization code or suffix it with [say] a number for uniqueness),"
-            + bundle.getString("login.password") + "* (" + bundle.getString("bulkupload.users.password.header.tip") + ")," + bundle
-                .getString("user.confirmpassword") + "* (same as password)," +
-            bundle.getString("user.role") + "* (ROLE_do = " + bundle.getString("role.domainowner")
-            + " / ROLE_ko = " + bundle.getString("role.kioskowner") + " / ROLE_sm = " + bundle
-            .getString("role.servicemanager") + "," +
-            bundle.getString("user.permission") + " (d = " + bundle.getString("default.caps")
-            + " / v = " + bundle.getString("user.permission.view") + " / a = " + bundle
-            .getString("user.permission.asset") + "; if empty it is considered as Default)," +
-            bundle.getString("user.token.expiry") + " (" + FieldLimits.TOKEN_EXPIRY_MIN + CharacterConstants.HYPHEN + FieldLimits.TOKEN_EXPIRY_MAX + CharacterConstants.SPACE + bundle.getString("days") + "; if empty or 0 domain's default is taken)," +
-            bundle.getString("user.firstname") + "* (" + FieldLimits.FIRSTNAME_MIN_LENGTH + CharacterConstants.HYPHEN + FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters)" +"," + bundle
-            .getString("user.lastname") + " (not more than " + FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters)" + "," +
-            bundle.getString("user.mobile")
-            + "* " + "(not more than " + FieldLimits.MOBILE_PHONE_MAX_LENGTH + " characters; format: [country-code][space][number-without-spacesORdashes])," +
-            bundle.getString("user.email") + " (* not more than " + FieldLimits.EMAIL_MAX_LENGTH + " characters; mandatory if user role is " + bundle
-            .getString("kiosk") + " Manager or higher)," +
-            bundle.getString("country")
-            + "* (ISO-3166 2-letter codes as at http://userpage.chemie.fu-berlin.de/diverse/doc/ISO_3166.html),"
-            + bundle.getString("language")
-            + "* (ISO-639-1 2-letter codes as listed at http://en.wikipedia.org/wiki/List_of_ISO_639-1_codes),"
-            +
-            bundle.getString("preferredtimezone")
-            + "* (Timezones can be downloaded from the bulk upload page of LogiWeb)," +
-            bundle.getString("user.gender") + " (m = Male / f = Female / o = Other)," + bundle
-            .getString("user.date.of.birth") + " (" + Constants.DATE_FORMAT_EXCEL + " format)," +
-            bundle.getString("user.landline") + " (not more than " + FieldLimits.LAND_PHONE_MAX_LENGTH + " characters; format: [country-code][space][number-without-spacesORdashes])," +
-            bundle.getString("state")
-            + "* (should be the same as in the corresponding LogiWeb drop-downs)," + bundle
-            .getString("district")
-            + " (should be the same as in the corresponding LogiWeb drop-downs)," + bundle
-            .getString("taluk")
-            + " (should be the same as in the corresponding LogiWeb drop-downs)," +
-            bundle.getString("village") + " (not more than " + FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters)" + ","
-            + bundle.getString("streetaddress") + " (not more than " + FieldLimits.STREET_ADDRESS_MAX_LENGTH + " characters)" + "," + bundle
-            .getString("zipcode") + " (not more than " + FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters)" + "," +
-            bundle.getString("user.oldpassword")
-            + " (specify ONLY IF you wish to change the password AND operation is edit)" + "," +
-            bundle.getString("customid.user") + " (not more than " + FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters)" + "," +
-            bundle.getString("user.mobilebrand") + " (not more than " + FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters)" + "," +
-            bundle.getString("user.mobilemodel") + " (not more than " + FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters)" + "," +
-            bundle.getString("user.imei") + " (not more than " + FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters)" + "," +
-            bundle.getString("user.mobileoperator") + " (not more than " + FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters)" + "," +
-            bundle.getString("user.simId") + " (not more than " + FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters)" + "," +
-            bundle.getString("tags") + " (semi-colon separate tags; e.g. tag1;tag2;tag3)" + CharacterConstants.COMMA +
-            bundle.getString("mob") + CharacterConstants.SPACE + bundle.getString("gui.theme") + " (0 = Same as in domain configuration / 1 = Default / 2 = Sidebar & Landing screen)" + CharacterConstants.COMMA
-      ;
-    return format;
-  }
+    @Override
+    public String getUploadableCSVHeader(Locale locale, String type) {
+        ResourceBundle bundle = Resources.getBundle(locale);
+        StringJoiner
+            header = new StringJoiner(CharacterConstants.COMMA);
+        header.add(bundle.getString("bulkupload.user.operation.header"))
+            .add(MessageFormat.format(bundle.getString("bulkupload.user.id.header"),
+                FieldLimits.USERID_MIN_LENGTH, FieldLimits.USERID_MAX_LENGTH))
+            .add(bundle.getString("bulkupload.password.header"))
+            .add(bundle.getString("bulkupload.confirm.password.header"))
+            .add(MessageFormat.format(bundle.getString("bulkupload.role.header"),
+                SecurityConstants.ROLE_DOMAINOWNER,
+                SecurityConstants.ROLE_SERVICEMANAGER,
+                SecurityConstants.ROLE_KIOSKOWNER))
+            .add(MessageFormat.format(bundle.getString("bulkupload.permission.header"),IUserAccount.PERMISSION_DEFAULT,
+                IUserAccount.PERMISSION_VIEW, IUserAccount.PERMISSION_ASSET))
+            .add(MessageFormat.format(bundle.getString("bulkupload.token.expiry.header"), FieldLimits.TOKEN_EXPIRY_MIN, FieldLimits.TOKEN_EXPIRY_MAX))
+            .add(MessageFormat.format(bundle.getString("bulkupload.user.firstname.header"), FieldLimits.FIRSTNAME_MIN_LENGTH, FieldLimits.TEXT_FIELD_MAX_LENGTH))
+            .add(MessageFormat.format(bundle.getString("bulkupload.user.lastname.header"), FieldLimits.TEXT_FIELD_MAX_LENGTH))
+            .add(MessageFormat.format(bundle.getString("bulkupload.user.mobile.header"), FieldLimits.MOBILE_PHONE_MAX_LENGTH))
+            .add(MessageFormat.format(bundle.getString("bulkupload.user.email.header"), FieldLimits.EMAIL_MAX_LENGTH, bundle.getString("role.servicemanager")))
+            .add(bundle.getString("bulkupload.country.header"))
+            .add(bundle.getString("bulkupload.language.header"))
+            .add(bundle.getString("bulkupload.timezone.header"))
+            .add(MessageFormat.format(bundle.getString("bulkupload.user.gender.header"),
+                IUserAccount.GENDER_MALE, IUserAccount.GENDER_FEMALE, IUserAccount.GENDER_OTHER))
+            .add(MessageFormat.format(bundle.getString("bulkupload.user.date.of.birth.header"), Constants.DATE_FORMAT_EXCEL))
+            .add(MessageFormat.format(bundle.getString("bulkupload.alternate.phone.header"), FieldLimits.LAND_PHONE_MAX_LENGTH))
+            .add(bundle.getString("bulkupload.state.header"))
+            .add(bundle.getString("bulkupload.district.header"))
+            .add(bundle.getString("bulkupload.taluk.header"))
+            .add(MessageFormat.format(bundle.getString("bulkupload.village.header"),CharacterConstants.EMPTY,
+                FieldLimits.TEXT_FIELD_MAX_LENGTH))
+            .add(MessageFormat.format(bundle.getString("bulkupload.street.address.header"), FieldLimits.STREET_ADDRESS_MAX_LENGTH))
+            .add(MessageFormat.format(bundle.getString("bulkupload.zipcode.header"), FieldLimits.TEXT_FIELD_MAX_LENGTH))
+            .add(bundle.getString("bulkupload.old.password.header"))
+            .add(MessageFormat.format(bundle.getString("bulkupload.user.custom.id.header"),
+                FieldLimits.TEXT_FIELD_MAX_LENGTH))
+            .add(MessageFormat.format(bundle.getString("bulkupload.mobile.brand.header"), FieldLimits. TEXT_FIELD_MAX_LENGTH))
+            .add(MessageFormat.format(bundle.getString("bulkupload.mobile.model.header"), FieldLimits.TEXT_FIELD_MAX_LENGTH))
+            .add(MessageFormat.format(bundle.getString("bulkupload.imei.number.header"), FieldLimits.TEXT_FIELD_MAX_LENGTH))
+            .add(MessageFormat.format(bundle.getString("bulkupload.sim.provider.header"), FieldLimits.TEXT_FIELD_MAX_LENGTH))
+            .add(MessageFormat.format(bundle.getString("bulkupload.sim.id.header"), FieldLimits.TEXT_FIELD_MAX_LENGTH))
+            .add(bundle.getString("bulkupload.tags.header"))
+            .add(bundle.getString("bulkupload.mobile.gui.theme.header"))
+        ;
+        return header.toString();
+    }
 }

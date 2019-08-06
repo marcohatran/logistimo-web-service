@@ -41,6 +41,15 @@ public interface MemcacheService {
 
   boolean putIfNotExist(String cacheKey, Object obj);
 
+  /**
+   *
+   * @param cacheKey - key to use
+   * @param obj - data
+   * @param expiry - expiry in seconds
+   * @return true if put is successful.
+   */
+  boolean putIfNotExist(String cacheKey, Object obj, int expiry);
+
   boolean putMultiIfNotExists(String cacheKey1, Object obj1, String cacheKey2, Object obj2);
 
   boolean delete(String key);

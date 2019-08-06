@@ -23,8 +23,6 @@
 
 package com.logistimo.models.users;
 
-import com.logistimo.constants.Constants;
-
 import org.springframework.util.StringUtils;
 
 import java.util.Date;

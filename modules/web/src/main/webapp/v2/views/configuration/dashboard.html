@@ -48,7 +48,7 @@
                             <div class="form-group">
                                 <label class="col-sm-3 control-label">{{resourceBundle['conf.db.mat.fil']}}</label>
                                 <div class="col-sm-4">
-                                    <tag-select tags-model="db.dmtgo" place-holder="Select tag" type="'material'" force-no-udf="'true'"></tag-select>
+                                    <tag-select tags-model="db.dmtgo" place-holder="{{resourceBundle['select.tag']}}" type="'material'" force-no-udf="'true'"></tag-select>
                                 </div>
                             </div>
                         </div>
@@ -58,7 +58,7 @@
                             <div class="form-group">
                                 <label class="col-sm-3 control-label">{{resourceBundle['exclude']}} {{resourceBundle['kiosk.lower']}} {{resourceBundle['tags.lower']}}</label>
                                 <div class="col-sm-4">
-                                    <tag-select tags-model="db.exetgo" place-holder="Select tag" type="'entity'" force-no-udf="'true'"></tag-select>
+                                    <tag-select tags-model="db.exetgo" place-holder="{{resourceBundle['select.tag']}}" type="'entity'" force-no-udf="'true'"></tag-select>
                                 </div>
                             </div>
                         </div>
@@ -87,7 +87,7 @@
                             <div class="form-group">
                                 <label class="col-sm-3 control-label">{{resourceBundle['temperature.states.default.exclude']}}</label>
                                 <div class="col-sm-4">
-                                    <lg-uib-select multiple="multiple" query="filterStatus(q)" ui-model="db.exetsta" place-holder="None"> </lg-uib-select>
+                                    <lg-uib-select multiple="multiple" query="filterStatus(q)" ui-model="db.exetsta" place-holder="{{resourceBundle['none']}}"> </lg-uib-select>
                                 </div>
                             </div>
                         </div>
@@ -107,12 +107,12 @@
                                 <label class="col-sm-3 control-label">{{resourceBundle['activity.default.period']}}</label>
                                 <div class="col-sm-4">
                                     <select ng-model="db.aper" class="form-control">
-                                        <option value="1">1 day</option>
-                                        <option value="2">2 days</option>
-                                        <option value="3">3 days</option>
-                                        <option value="7">7 days</option>
-                                        <option value="15">15 days</option>
-                                        <option value="30">30 days</option>
+                                        <option value="1">1 {{resourceBundle['day']}}</option>
+                                        <option value="2">2 {{resourceBundle['days']}}</option>
+                                        <option value="3">3 {{resourceBundle['days']}}</option>
+                                        <option value="7">7 {{resourceBundle['days']}}</option>
+                                        <option value="15">15 {{resourceBundle['days']}}</option>
+                                        <option value="30">30 {{resourceBundle['days']}}</option>
                                     </select>
                                 </div>
                             </div>
@@ -210,7 +210,7 @@
                             <div class="form-group">
                                 <label class="col-sm-3 control-label">{{resourceBundle['conf.db.ent.fil']}}</label>
                                 <div class="col-sm-4">
-                                    <tag-select tags-model="db.detgo" place-holder="Select tag" type="'entity'" multiple="'false'" force-no-udf="'true'"></tag-select>
+                                    <tag-select tags-model="db.detgo" place-holder="{{resourceBundle['select.tag']}}" type="'entity'" multiple="'false'" force-no-udf="'true'"></tag-select>
                                 </div>
                             </div>
                         </div>
@@ -248,7 +248,7 @@
                             <div class="form-group">
                                 <label class="col-sm-3 control-label">{{resourceBundle['conf.db.mat.fil']}}</label>
                                 <div class="col-sm-4">
-                                    <tag-select tags-model="db.dimtgo" place-holder="Select tag" type="'material'" multiple="'false'" force-no-udf="'true'"></tag-select>
+                                    <tag-select tags-model="db.dimtgo" place-holder="{{resourceBundle['select.tag']}}" type="'material'" multiple="'false'" force-no-udf="'true'"></tag-select>
                                 </div>
                             </div>
                         </div>
@@ -281,7 +281,7 @@
                             <div class="form-group">
                                 <label class="col-sm-3 control-label">{{resourceBundle['default.asset.type']}}</label>
                                 <div class="col-sm-4">
-                                    <lg-uib-select multiple="multiple" query="filterAssets(q, 1)" ui-model="db.mna" place-holder="All"> </lg-uib-select>
+                                    <lg-uib-select multiple="multiple" query="filterAssets(q, 1)" ui-model="db.mna" place-holder="{{resourceBundle['all']}}"> </lg-uib-select>
                                 </div>
                             </div>
                         </div>
@@ -291,7 +291,7 @@
                             <div class="form-group">
                                 <label class="col-sm-3 control-label">{{resourceBundle['default.asset.type']}}</label>
                                 <div class="col-sm-4">
-                                    <lg-uib-select multiple="multiple" query="filterAssets(q, 2)" ui-model="db.mda" place-holder="All"> </lg-uib-select>
+                                    <lg-uib-select multiple="multiple" query="filterAssets(q, 2)" ui-model="db.mda" place-holder="{{resourceBundle['all']}}"> </lg-uib-select>
                                 </div>
                             </div>
                         </div>

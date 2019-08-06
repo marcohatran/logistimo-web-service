@@ -187,7 +187,7 @@ public class DiscrepancyBuilder {
   }
 
   private String getFdRsnsDisplay(List<String> fdRsns, Locale locale) {
-    ResourceBundle jsMessages = Resources.get().getBundle("JSMessages", locale);
+    ResourceBundle jsMessages = Resources.getBundle(locale);
     if (jsMessages == null) {
       return "unknown";
     }
@@ -223,7 +223,7 @@ public class DiscrepancyBuilder {
   }
 
   public static String getOrderTypeDisplay(int oType, Locale locale) {
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+    ResourceBundle messages = Resources.getBundle(locale);
     if (messages == null) {
       return "unknown";
     }

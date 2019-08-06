@@ -23,8 +23,11 @@
 
 package com.logistimo.api.models;
 
+import com.logistimo.deliveryrequest.models.DeliveryRequestModel;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
@@ -276,6 +279,11 @@ public class OrderModel extends PermissionsModel {
    */
   public boolean vbm;
 
+  /**
+   * Active delivery request model present in shipment, null if multiple are present
+   */
+  private List<DeliveryRequestModel> drs;
+
   public List<Long> getDids() {
     return dids;
   }
@@ -333,4 +341,11 @@ public class OrderModel extends PermissionsModel {
     this.transferRefId = transferRefId;
   }
 
+  public List<DeliveryRequestModel> getDeliveryRequests() {
+    return drs;
+  }
+
+  public void setDeliveryRequests(List<DeliveryRequestModel> requestModels) {
+    this.drs = requestModels;
+  }
 }

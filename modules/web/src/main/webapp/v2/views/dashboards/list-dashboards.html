@@ -45,8 +45,8 @@
                                 <td><span class="word-wrap">{{dashboard.desc}}</span></td>
                                 <td align="center" ng-if="subview != 'customdashboard' && (iSU || dp.ce)">
                                     <a href="#configuration/dashboards/detail/{{dashboard.dbId}}"><span
-                                            class="glyphicon glyphicon-cog lPad5" title="Configure"></span></a>
-                                    <span class="glyphicon glyphicon-trash lPad5 click-element" title="Delete" ng-click="delete(dashboard.dbId)"></span>
+                                            class="glyphicon glyphicon-cog lPad5" title="{{resourceBundle['configure']}}"></span></a>
+                                    <span class="glyphicon glyphicon-trash lPad5 click-element" title="{{resourceBundle['delete']}}" ng-click="delete(dashboard.dbId)"></span>
                                 </td>
                             </tr>
                             </tbody>

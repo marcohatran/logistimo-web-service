@@ -69,7 +69,7 @@ public class CurrentUserBuilder {
     String userId = sUser.getUsername();
     Locale locale = sUser.getLocale();
     Long domainId = sUser.getCurrentDomainId();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     try {
       String domainName = domainsService.getDomain(domainId).getName();
       UserEntitiesModel userEntitiesModel = entitiesService.getUserWithKiosks(userId);

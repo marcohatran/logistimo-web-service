@@ -74,7 +74,7 @@ public class Approval {
     @SerializedName("approvers")
     private Set<ApproverQueue> approvers;
 
-    @JsonProperty("attributes")
+    @SerializedName("attributes")
     private Set<ApprovalAttributes> attributes;
 
     @SerializedName("domains")

@@ -66,6 +66,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URLDecoder;
+import java.text.MessageFormat;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Locale;
@@ -90,8 +91,6 @@ public class ExportController {
   private UploadService uploadService;
   private ExportService exportService;
   private UsersService usersService;
-
-  private static final String BACKEND_MESSAGES="BackendMessages";
 
   @Autowired
   private void setExportService(ExportService exportService) {
@@ -121,7 +120,7 @@ public class ExportController {
                     HttpServletResponse response) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     if (key == null || key.isEmpty()) {
       throw new BadRequestException(backendMessages.getString("file.download.error"));
     }
@@ -155,19 +154,18 @@ public class ExportController {
                         HttpServletResponse response) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     String csv = BulkUploadMgr.getCSVFormat(type, locale);
     if (csv == null) {
       throw new BadRequestException(backendMessages.getString("file.uploadformat.fetch.error"));
     }
     String typeName = null;
     try {
-      ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-      ResourceBundle bckMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
+      ResourceBundle bckMessages = Resources.getBundle(locale);
       if ("kiosks".equalsIgnoreCase(type)) {
         typeName = bckMessages.getString(type);
       } else {
-        typeName = messages.getString(type);
+        typeName = bckMessages.getString(type);
       }
     } catch (Exception ignored) {
       xLogger.warn("Exception while getting resource bundle", ignored);
@@ -313,7 +311,7 @@ public class ExportController {
     } catch (TaskSchedulingException e) {
       xLogger.severe("{0} when scheduling export task with params {1}: {2}", e.getClass().getName(),
           params, e.getMessage());
-      ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
+      ResourceBundle backendMessages = Resources.getBundle(locale);
       throw new InvalidServiceException(
           backendMessages.getString("error.in") + " " + e.getClass().getName() + " "
               + backendMessages.getString("schedule.export.task"));
@@ -421,15 +419,8 @@ public class ExportController {
   @ResponseBody
   String exportData(@RequestBody RequestModel model) throws ServiceException {
     long jobId = exportService.scheduleExportJob(model);
-    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, Locale.ENGLISH);
     IUserAccount u = usersService.getUserAccount(SecurityUtils.getUsername());
-    return backendMessages.getString("export.success1") + " " + u.getEmail() + " "
-        + backendMessages.getString("export.success2") + " "
-        + backendMessages.getString("exportstatusinfo2") + " "
-        + jobId + ". "
-        + backendMessages.getString("exportstatusinfo1");
+    ResourceBundle backendMessages = Resources.getBundle(u.getLocale());
+    return MessageFormat.format(backendMessages.getString("export.status.message"), u.getEmail(), jobId);
   }
-
-
-
 }

@@ -53,7 +53,7 @@ public class Resources {
   public ResourceBundle getBundle(String baseName, String locale) throws IOException {
     String
         key =
-        baseName + "_" + locale; // Messages_en.properties is the file that holsd english messages.
+        baseName + "_" + locale; // Messages_en.prop is the file that holsd english messages.
     ResourceBundle r = (ResourceBundle) propsMap.get(key);
     if (r == null) {
       String genericKey = null;

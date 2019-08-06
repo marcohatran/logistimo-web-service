@@ -33,9 +33,14 @@ import com.logistimo.config.models.EventSpec;
 import com.logistimo.config.models.LeadTimeAvgConfig;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
+import com.logistimo.constants.SourceConstants;
 import com.logistimo.conversations.entity.IMessage;
 import com.logistimo.conversations.service.ConversationService;
 import com.logistimo.dao.JDOUtils;
+import com.logistimo.deliveryrequest.actions.ICreateDeliveryRequestAction;
+import com.logistimo.deliveryrequest.models.DeliveryRequestModel;
+import com.logistimo.deliveryrequest.models.DeliveryRequestSource;
+import com.logistimo.deliveryrequest.models.DeliveryRequestUpdateWrapper;
 import com.logistimo.domains.utils.DomainsUtil;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.entity.IKioskLink;
@@ -71,8 +76,10 @@ import com.logistimo.orders.dao.OrderUpdateStatus;
 import com.logistimo.orders.entity.IDemandItem;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.orders.entity.Order;
+import com.logistimo.orders.exception.AllocationNotCompleteException;
 import com.logistimo.orders.models.OrderFilters;
 import com.logistimo.orders.models.PDFResponseModel;
+import com.logistimo.orders.models.ShipNowRequest;
 import com.logistimo.orders.models.UpdateOrderTransactionsModel;
 import com.logistimo.orders.models.UpdatedOrder;
 import com.logistimo.orders.service.IDemandService;
@@ -88,8 +95,10 @@ import com.logistimo.services.impl.PMF;
 import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.shipments.ShipmentStatus;
+import com.logistimo.shipments.ShipmentUtils;
 import com.logistimo.shipments.entity.IShipment;
 import com.logistimo.shipments.service.IShipmentService;
+import com.logistimo.shipments.service.impl.ShipmentService;
 import com.logistimo.tags.TagUtil;
 import com.logistimo.tags.dao.ITagDao;
 import com.logistimo.tags.entity.ITag;
@@ -98,9 +107,12 @@ import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.LockUtil;
 import com.logistimo.utils.QueryUtil;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -115,6 +127,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Set;
 
@@ -151,6 +165,7 @@ public class OrderManagementServiceImpl implements OrderManagementService {
   private UpdateOrderStatusValidator updateOrderStatusValidator;
   private OrderVisibilityAction orderVisibilityAction;
   private GetOrderOverallStatusAction orderOverallStatusAction;
+  private ICreateDeliveryRequestAction createDeliveryRequestAction;
 
   @Autowired
   public void setTagDao(ITagDao tagDao) {
@@ -231,6 +246,12 @@ public class OrderManagementServiceImpl implements OrderManagementService {
   public void setOrderOverallStatusAction(
       GetOrderOverallStatusAction orderOverallStatusAction) {
     this.orderOverallStatusAction = orderOverallStatusAction;
+  }
+
+  @Autowired
+  public void setCreateDeliveryRequestAction(ICreateDeliveryRequestAction
+                                                 createDeliveryRequestAction) {
+    this.createDeliveryRequestAction = createDeliveryRequestAction;
   }
 
   private static ITaskService getTaskService(){
@@ -435,7 +456,7 @@ public class OrderManagementServiceImpl implements OrderManagementService {
 
       List<IDemandItem> demandList = demandService.getDemandItems(orderId, pm);
       o.setItems(demandList);
-      updateOrderStatusValidator.validateOrderStatusChange(o, newStatus);
+      validateOrderStatusChangeAndAutoAllocateIfRequired(newStatus, updatingUserId, o);
       domainId = o.getDomainId();
       DomainConfig dc = DomainConfig.getInstance(domainId);
       String tag = IInvAllocation.Type.ORDER + CharacterConstants.COLON + orderId;
@@ -446,14 +467,14 @@ public class OrderManagementServiceImpl implements OrderManagementService {
           xLogger
               .info("Cancelling shipment {0} for order {1}", orderId, shipment.getShipmentId());
           shipmentService.updateShipmentStatus(shipment.getShipmentId(), ShipmentStatus.CANCELLED, message,
-              updatingUserId, crsn, false, pm, source);
+              updatingUserId, crsn, false, pm, source, false);
         }
         if (dc.autoGI()) {
           inventoryManagementService.clearAllocationByTag(null, null, tag, pm);
         }
 
-      } else if (newStatus.equals(IOrder.CONFIRMED) && dc.autoGI() && dc.getOrdersConfig()
-          .allocateStockOnConfirmation()) {
+      } else if (newStatus.equals(IOrder.CONFIRMED) && dc.autoGI()
+                 && dc.getOrdersConfig().allocateStockOnConfirmation()) {
         boolean autoAssignStatus = dc.getOrdersConfig().autoAssignFirstMatStatus();
         for (IDemandItem d : demandList) {
           try {
@@ -466,6 +487,9 @@ public class OrderManagementServiceImpl implements OrderManagementService {
                 , o.getOrderId(), d.getMaterialId(), d.getQuantity(), ie);
           }
         }
+      } else if (newStatus.equals(IOrder.READY_FOR_DISPATCH)) {
+        // ToDo: decide what to do with shipment status if present
+
       }
 
       uo = updateOrderStatus(o, newStatus, updatingUserId, message, pm);
@@ -496,6 +520,45 @@ public class OrderManagementServiceImpl implements OrderManagementService {
     // NOTE: Do this after pm is closed so that the order status is persisted
     generateEvent(domainId, IEvent.STATUS_CHANGE, uo.order, null, userIdsToBeNotified);
     return uo;
+  }
+
+  private void validateOrderStatusChangeAndAutoAllocateIfRequired(String newStatus,
+                                                                  String updatingUserId,
+                                                                  IOrder o) throws ServiceException {
+    try {
+      updateOrderStatusValidator.validateOrderStatusChange(o, newStatus);
+    } catch (AllocationNotCompleteException e) {
+      if(Objects.equals(newStatus, IOrder.READY_FOR_DISPATCH)) {
+        allocateInventoryAutomatically(updatingUserId, o.getServicingKiosk(),
+            o.getOrderId(), o.getItems());
+      }
+      updateOrderStatusValidator.validateOrderStatusChange(o, newStatus);
+    }
+  }
+
+  private void allocateInventoryAutomatically(String userId, Long vendorId, Long orderId,
+                                              List<? extends IDemandItem> items)
+      throws AllocationNotCompleteException {
+    String tag = IInvAllocation.Type.ORDER + CharacterConstants.COLON + orderId;
+    PersistenceManager localPM = PMF.get().getPersistenceManager();
+    Transaction tx = localPM.currentTransaction();
+    try {
+      tx.begin();
+      for(IDemandItem item : items) {
+        inventoryManagementService.allocateAutomatically(vendorId, item.getMaterialId(),
+            IInvAllocation.Type.ORDER, String.valueOf(orderId), tag, item.getQuantity(), userId,
+            true, localPM);
+      }
+      tx.commit();
+    } catch(ServiceException e) {
+      xLogger.warn("Automatic allocation failed", e);
+      throw new AllocationNotCompleteException("O018");
+    } finally {
+      if (tx.isActive()) {
+        tx.rollback();
+      }
+      localPM.close();
+    }
   }
 
   private UpdatedOrder updateOrderStatus(IOrder o, String newStatus, String updatingUserId,
@@ -540,28 +603,172 @@ public class OrderManagementServiceImpl implements OrderManagementService {
   }
 
   @Override
-  public String shipNow(IOrder order, String transporter, String trackingId, String reason,
-                        Date expectedFulfilmentDate, String userId, String ps, int source,
-                        String salesRefId, Boolean updateOrderFields)
+  public String shipNow(IOrder order, String userId, ShipNowRequest shipmentNowRequest,
+                        int source, Boolean updateOrderFields, Date expectedFulfilmentDate)
       throws ServiceException {
-    ShipmentModel model = new ShipmentModel();
+
+    ShipmentModel model = buildShipmentModel(order, userId, ShipmentStatus.SHIPPED);
     if (expectedFulfilmentDate != null) {
       model.ead = new SimpleDateFormat(Constants.DATE_FORMAT).format(expectedFulfilmentDate);
     }
-    model.trackingId = trackingId;
-    model.transporter = transporter;
-    model.ps = ps;
+    populateShipOrderDataToShipment(shipmentNowRequest, model);
+    return shipmentService.createShipment(model, source, updateOrderFields, null);
+  }
+
+  private void populateShipOrderDataToShipment(ShipNowRequest shipmentNowRequest,
+                                               ShipmentModel model) {
+    if(shipmentNowRequest != null) {
+      model.transporterId = shipmentNowRequest.getTransporterId();
+      model.transporter = shipmentNowRequest.getTransporter();
+      model.phonenum = shipmentNowRequest.getPhoneNum();
+      model.trackingId = shipmentNowRequest.getTrackingId();
+      model.ps = shipmentNowRequest.getPackageSize();
+      model.reason = shipmentNowRequest.getReason();
+      model.salesRefId = shipmentNowRequest.getSalesRefId();
+      model.isCustomerPickup = shipmentNowRequest.isCustomerPickup();
+      model.vehicle = shipmentNowRequest.getVehicle();
+      model.consignment = shipmentNowRequest.getConsignment();
+    }
+  }
+
+  private ShipmentModel buildShipmentModel(Long orderId, String userId, PersistenceManager pm)
+      throws ServiceException {
+    IOrder order = getOrder(orderId, true, pm);
+    return buildShipmentModel(order, userId, ShipmentStatus.OPEN);
+  }
+
+  @Override
+  public DeliveryRequestModel createDeliveryRequest(DeliveryRequestModel model)
+      throws LogiException {
+    DeliveryRequestSource source = StringUtils.isBlank(model.getShipmentId()) ?
+        DeliveryRequestSource.order : DeliveryRequestSource.shipment;
+    SecureUserDetails user = SecurityUtils.getUserDetails();
+    DeliveryRequestUpdateWrapper updateModel = raiseDeliveryRequest(model, source, user);
+    String shipmentId = model.getShipmentId();
+    shipmentService.updateShipmentDetails(shipmentId, user.getUsername(), updateModel);
+    if (source == DeliveryRequestSource.order) {
+      ResourceBundle backendMessages = Resources.getBundle(user.getLocale());
+      shipmentService.updateShipmentStatus(shipmentId, ShipmentStatus.READY_FOR_DISPATCH,
+          backendMessages.getString("dr.cr.success"), Constants.SYSTEM_USER_ID,
+          CharacterConstants.EMPTY, false, null, SourceConstants.WEB, true);
+    }
+    return null;
+  }
+
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public DeliveryRequestUpdateWrapper raiseDeliveryRequest(DeliveryRequestModel model,
+                                                            DeliveryRequestSource source,
+                                                            SecureUserDetails user)
+      throws LogiException {
+    PersistenceManager pm = PMF.get().getPersistenceManager();
+    Transaction tx = pm.currentTransaction();
+    try {
+      tx.begin();
+      if (source == DeliveryRequestSource.order) {
+        validateAndCreateShipment(user, model, pm);
+      } else if(source == DeliveryRequestSource.shipment) {
+        validateAndUpdateShipmentConsignmentDetails(user.getUsername(), model, pm);
+      }
+      DeliveryRequestUpdateWrapper updateModel = createDeliveryRequestAction.invoke(user,
+          user.getCurrentDomainId(), model);
+      tx.commit();
+      return updateModel;
+    } finally {
+      if(tx.isActive()) {
+        tx.rollback();
+      }
+      PMF.close(pm);
+    }
+  }
+
+  private void validateAndUpdateShipmentConsignmentDetails(String userId,
+                                                           DeliveryRequestModel model,
+                                                           PersistenceManager pm)
+      throws LogiException {
+    model.setOrderId(ShipmentUtils.extractOrderId(model.getShipmentId()));
+    IShipment shipment = shipmentService.getShipment(model.getShipmentId());
+    if(shipment != null) {
+      if(ShipmentStatus.READY_FOR_DISPATCH != shipment.getStatus()) {
+        throw new ServiceException("O019", new Object[]{});
+      }
+      Long consignmentId = shipment.getConsignmentId();
+      if (consignmentId != null) {
+        shipmentService.updateConsignmentDetails(consignmentId, model.getConsignment(), pm);
+        Map<String, String> updData = new HashMap<>();
+        updData.put(ShipmentService.SHIPMENT_TRANSPORTER_ID,
+            String.valueOf(model.getTrackingDetails().getTransporterId()));
+        updData.put(ShipmentService.SHIPMENT_TRANSPORTER_NAME,
+            String.valueOf(model.getTrackingDetails().getTransporter()));
+        updData.put(ShipmentService.SHIPMENT_CONTACT_PHONE_NUM,
+            String.valueOf(model.getTrackingDetails().getPhoneNumber()));
+        shipmentService.updateShipmentData(updData, null, model.getShipmentId(), userId);
+      }
+    } else {
+      throw new ServiceException("O020", new Object[]{});
+    }
+  }
+
+  /**
+   * Performs status and existing shipment validations
+   * Creates a new shipment if all validations are passed
+   * @param user
+   * @param model
+   * @param pm
+   * @throws ServiceException if any validation fails
+   */
+  private void validateAndCreateShipment(SecureUserDetails user, DeliveryRequestModel model,
+                                         PersistenceManager pm)
+      throws ServiceException {
+    IOrder order = getOrder(model.getOrderId(), false, pm);
+    validateNonCancelledShipmentShouldNotExist(user.getLocale(), model.getOrderId(), pm);
+    if(!IOrder.READY_FOR_DISPATCH.equals(order.getStatus())) {
+      throw new ServiceException("O019", new Object[]{});
+    }
+    model.setShipmentId(createShipment(user, model, pm));
+  }
+
+  private void validateNonCancelledShipmentShouldNotExist(Locale locale, Long orderId,
+                                                          PersistenceManager pm) throws ServiceException {
+    List<IShipment> shipments = shipmentService.getShipmentsByOrderId(orderId, pm);
+    if(CollectionUtils.isNotEmpty(shipments)) {
+      Optional<IShipment> activeShipment = shipments.stream()
+          .filter(shipment -> !ShipmentStatus.INACTIVE_SHIPMENT_STATUSES
+              .contains(shipment.getStatus()))
+          .findAny();
+      if(activeShipment.isPresent()) {
+        ResourceBundle backendMessages = Resources.getBundle(locale);
+        throw new ServiceException(backendMessages.getString("dr.err.active.shipment"));
+      }
+    }
+  }
+
+  private String createShipment(SecureUserDetails user, DeliveryRequestModel model,
+                                PersistenceManager pm)
+      throws ServiceException, ValidationException {
+    ShipmentModel shipmentModel = buildShipmentModel(model.getOrderId(), user.getUsername(), pm);
+    shipmentModel.consignment = model.getConsignment();
+    if(model.getTrackingDetails() == null) {
+      throw new ServiceException("O020", new Object[]{});
+    }
+    shipmentModel.transporter = model.getTrackingDetails().getTransporter();
+    shipmentModel.transporterId = model.getTrackingDetails().getTransporterId();
+    shipmentModel.phonenum = model.getTrackingDetails().getPhoneNumber();
+    shipmentModel.status = ShipmentStatus.OPEN;
+    shipmentModel.createdBy = user.getUsername();
+    return shipmentService.createShipment(shipmentModel, SourceConstants.WEB, true, pm);
+  }
+
+  private ShipmentModel buildShipmentModel(IOrder order, String userId, ShipmentStatus status) throws ServiceException {
+    ShipmentModel model = new ShipmentModel();
     model.orderId = order.getOrderId();
     model.customerId = order.getKioskId();
     model.vendorId = order.getServicingKiosk();
     IKiosk vendor = entitiesService.getKiosk(model.vendorId, false);
-    model.reason = reason;
-    model.status = ShipmentStatus.SHIPPED;
+    model.status = status;
     model.tags = order.getTags(TagUtil.TYPE_ORDER);
     model.userID = userId;
     model.items = new ArrayList<>();
     model.sdid = order.getDomainId();
-    model.salesRefId = salesRefId;
     DomainConfig dc = DomainConfig.getInstance(order.getDomainId());
     for (IDemandItem demandItem : order.getItems()) {
       if (BigUtil.greaterThanZero(demandItem.getQuantity())) {
@@ -575,7 +782,7 @@ public class OrderManagementServiceImpl implements OrderManagementService {
         model.items.add(shipmentItemModel);
       }
     }
-    return shipmentService.createShipment(model, source, updateOrderFields);
+    return model;
   }
 
   private IMessage addMessageToOrder(Long orderId, Long domainId, String message,
@@ -1072,11 +1279,11 @@ public class OrderManagementServiceImpl implements OrderManagementService {
                 updateOrderTransactionsRequest.getTrackingId(),
                 updateOrderTransactionsRequest.getKioskId(), e.getMessage(), e);
         final Locale locale = SecurityUtils.getLocale();
-        ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-        ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+        ResourceBundle messages = Resources.getBundle(locale);
+
         throw new ServiceException(
             messages.getString("order") + " " + updateOrderTransactionsRequest.getTrackingId() + " "
-                + backendMessages
+                + messages
                 .getString("error.notfound"));
       } catch (Exception e) {
         xLogger.severe("Exception while re-ordering: {0}", e.getMessage(), e);
@@ -1963,7 +2170,7 @@ public class OrderManagementServiceImpl implements OrderManagementService {
   @Override
   public void updateOrderMetadata(Long orderId, String updatedBy,
                                   PersistenceManager persistenceManager, String salesReferenceId,
-                                  Date expectedArrivalDate, Boolean updateOrderFields) {
+                                  Date expectedArrivalDate, boolean updateOrderFields) {
     Boolean isLocalPersistentManager = Boolean.FALSE;
     if (persistenceManager == null) {
       persistenceManager = PMF.get().getPersistenceManager();

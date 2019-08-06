@@ -28,7 +28,7 @@
                 <div class="row">
                     <div class="col-sm-12">
                         <div class="domain-title-heading marginlr0">
-                            <h4>System configuration</h4>
+                            <h4>{{resourceBundle['manage.systemconf']}}</h4>
                             <span ng-show="tags.lastUpdated" class="caption pull-right">{{resourceBundle['lastupdated']}} {{resourceBundle['on']}} {{tags.lastUpdated}} {{resourceBundle['by']}}
                                 <a href="#/setup/users/all/details?userId={{tags.createdBy}}"
                                    target="_new">{{tags.fn}}</a>
@@ -40,13 +40,13 @@
                     <div class="row">
                         <div class="col-sm-12">
                             <div class="title-heading">
-                                Configuration
+                                {{resourceBundle['configuration']}}
                             </div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-sm-12">
-                            <span class="litetext mb10">Configuration type</span>
+                            <span class="litetext mb10">{{resourceBundle['system.config.type']}}</span>
 
                             <div class="form-group">
                                 <div class="col-sm-8">
@@ -61,7 +61,7 @@
                     </div>
                     <div class="row">
                         <div class="col-sm-12">
-                            <span class="litetext mb10">Configuration</span>
+                            <span class="litetext mb10">{{resourceBundle['configuration']}}</span>
 
                             <div class="form-group">
                                 <div class="col-sm-8">
@@ -70,10 +70,9 @@
                                 </div>
                                 <div class="col-sm-4">
                                     <div ng-if="configType == 'locations'">
-                                        <button class="btn btn-danger" ng-click="updateLocationsMasterData()">Add new locations to Locations
-                                            service
+                                        <button class="btn btn-danger" ng-click="updateLocationsMasterData()">{{resourceBundle['system.config.add.new.locations']}}
                                         </button>
-                                        <p>Note: Please save the configuration before triggering request.</p>
+                                        <p>{{resourceBundle['system.config.add.new.locations.note']}}</p>
                                     </div>
                                 </div>
                             </div>

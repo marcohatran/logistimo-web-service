@@ -2459,6 +2459,11 @@ date-picker[noclear] .btn-group>.btn:first-child:not(:last-child):not(.dropdown-
     width: 15px;
 }
 
+.medium-icon{
+    height: 24px;
+    width: 24px;
+}
+
 .temp-refresh{
     margin-left: 20px;
     display: inline-block;
@@ -4362,4 +4367,24 @@ div[uib-tooltip-html-popup] > .tooltip-arrow {
 
 .otp-model {
     padding: 35px 35px 35px;
+}
+.form-control-override {
+    width: 30%;
+    float:left;
+    margin-right: 5px;
+}
+.grid-wrapper {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-gap: 10px;
+}
+.frame {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0 none;
+    box-sizing: border-box;
 }

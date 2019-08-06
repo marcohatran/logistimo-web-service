@@ -40,10 +40,10 @@
                         <div ng-show="order.oty == 0">
                             <span class="lnk"
                                   ng-show="editMetaDataPermission && isUndef(order.transferRefId) && !edit.transferRefId && (order.st == ORDER.PENDING) && order.atv && !transRelease"
-                                  ng-class="{'required':oCfg.transfer}">{{"Add " + resourceBundle['transfer.reference.id'] }} </span>
+                                  ng-class="{'required':oCfg.transfer}">{{resourceBundle['add']}} {{resourceBundle['transfer.reference.id']}} </span>
                             <span class="lnk"
                                   ng-show="editMetaDataPermission && isUndef(order.transferRefId) && !edit.transferRefId && (order.st == ORDER.PENDING) && order.atv && transRelease"
-                                  ng-class="{'required':oCfg.transfer}">{{"Add " + resourceBundle['release.reference.id'] }} </span>
+                                  ng-class="{'required':oCfg.transfer}">{{resourceBundle['add']}} {{resourceBundle['release.reference.id'] }} </span>
                             <span class="lnk" ng-show="isDef(order.transferRefId) && !edit.transferRefId">
                                 <span ng-class="{'required':oCfg.transfer && order.st == ORDER.PENDING && order.atv}">{{transRelease ? resourceBundle['release.reference.id'] : resourceBundle['transfer.reference.id']}} </span>
                                 <span>{{": " + order.transferRefId}}</span>
@@ -70,7 +70,7 @@
                         <div ng-hide="order.oty == 0">
                             <span class="lnk"
                                   ng-show="editMetaDataPermission && isUndef(order.purchaseRefId) && !edit.purchaseRefId && (order.st == ORDER.PENDING) && order.atc"
-                                  ng-class="{'required':oCfg.purchase && order.atc}">{{"Add " + resourceBundle['purchase.reference.id'] }} </span>
+                                  ng-class="{'required':oCfg.purchase && order.atc}">{{resourceBundle['add']}} {{resourceBundle['purchase.reference.id'] }} </span>
                             <span class="lnk" ng-show="isDef(order.purchaseRefId) && !edit.purchaseRefId">
                                 <span ng-class="{'required':oCfg.purchase && order.st == ORDER.PENDING && order.atc}">{{resourceBundle['purchase.reference.id']}}</span>
                                 <span>{{": " + order.purchaseRefId }} </span>
@@ -96,7 +96,7 @@
                         </div>
                         <div>
                             <span class="lnk"
-                                  ng-show="editMetaDataPermission && isUndef(order.salesRefId) && !edit.salesRefId && (order.st == ORDER.PENDING || order.st == ORDER.CONFIRMED) && order.atv">{{"Add " + resourceBundle['sales.reference.id'] }} </span>
+                                  ng-show="editMetaDataPermission && isUndef(order.salesRefId) && !edit.salesRefId && (order.st == ORDER.PENDING || order.st == ORDER.CONFIRMED) && order.atv">{{resourceBundle['add']}} {{resourceBundle['sales.reference.id']}} </span>
                             <span class="lnk" ng-show="isDef(order.salesRefId) && !edit.salesRefId">{{resourceBundle['sales.reference.id'] + ": " + order.salesRefId }} </span>
                             <div class="lnk">
                                 <div ng-show="edit.salesRefId" style="width: 30%">
@@ -152,8 +152,8 @@
                     <form class="form-group mb5" role="form" name="updTransForm">
                     <span ng-hide="edit.otags">
                         <div ng-logi-tags tgs="order.tgs" style="border-radius: 10px;"></div>
-                        <span ng-show="isUndef(order.tgs) && editMetaDataPermission" class="dinline cbx control-label">Add order tags</span>
-                        <a ng-show="order.st == ORDER.PENDING || order.st == ORDER.CONFIRMED" uib-tooltip="Edit" ng-click="editTags()" tooltip-append-to-body="true">
+                        <span ng-show="isUndef(order.tgs) && editMetaDataPermission" class="dinline cbx control-label">{{resourceBundle['orders.add.order.tags']}}</span>
+                        <a ng-show="order.st == ORDER.PENDING || order.st == ORDER.CONFIRMED" uib-tooltip="{{resourceBundle['edit']}}" ng-click="editTags()" tooltip-append-to-body="true">
                             <span ng-hide="dp.vp || !editMetaDataPermission" class="ml15 glyphicons glyphicons-edit cbx"></span>
                         </a>
                     </span>
@@ -190,13 +190,13 @@
                 <div class="col-sm-12">
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            Status
+                            {{resourceBundle['status']}}
                         </div>
                         <div class="panel-body">
                             <div class="col-sm-9 mt10 noLRpad">
                                 <div ng-if="isDef(order)" ng-include="'views/orders/status-indicator.html'"></div>
-                                <span ng-click="toggleStatusHistory()" class="glyphicons glyphicons-history codegray large"  uib-tooltip="Show status history" ng-if="!dispStatusHistory" tooltip-append-to-body="true"></span>
-                                <span ng-click="toggleStatusHistory()" class="glyphicons glyphicons-history codegray large" uib-tooltip="Hide status history" ng-if="dispStatusHistory" tooltip-append-to-body="true"></span>
+                                <span ng-click="toggleStatusHistory()" class="glyphicons glyphicons-history codegray large"  uib-tooltip="{{resourceBundle['orders.show.status.history']}}" ng-if="!dispStatusHistory" tooltip-append-to-body="true"></span>
+                                <span ng-click="toggleStatusHistory()" class="glyphicons glyphicons-history codegray large" uib-tooltip="{{resourceBundle['orders.hide.status.history']}}" ng-if="dispStatusHistory" tooltip-append-to-body="true"></span>
                             </div>
                             <div class="col-sm-3 btn-group">
                                 <div class="pull-right">
@@ -205,11 +205,11 @@
                                             <button type="button" class="btn btn-sm btn-primary dropdown-toggle"
                                                     data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
                                                     ng-show="shouldShowStatusChange()">
-                                                <span class="glyphicons glyphicons-show-lines medium pt2" uib-tooltip="Change status" tooltip-append-to-body="true"></span>
+                                                <span class="glyphicons glyphicons-show-lines medium pt2" uib-tooltip="{{resourceBundle['orders.change.status']}}" tooltip-append-to-body="true"></span>
                                             </button>
                                             <ul class="dropdown-menu dropdown-menu-right">
                                                 <li ng-repeat="status in statusList" ng-hide="dp.vp">
-                                                    <a ng-hide="checkHideStatus(status)" ng-click="changeStatus(status)"> {{ORDERSTATUSTEXT.statusTxt[status]}}</a>
+                                                    <a ng-hide="checkHideStatus(status)" ng-click="changeStatus(status)">{{getLabelFromResourceBundle(ORDERSTATUSTEXT.statusTxt[status])}}</a>
                                                 </li>
                                             </ul>
                                         </li>
@@ -230,6 +230,25 @@
                                 </div>
                             </div>
                             <div class="col-sm-12 lPad5 mt10 fc-color-grey"><span class="float-right">{{resourceBundle['order.processingtime']}}: {{order.pt}}, {{resourceBundle['order.deliveryleadtime']}}: {{order.dlt}}</span> </div>
+                            <div ng-if="order.drs != null && order.drs.length == 1" class="col-sm-12 pt10">
+                                <div class="row mb10 col-sm-6">
+                                    <span class="col-sm-1">
+                                        <img class="medium-icon" src="images/truck-icon.png">
+                                    </span>
+                                    <span class="pull-left pt5 ml5">Request for delivery was placed at
+                                        {{order.drs[0].cr_on | date:'d/M/yy h:mm a'}}</span>
+                                    <div ng-if="!dispDeliveryStatus" class="pt5"
+                                         ng-click="toggleDispDeliveryStatus()">
+                                        <span class="glyphicons glyphicons-chevron-down small pt2 ml10"></span>
+                                    </div>
+                                    <div ng-if="dispDeliveryStatus" class="pt5" ng-click="toggleDispDeliveryStatus()">
+                                        <span class="glyphicons glyphicons-chevron-up small pt2 ml10"></span>
+                                    </div>
+                                </div>
+                                <div class="row pt5" ng-show="dispDeliveryStatus">
+                                    <div ng-include="'views/shipment/shipment-tracking.html'"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -277,7 +296,7 @@
                             </div>
                             <div class="tab-pane" ng-switch-when="message">
                                 <div ng-include="'views/conversation/messages.html'"
-                                     ng-init="objId = orderId;objType = 'ORDER'"></div>
+                                     ng-init="objId = orderId; objType = 'ORDER'"></div>
                             </div>
                         </div>
                     </div>
@@ -294,5 +313,12 @@
         <div ng-switch-when="createReturns">
             <div ng-include="'views/returns/returns-create.html'"></div>
         </div>
+        <div ng-switch-when="createDelReqs">
+            <div ng-include="'views/delivery-requests/new-delivery-request.html'"
+                 ng-init="drOrderId = orderId; drShipmentId = null;
+                    vendor = {name: order.vnm, id: order.vid, addr: order.vadd};
+                    cust = {name: order.enm, id: order.eid, addr: order.eadd}"></div>
+        </div>
+
     </div>
 </div>

@@ -55,4 +55,16 @@ public interface IUserToken {
   void setAccessKey(String accessKey);
 
   boolean hasAccessKey();
+
+  void setTokenType(TokenType tokenType);
+
+  TokenType getTokenType();
+
+  Date getCreatedOn();
+
+  void setCreatedOn(Date createdOn);
+
+  String getDescription();
+
+  void setDescription(String description);
 }

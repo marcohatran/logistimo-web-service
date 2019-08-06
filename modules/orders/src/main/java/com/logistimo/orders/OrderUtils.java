@@ -24,6 +24,7 @@
 package com.logistimo.orders;
 
 import com.logistimo.config.models.DomainConfig;
+import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.SourceConstants;
 import com.logistimo.context.StaticApplicationContext;
@@ -36,6 +37,7 @@ import com.logistimo.models.shipments.ShipmentItemBatchModel;
 import com.logistimo.models.shipments.ShipmentItemModel;
 import com.logistimo.models.shipments.ShipmentMaterialsModel;
 import com.logistimo.orders.entity.IOrder;
+import com.logistimo.orders.models.ShipNowRequest;
 import com.logistimo.orders.models.UpdatedOrder;
 import com.logistimo.orders.service.OrderManagementService;
 import com.logistimo.orders.service.impl.OrderManagementServiceImpl;
@@ -117,7 +119,8 @@ public class OrderUtils {
         List<IShipment> shipments = ss.getShipmentsByOrderId(orderId);
         if (shipments != null && !shipments.isEmpty()) {
           IShipment s = shipments.get(0);
-          updated = ss.fulfillShipment(s.getShipmentId(), updatingUserId, source).status;
+          updated = ss.fulfillShipment(s.getShipmentId(), updatingUserId, CharacterConstants.EMPTY,
+              source).status;
         }
       } catch (Exception e) {
         uo.inventoryError = true;
@@ -130,7 +133,7 @@ public class OrderUtils {
         uo.message = backendMessages.getString("error.unabletofulfilorder");
       }
     } else if (IOrder.COMPLETED.equals(newStatus)) {
-      oms.shipNow(o, null, null, null, null, updatingUserId, null, source, null, true);
+      oms.shipNow(o, updatingUserId, null, source, true, null);
       if (message != null && !message.isEmpty()) {
         oms.addMessageToOrder(orderId, message, updatingUserId);
       }
@@ -167,7 +170,7 @@ public class OrderUtils {
         StaticApplicationContext.getBean(OrderManagementServiceImpl.class);
     IOrder o = oms.getOrder(uosReq.tid, true);
     if (!OrderUtils.validateOrderUpdatedTime(uosReq.tm, o.getUpdatedOn())) {
-      throw new LogiException("O004", uosReq.uid,uosReq.tm);
+      throw new LogiException("O004", o.getUpdatedBy(), uosReq.tm);
     }
     UpdatedOrder uo = new UpdatedOrder();
     if (IOrder.FULFILLED.equals(uosReq.ost)) {
@@ -192,7 +195,7 @@ public class OrderUtils {
                                    OrderManagementService oms, IOrder o, UpdatedOrder uo)
       throws ServiceException {
     if (dc.getOrdersConfig()
-        .isReferenceIdMandatory() && !o.hasSalesReferenceId() && !uosReq.hasReferenceId()) {
+            .isReferenceIdMandatory() && !o.hasSalesReferenceId() && !uosReq.hasReferenceId()) {
       uo.inventoryError = true;
       uo.message = "Sales reference # is mandatory before shipping.";
       return true;
@@ -207,7 +210,26 @@ public class OrderUtils {
     if (uosReq.hasReferenceId()) {
       oms.updateOrderReferenceId(uosReq.tid, uosReq.rid, uosReq.uid, null);
     }
-    oms.shipNow(o, uosReq.trsp, uosReq.trid, null, uosReq.ead, uosReq.uid, uosReq.pksz, source, uosReq.rid, true);
+
+    ShipNowRequest.ShipNowRequestBuilder builder = ShipNowRequest.builder()
+        .trackingId(uosReq.trid)
+        .isCustomerPickup(uosReq.isCustomerPickup())
+        .transporter(uosReq.trsp)
+        .packageSize(uosReq.pksz)
+        .salesRefId(uosReq.rid);
+
+    if(uosReq.getConsignment() != null) {
+      builder.consignment(
+          MobileModelMapperUtils.buildConsignmentModelFromMobileModel(uosReq.getConsignment()));
+    }
+
+    if(uosReq.getTransporter() != null) {
+      builder.transporter(uosReq.getTransporter().getTransporterName())
+          .transporterId(uosReq.getTransporter().getTransporterId())
+          .phoneNum(uosReq.getTransporter().getPhoneNumber())
+          .vehicle(uosReq.getTransporter().getVehicleDetails());
+    }
+    oms.shipNow(o, uosReq.uid, builder.build(), source, true, uosReq.ead);
     if (uosReq.ms != null && !uosReq.ms.isEmpty()) {
       oms.addMessageToOrder(uosReq.tid, uosReq.ms, uosReq.uid);
     }
@@ -242,7 +264,7 @@ public class OrderUtils {
     return false;
   }
 
-  private static ShipmentMaterialsModel getShipmentMaterialsModel(UpdateOrderStatusRequest uosReq) {
+  static ShipmentMaterialsModel getShipmentMaterialsModel(UpdateOrderStatusRequest uosReq) {
     if (uosReq.mt == null || uosReq.mt.isEmpty()) {
       return null;
     }
@@ -376,8 +398,7 @@ public class OrderUtils {
       if (!shipmentMetadata.isEmpty()) {
         ss.updateShipmentData(shipmentMetadata, previousUpdatedTime, uosReq.sid, uosReq.uid);
       }
-      updated =
-          ss.updateShipmentStatus(uosReq.sid, shipmentStatus, uosReq.ms, uosReq.uid,
+      updated = ss.updateShipmentStatus(uosReq.sid, shipmentStatus, uosReq.ms, uosReq.uid,
               uosReq.rsnco, source).status;
     }
 
@@ -398,7 +419,7 @@ public class OrderUtils {
   }
 
   public static String getStatusDisplay(String status, Locale locale) {
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+    ResourceBundle messages = Resources.getBundle(locale);
     if (messages == null) {
       return "unknown";
     }
@@ -409,6 +430,8 @@ public class OrderUtils {
       name = messages.getString("order.changed");
     } else if (IOrder.COMPLETED.equals(status)) {
       name = messages.getString("order.shipped");
+    } else if (IOrder.READY_FOR_DISPATCH.equals(status)) {
+      name = messages.getString("order.readyfordispatch");
     } else if (IOrder.CONFIRMED.equals(status)) {
       name = messages.getString("order.confirmed");
     } else if (IOrder.FULFILLED.equals(status)) {
@@ -425,7 +448,7 @@ public class OrderUtils {
   }
 
   public static String getShipmentStatusDisplay(ShipmentStatus status, Locale locale) {
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+    ResourceBundle messages = Resources.getBundle(locale);
     if (messages == null) {
       return "unknown";
     }
@@ -438,6 +461,8 @@ public class OrderUtils {
       name = messages.getString("order.pending");
     } else if (ShipmentStatus.SHIPPED.equals(status)) {
       name = messages.getString("order.shipped");
+    } else if (ShipmentStatus.READY_FOR_DISPATCH.equals(status)) {
+      name = messages.getString("order.readyfordispatch");
     } else {
       name = "unknown";
     }

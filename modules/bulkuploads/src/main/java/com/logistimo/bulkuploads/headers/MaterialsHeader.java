@@ -27,42 +27,56 @@ import com.logistimo.constants.CharacterConstants;
 import com.logistimo.services.Resources;
 import com.logistimo.utils.FieldLimits;
 
+import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.StringJoiner;
 
 /**
  * Created by charan on 06/03/17.
  */
 public class MaterialsHeader implements IHeader {
 
-  // Get the uploadable CSV header
-  public String getUploadableCSVHeader(Locale locale, String type) {
-    ResourceBundle bundle = Resources.get().getBundle("Messages", locale);
-    String
-        format =
-        "Operation* (a = add / e = edit / d = delete; if empty it is defaulted to add; ensure that the Material Name is EXACT for edit/delete),"
-            +
-            bundle.getString("material.name") + "* (" + FieldLimits.MATERIAL_NAME_MIN_LENGTH + CharacterConstants.HYPHEN + FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters)," + bundle
-            .getString("shortname") + " (" + FieldLimits.MATERIAL_SHORTNAME_MAX_LENGTH + " characters max.; for use in SMS mode only)," +
-            bundle.getString("description") + " (max. " + FieldLimits.MATERIAL_DESCRIPTION_MAX_LENGTH + " characters)," +
-            bundle.getString("material.addinfo") + " (max. " + FieldLimits.MATERIAL_ADDITIONAL_INFO_MAX_LENGTH + " characters)," +
-            bundle.getString("material.addinfocheck") + " (yes/no; defaults to 'yes')," +
-            bundle.getString("tags") + " (semi-colon separated tag names - e.g. tag1;tag2;tag3)," +
-            bundle.getString("material.seasonal") + " (yes/no; default is 'no')," +
-            bundle.getString("material.msrp") + " (valid number; max. 1 billion rounded to two decimal places maximum)," + bundle
-            .getString("material.retailerprice") + " (valid number; max. 1 billion rounded to two decimal places maximum)," +
-            bundle.getString("currency")
-            + " (ISO-4217 3-letter codes as at http://en.wikipedia.org/wiki/ISO_4217)," +
-            bundle.getString("material.name") + "[" + bundle.getString("new")
-            + "] (new name if material name is to be modified; used ONLY if operation is edit)," +
-            bundle.getString("customid.material") + " (not more than " + FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters)," +
-            bundle.getString("batch.enable") + " (yes/no; default is 'no')," +
-            bundle.getString("temperature.sensitive") + " (yes/no; default is 'no')," +
-            bundle.getString("temperature") + " " + bundle.getString("min") + "(" + bundle
-            .getString("temperature.indegreescelsius") + ")," +
-            bundle.getString("temperature") + " " + bundle.getString("max") + "(" + bundle
-            .getString("temperature.indegreescelsius") + ")";
+    // Get the uploadable CSV header
+    @Override
+    public String getUploadableCSVHeader(Locale locale, String type) {
+        ResourceBundle bundle = Resources.getBundle(locale);
+        StringJoiner header = new StringJoiner(CharacterConstants.COMMA);
+        header.add(bundle.getString("bulkupload.material.operation.header"))
+            .add(MessageFormat.format(bundle.getString("bulkupload.material.name.header"),
+                FieldLimits.MATERIAL_NAME_MIN_LENGTH, FieldLimits.TEXT_FIELD_MAX_LENGTH))
+            .add(MessageFormat.format(bundle.getString("bulkupload.material.shortname.header"),
+                FieldLimits.MATERIAL_SHORTNAME_MAX_LENGTH))
+            .add(MessageFormat.format(bundle.getString("bulkupload.material.description.header"),
+                FieldLimits.MATERIAL_DESCRIPTION_MAX_LENGTH))
+            .add(MessageFormat
+                .format(bundle.getString("bulkupload.material.additional.info.header"),
+                    FieldLimits.MATERIAL_ADDITIONAL_INFO_MAX_LENGTH))
+            .add(MessageFormat
+                .format(bundle.getString("bulkupload.material.additional.info.on.mobile.header"),
+                    FieldLimits.YES, FieldLimits.NO))
+            .add(bundle.getString("bulkupload.tags.header"))
+            .add(MessageFormat.format(bundle.getString("bulkupload.material.seasonal.header"),
+                FieldLimits.YES, FieldLimits.NO))
+            .add(MessageFormat
+                .format(bundle.getString("bulkupload.material.msrp.header"), FieldLimits.MAX_PRICE))
+            .add(MessageFormat
+                .format(bundle.getString("bulkupload.material.retailer.price.header"),
+                    FieldLimits.MAX_PRICE))
+            .add(bundle.getString("bulkupload.material.currency.header"))
+            .add(bundle.getString("bulkupload.material.new.name.header"))
+            .add(MessageFormat.format(
+                bundle.getString("bulkupload.material.custom.id.header"),
+                FieldLimits.TEXT_FIELD_MAX_LENGTH))
+            .add(MessageFormat
+                .format(bundle.getString("bulkupload.material.batch.management.header"),
+                    FieldLimits.YES, FieldLimits.NO))
+            .add(MessageFormat
+                .format(bundle.getString("bulkupload.material.temperature.header"),
+                    FieldLimits.YES, FieldLimits.NO))
+            .add(bundle.getString("bulkupload.material.temperature.min.header"))
+            .add(bundle.getString("bulkupload.material.temperature.max.header"));
 
-    return format;
-  }
+        return header.toString();
+    }
 }

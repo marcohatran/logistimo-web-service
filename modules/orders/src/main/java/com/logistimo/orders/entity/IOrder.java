@@ -27,6 +27,8 @@ import com.logistimo.domains.ICrossDomain;
 import com.logistimo.tags.entity.ITag;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -42,11 +44,16 @@ public interface IOrder extends ICrossDomain {
   String CHANGED = "ch"; // not used
   String COMPLETED = "cm"; // shipped
   String CONFIRMED = "cf"; // confirmed receipt of order, and in process
+  String READY_FOR_DISPATCH = "rp"; // ready for dispatch
   String FULFILLED = "fl"; // goods arrived at destnation
   String PENDING = "pn"; // order just placed, but not acted on
   String BACKORDERED = "bo";
   // Order status together
-  String[] STATUSES = {CANCELLED, CONFIRMED, FULFILLED, PENDING, COMPLETED, BACKORDERED};
+  String[] STATUSES = {CANCELLED, CONFIRMED, READY_FOR_DISPATCH, FULFILLED, PENDING, COMPLETED,
+      BACKORDERED};
+
+  Collection<String> ITEMS_UNEDITABLE_STATUSES = Arrays.asList(CANCELLED, READY_FOR_DISPATCH,
+      FULFILLED, COMPLETED);
   // Types
   String TYPE_SALE = "sle";
   String TYPE_PURCHASE = "prc";

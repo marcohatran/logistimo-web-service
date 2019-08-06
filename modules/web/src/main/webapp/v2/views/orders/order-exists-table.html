@@ -22,17 +22,17 @@
   -->
 
 <div class="modal-header ws">
-    <h3 class="modal-title">Confirm</h3>
+    <h3 class="modal-title">{{resourceBundle['confirm']}}</h3>
 </div>
 <div class="modal-body ws" style="background: #ffffff">
-    <p>You already have an open purchase order with {{order.ent.nm}} for the following materials:</p>
+    <p>{{resourceBundle['orders.open.purchase.order.message1']}} {{order.ent.nm}} {{resourceBundle['orders.open.purchase.order.message2']}}:</p>
     <div>
         <table class="table table-condensed">
             <tbody>
             <tr>
-                <th class="text-center">Order Id</th>
-                <th class="text-center">Material</th>
-                <th class="text-center">Ordered</th>
+                <th class="text-center">{{resourceBundle['order.id']}}</th>
+                <th class="text-center">{{resourceBundle['material.upper']}}</th>
+                <th class="text-center">{{resourceBundle['ordered']}}</th>
             </tr>
             <tr ng-repeat="item in orderTable">
                 <td class="text-center">
@@ -45,10 +45,10 @@
         </table>
     </div>
     <div>
-        <p>Please edit the existing open orders, before creating a new order. Do you wish to still create a new order?</p>
+        <p>{{resourceBundle['orders.edit.open.existing.orders']}}</p>
     </div>
 </div>
 <div class="modal-footer ws">
-    <button class="btn btn-primary" ng-click="proceed()">Yes</button>
-    <button class="btn btn-default" ng-click="cancel()">No</button>
+    <button class="btn btn-primary" ng-click="proceed()">{{resourceBundle['yes']}}</button>
+    <button class="btn btn-default" ng-click="cancel()">{{resourceBundle['no']}}</button>
 </div>

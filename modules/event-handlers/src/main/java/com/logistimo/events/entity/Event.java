@@ -227,7 +227,7 @@ public class Event implements IEvent {
   }
 
   public static String getObjectType(String oty, Locale locale) {
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+    ResourceBundle messages = Resources.getBundle(locale);
     if (Order.class.getName().equals(oty)) {
       return messages.getString("order");
     } else if (Invntry.class.getName().equals(oty)) {

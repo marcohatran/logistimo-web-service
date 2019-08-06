@@ -86,7 +86,7 @@ public class NotifierServlet extends SgServlet {
 
   // Notify an event as a SMS / email message
   private static void notifyEvent(HttpServletRequest request, HttpServletResponse response,
-                                  ResourceBundle backendMessages, ResourceBundle messages) {
+                                  ResourceBundle messages) {
     xLogger.fine("Entered notifyEvent");
     // Get the event key
     String eventKeyStr = request.getParameter("eventkey");
@@ -190,7 +190,7 @@ public class NotifierServlet extends SgServlet {
 
   // Notify in batch
   private static void batchNotify(HttpServletRequest request, HttpServletResponse response,
-                                  ResourceBundle backendMessages, ResourceBundle messages) {
+                                  ResourceBundle messages) {
     xLogger.fine("Entered batchNotify");
     // Get the request parameters
     String domainIdStr = request.getParameter("domainid");
@@ -262,7 +262,7 @@ public class NotifierServlet extends SgServlet {
 
   // Trigger batch notification events
   private static void triggerBatchNotify(HttpServletRequest request, HttpServletResponse response,
-                                         ResourceBundle backendMessages, ResourceBundle messages) {
+                                         ResourceBundle messages) {
     xLogger.fine("Entered triggerBatchNotify");
     String domainIdStr = request.getParameter("domainid");
     String frequencyStr = request.getParameter("frequency");
@@ -474,26 +474,24 @@ public class NotifierServlet extends SgServlet {
 
   @Override
   protected void processGet(HttpServletRequest request, HttpServletResponse response,
-                            ResourceBundle backendMessages,
                             ResourceBundle messages) throws ServletException, IOException,
       ServiceException {
-    processPost(request, response, backendMessages, messages);
+    processPost(request, response, messages);
   }
 
   @Override
   protected void processPost(HttpServletRequest request, HttpServletResponse response,
-                             ResourceBundle backendMessages,
                              ResourceBundle messages) throws ServletException, IOException,
       ServiceException {
     xLogger.fine("Entered processPost");
     // Get the action
     String action = request.getParameter("action");
     if (ACTION_NOTIFY.equals(action)) {
-      notifyEvent(request, response, backendMessages, messages);
+      notifyEvent(request, response, messages);
     } else if (ACTION_BATCHNOTIFY.equals(action)) {
-      batchNotify(request, response, backendMessages, messages);
+      batchNotify(request, response, messages);
     } else if (ACTION_TIGGERBATCHNOTIFY.equals(action)) {
-      triggerBatchNotify(request, response, backendMessages,
+      triggerBatchNotify(request, response,
           messages); // for manual triggering of notification events
     } else {
       xLogger.severe("Invalid action: {0}", action);

@@ -172,7 +172,7 @@ public class DemandController {
     Long domainId = sUser.getDomainId();
     etrn = etrn == null ? false : etrn;
     bo = bo == null ? false : bo;
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", sUser.getLocale());
+    ResourceBundle backendMessages = Resources.getBundle(sUser.getLocale());
     try {
       demandService.clearAllocations(kId, mId, oid, etrn, bo);
     } catch (Exception e) {
@@ -223,7 +223,7 @@ public class DemandController {
     DomainConfig dc = DomainConfig.getInstance(sUser.getDomainId());
     ResourceBundle
         backendMessages =
-        Resources.get().getBundle("BackendMessages", sUser.getLocale());
+        Resources.getBundle(sUser.getLocale());
     if (dc.autoGI()) {
       for (DemandBreakdownModel dbm : allocate.model) {
         List<ShipmentItemBatchModel> sim = null;
@@ -432,6 +432,8 @@ public class DemandController {
   public
   @ResponseBody
   void clearAllocations() {
+    //set system user as this is executed as background task
+    SecurityUtils.setSystemUser();
     clearAllocationAction.invoke();
   }
 }

@@ -48,6 +48,7 @@ import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.SourceConstants;
 import com.logistimo.dao.JDOUtils;
+import com.logistimo.deliveryrequest.models.DeliveryRequestModel;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.events.generators.EventGeneratorFactory;
 import com.logistimo.events.generators.OrdersEventGenerator;
@@ -70,7 +71,9 @@ import com.logistimo.orders.actions.ScheduleOrderAutomationAction;
 import com.logistimo.orders.approvals.service.IOrderApprovalsService;
 import com.logistimo.orders.entity.IDemandItem;
 import com.logistimo.orders.entity.IOrder;
+import com.logistimo.orders.exception.AllocationNotCompleteException;
 import com.logistimo.orders.models.PDFResponseModel;
+import com.logistimo.orders.models.ShipNowRequest;
 import com.logistimo.orders.models.UpdateOrderTransactionsModel;
 import com.logistimo.orders.models.UpdatedOrder;
 import com.logistimo.orders.service.IDemandService;
@@ -97,6 +100,8 @@ import com.logistimo.utils.StringUtil;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -127,7 +132,6 @@ public class OrdersController {
 
   private static final XLog xLogger = XLog.getLog(OrdersController.class);
   private static final String CACHE_KEY = "order";
-  private static final String BACKEND_MESSAGES = "BackendMessages";
 
   private OrdersAPIBuilder orderAPIBuilder;
 
@@ -321,14 +325,14 @@ public class OrdersController {
                                   HttpServletRequest request) {
     SecureUserDetails user = SecurityUtils.getUserDetails();
     Locale locale = user.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     Long domainId = SecurityUtils.getCurrentDomainId();
     try {
       UpdatedOrder updOrder;
       IOrder o = orderManagementService.getOrder(orderId, true);
       if (status.orderUpdatedAt != null && !status.orderUpdatedAt
           .equals(LocalDateUtil.formatCustom(o.getUpdatedOn(), Constants.DATETIME_FORMAT, null))) {
-        throw new LogiException("O004", user.getUsername(),
+        throw new LogiException("O004", o.getUpdatedBy(),
             LocalDateUtil.format(o.getUpdatedOn(), user.getLocale(), user.getTimezone()));
       }
       if (IOrder.COMPLETED.equals(status.st) || IOrder.FULFILLED.equals(status.st)) {
@@ -353,9 +357,9 @@ public class OrdersController {
         }
         if (!o.isStatus(IOrder.COMPLETED) && !o.isStatus(IOrder.CANCELLED) && !o
             .isStatus(IOrder.FULFILLED)) {
-          shipmentId =
-              orderManagementService.shipNow(o, status.t, status.tid, status.cdrsn, efd, user.getUsername(),
-                  status.ps, SourceConstants.WEB, status.salesRefId, true);
+          ShipNowRequest shipOrderData = populateShipOrderDataWrapper(status);
+          shipmentId = orderManagementService.shipNow(o, user.getUsername(), shipOrderData,
+                  SourceConstants.WEB, true, efd);
         } else if (o.isStatus(IOrder.COMPLETED)) {
           if (shipments == null || shipments.size() > 1) {
             xLogger.warn("Invalid order {0} ({1}) cannot fulfill, already has more shipments or " +
@@ -370,7 +374,8 @@ public class OrdersController {
 
         if (IOrder.FULFILLED.equals(status.st)) {
           if (shipmentId != null) {
-            shipmentService.fulfillShipment(shipmentId, user.getUsername(), SourceConstants.WEB);
+            shipmentService.fulfillShipment(shipmentId, user.getUsername(),
+                CharacterConstants.EMPTY, SourceConstants.WEB);
           } else {
             xLogger.warn("Invalid order {0} status ({1}) cannot fulfill ", orderId, o.getStatus());
             throw new BadRequestException(backendMessages.getString("error.unabletofulfilorder"));
@@ -390,10 +395,14 @@ public class OrdersController {
       }
       return orderAPIBuilder.buildOrderResponseModel(updOrder, true, domainId, true,
           OrdersAPIBuilder.DEFAULT_EMBED);
+    } catch (AllocationNotCompleteException ie) {
+      xLogger.warn("Items are not allocated for order {0}, order status update requested by {1}",
+          orderId, user.getUsername());
+      throw new InvalidServiceException(ie);
     } catch (ServiceException ie) {
       xLogger.severe("Error in updating order status", ie);
       if (ie.getCode() != null) {
-        throw new InvalidDataException(ie.getMessage());
+        throw new ValidationException(ie.getCode(), ie.getArguments());
       } else {
         throw new InvalidServiceException(backendMessages.getString("order.status.update.error"));
       }
@@ -406,6 +415,20 @@ public class OrdersController {
       xLogger.severe("Failed to update order status", e);
       throw new InvalidServiceException(backendMessages.getString("order.status.update.error"));
     }
+  }
+
+  private ShipNowRequest populateShipOrderDataWrapper(OrderStatusModel status) {
+    return ShipNowRequest.builder()
+                .consignment(status.consignment)
+                .trackingId(status.tid)
+                .reason(status.cdrsn)
+                .transporterId(status.transporterId)
+                .transporter(status.t)
+                .packageSize(status.ps)
+                .salesRefId(status.salesRefId)
+                .vehicle(status.vehicle)
+                .isCustomerPickup(status.customerPickup)
+                .phoneNum(status.phone).build();
   }
 
 
@@ -454,7 +477,7 @@ public class OrdersController {
   String getOrderStatusJSON(@PathVariable Long orderId, HttpServletRequest request) {
     SecureUserDetails user = SecurityUtils.getUserDetails();
     Locale locale = user.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     Long domainId = SecurityUtils.getCurrentDomainId();
     try {
       IOrder order = orderManagementService.getOrder(orderId);
@@ -477,7 +500,7 @@ public class OrdersController {
                                        HttpServletRequest request) {
     SecureUserDetails user = SecurityUtils.getUserDetails();
     Locale locale = user.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     Long domainId = SecurityUtils.getCurrentDomainId();
     LockUtil.LockStatus lockStatus = LockUtil.lock(Constants.TX_O + orderId);
     if (!LockUtil.isLocked(lockStatus)) {
@@ -495,10 +518,10 @@ public class OrdersController {
       }
       if (model.orderUpdatedAt != null && !model.orderUpdatedAt.equals(
           LocalDateUtil.formatCustom(order.getUpdatedOn(), Constants.DATETIME_FORMAT, null))) {
-        throw new LogiException("O004", user.getUsername(),
+        throw new LogiException("O004", order.getUpdatedBy(),
             LocalDateUtil.format(order.getUpdatedOn(), user.getLocale(), user.getTimezone()));
       }
-      if (order.isStatus(IOrder.CANCELLED) || order.isStatus(IOrder.FULFILLED) || order.isStatus(IOrder.COMPLETED)) {
+      if (IOrder.ITEMS_UNEDITABLE_STATUSES.contains(order.getStatus())) {
         xLogger.warn("User {0} tried to edit materials of {1} order {2}", user, order.getStatus(),
             orderId);
         throw new BadRequestException("O003", orderId,
@@ -603,7 +626,7 @@ public class OrdersController {
                                          HttpServletRequest request) {
     SecureUserDetails user = SecurityUtils.getUserDetails();
     Locale locale = user.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     try {
       Long domainId = SecurityUtils.getCurrentDomainId();
       IOrder order = orderManagementService.getOrder(orderId);
@@ -612,7 +635,7 @@ public class OrdersController {
         throw new Exception(backendMessages.getString("order.none") + " " + orderId);
       }
       if (!OrderUtils.validateOrderUpdatedTime(orderUpdatedAt, order.getUpdatedOn())) {
-        throw new LogiException("O004", user.getUsername(),
+        throw new LogiException("O004", order.getUpdatedBy(),
             LocalDateUtil.format(order.getUpdatedOn(), user.getLocale(), user.getTimezone()));
       }
       String labelText = null;
@@ -681,7 +704,7 @@ public class OrdersController {
                            HttpServletRequest request) {
     SecureUserDetails user = SecurityUtils.getUserDetails();
     Locale locale = user.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     try {
       Long domainId = SecurityUtils.getCurrentDomainId();
       DomainConfig dc = DomainConfig.getInstance(domainId);
@@ -730,8 +753,8 @@ public class OrdersController {
     } else {
       locale = new Locale(Constants.LANG_DEFAULT, Constants.COUNTRY_DEFAULT);
     }
-    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
+
     String userId = sUser.getUsername();
     Long domainId = SecurityUtils.getCurrentDomainId();
     OrderMaterialsModel model = new OrderMaterialsModel();
@@ -823,17 +846,17 @@ public class OrdersController {
                 oType == 2,
                     null, edd, efd, SourceConstants.WEB, null, null, null, referenceId));
         IOrder order = orderResults.getOrder();
-        String prefix = CharacterConstants.EMPTY;
+        String prefix = backendMessages.getString("order");
         if (oType == 0) {
           if (dc.getOrdersConfig() != null && dc.getOrdersConfig().isTransferRelease()) {
-            prefix = "Release ";
+            prefix = backendMessages.getString("order.release");
           } else {
-            prefix = messages.getString("transactions.transfer.upper") + CharacterConstants.SPACE;
+            prefix = backendMessages.getString("order.transfer");
           }
         }
         model.orderId = order.getOrderId();
         model.msg =
-            prefix + backendMessages.getString("order.lowercase") + " <b>" + order.getOrderId()
+            prefix + " <b>" + order.getOrderId()
                 + "</b> " + backendMessages.getString("created.successwith") + " <b>" + order.size()
                 + "</b> " + backendMessages.getString("items.lowercase") + ". ";
       }
@@ -991,5 +1014,32 @@ public class OrdersController {
   @ResponseBody
   void scheduleOrderAutomation() throws ServiceException {
     scheduleOrderAutomation.invoke();
+  }
+
+  @RequestMapping(value = "/{orderId}/delivery-requests", method = RequestMethod.POST)
+  public ResponseEntity createDeliveryRequest(@PathVariable Long orderId,
+                                    @RequestBody DeliveryRequestModel model) throws LogiException {
+    if(model == null) {
+      throw new BadRequestException("O020", null);
+    }
+    model.setOrderId(orderId);
+    model.setShipmentId(null);
+    orderManagementService.createDeliveryRequest(model);
+    return new ResponseEntity(HttpStatus.OK);
+  }
+
+  @RequestMapping(value = "/{orderId}/shipments/{sId}/delivery-requests",
+      method = RequestMethod.POST)
+  public ResponseEntity createDeliveryRequest(@PathVariable Long orderId,
+                                              @PathVariable String sId,
+                                              @RequestBody DeliveryRequestModel model)
+      throws LogiException {
+    if(model == null) {
+      throw new BadRequestException("O020", null);
+    }
+    model.setOrderId(orderId);
+    model.setShipmentId(sId);
+    orderManagementService.createDeliveryRequest(model);
+    return new ResponseEntity(HttpStatus.OK);
   }
 }

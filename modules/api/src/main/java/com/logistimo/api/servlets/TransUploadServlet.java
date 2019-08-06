@@ -25,14 +25,18 @@ package com.logistimo.api.servlets;
 
 
 import com.logistimo.auth.SecurityMgr;
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.bulkuploads.BulkUploadMgr;
 import com.logistimo.bulkuploads.MnlTransactionUtil;
 import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.logger.XLog;
+import com.logistimo.security.SecureUserDetails;
+import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
 import com.logistimo.users.service.UsersService;
 
 import java.io.IOException;
+import java.util.Locale;
 import java.util.ResourceBundle;
 
 import javax.servlet.ServletException;
@@ -48,7 +52,7 @@ public class TransUploadServlet extends SgServlet {
 
   @Override
   protected void processGet(HttpServletRequest request, HttpServletResponse response,
-                            ResourceBundle backendMessages, ResourceBundle messages)
+                            ResourceBundle messages)
       throws ServletException, IOException, ServiceException {
     // TODO Auto-generated method stub
 
@@ -56,12 +60,12 @@ public class TransUploadServlet extends SgServlet {
 
   @Override
   protected void processPost(HttpServletRequest request, HttpServletResponse response,
-                             ResourceBundle backendMessages, ResourceBundle messages)
+                             ResourceBundle messages)
       throws ServletException, IOException, ServiceException {
     xLogger.fine("Entering processPost");
     String actionStr = request.getParameter("action");
     if (TransUploadServlet.ACTION_TRANSACTIONIMPORT.equals(actionStr)) {
-      importTransactions(request, response, backendMessages);
+      importTransactions(request, response);
     } else {
       xLogger.severe("Invalid actionStr. {0}", actionStr);
     }
@@ -69,8 +73,7 @@ public class TransUploadServlet extends SgServlet {
     xLogger.fine("Exiting processPost");
   }
 
-  private void importTransactions(HttpServletRequest request, HttpServletResponse response,
-                                  ResourceBundle backendMessages)
+  private void importTransactions(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException, ServiceException {
     xLogger.fine("Entering transactionImport");
     String userIdStr = request.getParameter("userid");
@@ -85,20 +88,24 @@ public class TransUploadServlet extends SgServlet {
       xLogger.severe("Invalid or null parameters while scheduling transaction import");
       return;
     }
+
     UsersService usersService = StaticApplicationContext.getBean(UsersService.class);
     SecurityMgr.setSessionDetails(usersService.getUserAccount(userIdStr));
     Long domainId = Long.valueOf(domainIdStr);
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Locale locale = sUser.getLocale();
+    ResourceBundle messages = Resources.getBundle(locale);
     Long kioskId = null;
     if (kioskIdStr != null && !kioskIdStr.isEmpty()) {
       kioskId = Long.valueOf(kioskIdStr);
     }
     if (BulkUploadMgr.TYPE_TRANSACTIONS.equals(type)) {
       MnlTransactionUtil
-          .parseUploadedTransactions(backendMessages, domainId, kioskId, userIdStr,
+          .parseUploadedTransactions(messages, domainId, kioskId, userIdStr,
               blobKeyStr);
     } else if (BulkUploadMgr.TYPE_TRANSACTIONS_CUM_INVENTORY_METADATA.equals(type)) {
       MnlTransactionUtil
-          .parseUploadedManualTransactions(backendMessages, domainId, kioskId, userIdStr,
+          .parseUploadedManualTransactions(messages, domainId, kioskId, userIdStr,
               blobKeyStr);
     }
     xLogger.fine("Exiting transactionImport");

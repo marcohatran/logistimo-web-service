@@ -232,7 +232,7 @@ demandControllers.controller('DemandTableController', ['$scope', 'demandService'
             }
             var maxAQ = Math.min($scope.item.atpstk, $scope.dItem.yta) + parseInt(aoQty);
             if (aQty > maxAQ) {
-                $scope.showWarning("Allocation cannot be greater than available/yet to allocate quantity " + maxAQ);
+                $scope.showWarning($scope.resourceBundle['allocated.quantity.greater.than.available.quantity'] + " " + maxAQ);
                 return false;
             }
             return true;
@@ -272,7 +272,7 @@ demandControllers.controller('DemandTableController', ['$scope', 'demandService'
                     $scope.dItem.yta = $scope.dItem.q - ($scope.dItem.astk + $scope.dItem.sq);
                     $scope.dItem.atpstk = $scope.dItem.atpstk + diff;
                     $scope.resetAllocatedQuantity(diff);
-                    $scope.showSuccess("Allocation done successfully");
+                    $scope.showSuccess($scope.resourceBundle['allocation.successful']);
                     $scope.cancel();
                 }).catch(function (errMsg) {
                     $scope.showErrorMsg(errMsg);
@@ -306,7 +306,7 @@ demandControllers.controller('DemandTableController', ['$scope', 'demandService'
                 id = $scope.dItem.id;
             }
             demandService.clearAllocations(eid, id, oid, $scope.etrn, $scope.showBackOrder).then(function () {
-                $scope.showSuccess("Allocations cleared successfully.");
+                $scope.showSuccess($scope.resourceBundle['allocations.cleared.successfully']);
                 if (oid == null) {
                     $scope.fetch();
                 } else {
@@ -823,7 +823,7 @@ demandControllers.controller('DiscrepanciesListingCtrl', ['$scope', 'demandServi
         function getCaption() {
             var caption = getFilterTitle($scope.entity, $scope.resourceBundle['kiosk'], 'nm');
             caption += getFilterTitle($scope.material, $scope.resourceBundle['material'], 'mnm');
-            caption += getFilterTitle($scope.discType, $scope.resourceBundle['discrepancy']);
+            caption += getFilterTitle(getDiscTypeLabel($scope.discType), $scope.resourceBundle['discrepancy']);
             caption += getFilterTitle($scope.ordId, $scope.resourceBundle['order']);
             caption += getFilterTitle($scope.etrn ? "YES" : undefined , $scope.transRelease ? $scope.resourceBundle['exclude.transferorders'] : $scope.resourceBundle['exclude.releaseorders']);
             caption += getFilterTitle(formatDate2Url($scope.from), $scope.resourceBundle['from']);
@@ -831,6 +831,17 @@ demandControllers.controller('DiscrepanciesListingCtrl', ['$scope', 'demandServi
             caption += getFilterTitle($scope.eTag, $scope.resourceBundle['kiosk'] + " " + $scope.resourceBundle['tag.lower']);
             caption += getFilterTitle($scope.mTag, $scope.resourceBundle['material'] + " " + $scope.resourceBundle['tag.lower']);
             return caption;
+        }
+
+        function getDiscTypeLabel(discType) {
+            switch (discType) {
+                case 'ordering':
+                    return $scope.resourceBundle['discrepancy.ordering'];
+                case 'shipping':
+                    return $scope.resourceBundle['discrepancy.shipping'];
+                case 'fulfillment':
+                    return $scope.resourceBundle['discrepancy.fulfillment'];
+            }
         }
     }
 ]);

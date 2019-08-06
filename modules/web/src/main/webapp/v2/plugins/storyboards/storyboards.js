@@ -1081,7 +1081,7 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
         };
         
         $scope.removeWidget = function (wid) {
-            if (!confirm("Do you want to remove this widget from dashboard?")) {
+            if (!confirm($scope.resourceBundle['config.custom.dashboard.remove.widget.confirm.message'])) {
                 return;
             }
             dashboardLayoutHandler.removeWidget(wid.id);
@@ -1516,13 +1516,13 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
         "    <div class=\"bgr\">\n" +
         "        <div class=\"box topbox\" style=\"min-height:500px;\">\n" +
         "            <div class=\"title-heading\">\n" +
-        "                Widgets\n" +
+        "                {{resourceBundle['widgets.upper']}}\n" +
         "            </div>\n" +
         "            <div class=\"row\">\n" +
         "                <div class=\"col-sm-6\">\n" +
         "                    <div class=\"col-sm-4\" ng-show=\"checkNullEmpty(widgets)\">\n" +
         "                        <div class=\"form-group\">\n" +
-        "                            <label class=\"cbx control-label\">No widgets configured</label>\n" +
+        "                            <label class=\"cbx control-label\">{{resourceBundle['no.widgets.configured']}}</label>\n" +
         "                        </div>\n" +
         "                    </div>\n" +
         "                </div>\n" +
@@ -1571,16 +1571,16 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
         "    <div class=\"row\" id=\"sbt\">\n" +
         "        <div class=\"col-sm-6\">\n" +
         "            <div class=\"pull-right\" ng-show=\"!edit\">\n" +
-        "                <button type=\"button\" ng-click=\"save()\" class=\"btn btn-primary\">Save</button>\n" +
+        "                <button type=\"button\" ng-click=\"save()\" class=\"btn btn-primary\">{{resourceBundle['save']}}</button>\n" +
         "            </div>\n" +
         "            <div class=\"pull-right\" ng-show=\"edit\">\n" +
-        "                <button type=\"button\" ng-click=\"save()\" class=\"btn btn-primary\">Update</button>\n" +
+        "                <button type=\"button\" ng-click=\"save()\" class=\"btn btn-primary\">{{resourceBundle['update']}}</button>\n" +
         "            </div>\n" +
         "            <div class=\"pull-right\" style=\"padding-right:10px;\" ng-show=\"!preview\">\n" +
-        "                <button type=\"button\" ng-click=\"previewChange()\" class=\"btn btn-primary\">Preview</button>\n" +
+        "                <button type=\"button\" ng-click=\"previewChange()\" class=\"btn btn-primary\">{{resourceBundle['preview']}}</button>\n" +
         "            </div>\n" +
         "            <div class=\"pull-right\" style=\"padding-right:10px;\" ng-show=\"preview\">\n" +
-        "                <button type=\"button\" ng-click=\"previewChange()\" class=\"btn btn-primary\">Exit preview</button>\n" +
+        "                <button type=\"button\" ng-click=\"previewChange()\" class=\"btn btn-primary\">{{resourceBundle['exit.preview']}}</button>\n" +
         "            </div>\n" +
         "        </div>\n" +
         "    </div>\n" +

@@ -56,11 +56,11 @@
                             <div class="col-sm-12">
                                 <div class="bgr">
                                     <div class="title-heading">
-                                        Handling unit information
+                                        {{resourceBindle['handling.unit.info']}}
                                     </div>
                                     <div class="row">
                                         <div class="col-sm-4">
-                                            <label class="control-label">Handling unit name:</label>
+                                            <label class="control-label">{{resourceBundle['handling.unit.name']}}</label>
                                         </div>
                                         <div class="col-sm-8 cbx">
                                             {{huDetail.name}}
@@ -77,7 +77,7 @@
                                     </div>
                                     <div class="row">
                                         <div class="col-sm-4">
-                                            <label class="control-label">Content:</label>
+                                            <label class="control-label">{{resourceBundle['handling.unit.content']}}:</label>
                                         </div>
                                         <div class="col-sm-8 cbx word-wrap">
                                             <a href="#/setup/materials/all/detail/{{huDetail.contents[0].cntId}}">{{huDetail.contents[0].cntName}}</a>
@@ -85,7 +85,7 @@
                                     </div>
                                     <div class="row">
                                         <div class="col-sm-4">
-                                            <label class="control-label">Quantity:</label>
+                                            <label class="control-label">{{resourceBundle['quantity']}}:</label>
                                         </div>
                                         <div class="col-sm-8 cbx word-wrap">
                                             {{huDetail.contents[0].quantity}}

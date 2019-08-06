@@ -127,6 +127,7 @@ public class ReturnsService {
   public ReturnsVO updateReturnsStatus(ReturnsVO updatedReturnVO, Long domainId)
       throws ServiceException, DuplicationException {
     ReturnsVO returnsVO = getReturn(updatedReturnVO.getId());
+    returnsValidationHandler.checkIfLatest(updatedReturnVO, returnsVO);
     LockUtil.LockStatus lockStatus = getLockStatus(returnsVO);
     isLocked(returnsVO, lockStatus);
     try {
@@ -166,6 +167,7 @@ public class ReturnsService {
   @Transactional(transactionManager = "transactionManager", rollbackFor = Exception.class)
   public ReturnsVO updateReturnItems(ReturnsVO updatedReturnsVO) {
     ReturnsVO returnsVO = getReturn(updatedReturnsVO.getId());
+    returnsValidationHandler.checkIfLatest(updatedReturnsVO, returnsVO);
     LockUtil.LockStatus lockStatus = getLockStatus(returnsVO);
     isLocked(returnsVO, lockStatus);
     try {

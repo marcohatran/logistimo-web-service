@@ -29,32 +29,32 @@
                     <div class="row">
                         <div class="col-sm-3 norightpad">
                             <label class="filter-label">{{resourceBundle['material']}} {{resourceBundle['multiple.tags']}}</label>
-                            <tag-select tags-model="fvmtag" place-holder="All"
+                            <tag-select tags-model="fvmtag" place-holder="{{resourceBundle['all']}}"
                                         type="'material'"
                                         force-no-udf="'true'"></tag-select>
                         </div>
                         <div class="col-sm-3 norightpad">
                             <label class="filter-label">{{resourceBundle['kiosk']}} {{resourceBundle['tag.lower']}}</label>
-                            <tag-select tags-model="etag" place-holder="All"
+                            <tag-select tags-model="etag" place-holder="{{resourceBundle['all']}}"
                                         type="'entity'"
                                         multiple="'false'" force-no-udf="'true'"></tag-select>
                         </div>
                         <div class="col-sm-3 norightpad">
                             <span ng-show="!iDis">
-                                <label class="control-label">Status</label>
+                                <label class="control-label">{{resourceBundle['status']}}</label>
                                 <lg-uib-select query="getTypes(q)" ui-model="invType"> </lg-uib-select>
                             </span>
                         </div>
                         <div class="col-sm-3">
-                            <label class="control-label">Period</label>
+                            <label class="control-label">{{resourceBundle['period']}}</label>
                             <select ng-model="period" class="form-control input-sm">
-                                <option value="0">Now</option>
-                                <option value="1">1 day</option>
-                                <option value="2">2 days</option>
-                                <option value="3">3 days</option>
-                                <option value="7">7 days</option>
-                                <option value="15">15 days</option>
-                                <option value="30">30 days</option>
+                                <option value="0">{{resourceBundle['now.uppercase']}}</option>
+                                <option value="1">1 {{resourceBundle['day']}}</option>
+                                <option value="2">2 {{resourceBundle['days']}}</option>
+                                <option value="3">3 {{resourceBundle['days']}}</option>
+                                <option value="7">7 {{resourceBundle['days']}}</option>
+                                <option value="15">15 {{resourceBundle['days']}}</option>
+                                <option value="30">30 {{resourceBundle['days']}}</option>
                             </select>
                         </div>
                     </div>
@@ -87,20 +87,20 @@
                             <span ng-show="isDef(dbdata)" class="litetext pull-right cbx rPad10">{{resourceBundle['asof']}} {{dbdata.ut}}</span>
                         </div>
                     </ul>
-                    <h4 class="text-center mb0 col-sm-12">Inventory <span uib-tooltip="% of inventory items that are normal or abnormal (zero stock, < min. or > max) across all {{resourceBundle['kiosks.lowercase']}} in this jurisdiction. An inventory item is a material at a {{resourceBundle['kiosk.lowercase']}}." style="display: inline" class="litetext glyphicons glyphicons-info-sign"></span></h4>
+                    <h4 class="text-center mb0 col-sm-12">{{resourceBundle['inventory']}} <span uib-tooltip="{{resourceBundle['overview.inventory.dashboard.info']}}" style="display: inline" class="litetext glyphicons glyphicons-info-sign"></span></h4>
                         <p class="text-center litetext">
-                            <span ng-show="fvmtag.text"><b>Material tag:</b> {{fvmtag.text}}, </span>
-                            <span ng-show="etag.text"><b>{{resourceBundle['kiosk']}} tag:</b> {{etag.text}}, </span>
-                            <span ng-show="period>0"><b>Period:</b> {{period}} day(s), </span>
-                            <b>Status:</b> {{invType.text}}
+                            <span ng-show="fvmtag.text"><b>{{resourceBundle['tagmaterial']}}:</b> {{fvmtag.text}}, </span>
+                            <span ng-show="etag.text"><b>{{resourceBundle['tagentity']}}:</b> {{etag.text}}, </span>
+                            <span ng-show="period>0"><b>{{resourceBundle['period']}}:</b> {{period}} {{resourceBundle['one.or.more.days']}}, </span>
+                            <b>{{resourceBundle['status']}}:</b> {{invType.text}}
                         </p>
                          <span class="pull-right" ng-show="iDis">
                         <span class="alert-danger paddinglr10"></span>
-                        &nbsp;&nbsp;Zero stock&nbsp;&nbsp;
+                        &nbsp;&nbsp;{{resourceBundle['inventory.dashboard.status.zerostock']}}&nbsp;&nbsp;
                         <span class="alert-warning  paddinglr10"></span>
-                        &nbsp;&nbsp;Min&nbsp;&nbsp;
+                        &nbsp;&nbsp;{{resourceBundle['inventory.dashboard.status.min']}}&nbsp;&nbsp;
                         <span class="alert-info  paddinglr10"></span>
-                        &nbsp;&nbsp;Max&nbsp;&nbsp;
+                        &nbsp;&nbsp;{{resourceBundle['inventory.dashboard.status.max']}}&nbsp;&nbsp;
                     </span>
                     <span ng-hide="iDis || filteredMaterials.length == 0 || invByMatEmpty" class="pull-right">
                         <span ng-repeat="value in range[updInvType.id]" ng-if="!($first)" class="mr10">
@@ -128,7 +128,7 @@
                                             <span ng-if="iDis">{{resourceBundle.kiosk}}</span>
                                         </th>
                                         <th class="outer-col outer-col3 outer-header" ng-if="tempEnabled">
-                                            <span class="glyphicons glyphicons-temperature large" uib-tooltip="Temperature"></span>
+                                            <span class="glyphicons glyphicons-temperature large" uib-tooltip="{{resourceBundle['temperature']}}"></span>
                                         </th>
                                         <th ng-repeat="mat in filteredMaterials track by mat.mId"
                                             class="stock-col">
@@ -192,7 +192,7 @@
                                         <span ng-if="iDis">{{resourceBundle.kiosk}}</span>
                                     </th>
                                     <th class="outer-col outer-col3 outer-header" ng-if="tempEnabled">
-                                        <span class="glyphicons glyphicons-temperature large" uib-tooltip="Temperature"></span>
+                                        <span class="glyphicons glyphicons-temperature large" uib-tooltip="{{resourceBundle['temperature']}}"></span>
                                     </th>
                                     <th ng-repeat="mat in filteredMaterials track by mat.mId"
                                         class="stock-col">
@@ -247,7 +247,7 @@
             <div class="box topbox tabminheight">
                 <div class="row">
                     <div class="col-sm-12 mt10">
-                        <div class="alert alert-warning">Please choose default country for the domain to enable dashboards.</div>
+                        <div class="alert alert-warning">{{resourceBundle['default.country']}}</div>
                     </div>
                 </div>
             </div>

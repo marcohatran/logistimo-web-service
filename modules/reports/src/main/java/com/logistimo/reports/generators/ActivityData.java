@@ -84,7 +84,7 @@ public class ActivityData extends ReportData {
       data.addColumn(
           new ColumnDescription(RECEIPTS, ValueType.NUMBER, messages.getString("receipts")));
       data.addColumn(new ColumnDescription(STOCKCOUNTS, ValueType.NUMBER,
-          messages.getString("stock") + " " + jsMessages.getString("count") + "s"));
+          messages.getString("stock") + " " + messages.getString("count") + "s"));
       data.addColumn(new ColumnDescription(WASTAGE, ValueType.NUMBER,
           messages.getString("transactions.wastage.upper")));
       data.addColumn(new ColumnDescription(TOTAL, ValueType.NUMBER, messages.getString("total")));

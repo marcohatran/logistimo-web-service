@@ -23,6 +23,7 @@
 
 package com.logistimo.utils;
 
+import com.logistimo.constants.Constants;
 import com.logistimo.security.SecureUserDetails;
 
 import java.util.HashSet;
@@ -36,6 +37,7 @@ public class ThreadContext {
   public Set<String> locks = new HashSet<>(1);
 
   private SecureUserDetails secureUserDetails;
+  private String traceId;
 
   public SecureUserDetails getSecureUserDetails() {
     return secureUserDetails;
@@ -45,4 +47,15 @@ public class ThreadContext {
     this.secureUserDetails = secureUserDetails;
   }
 
+  public void setTraceId(String traceId) {
+    this.traceId = traceId;
+  }
+
+  public String getTraceId() {
+    return traceId;
+  }
+
+  public void removeTraceId() {
+    this.traceId = Constants.EMPTY;
+  }
 }

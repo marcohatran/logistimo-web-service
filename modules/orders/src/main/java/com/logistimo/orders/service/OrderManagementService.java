@@ -25,15 +25,18 @@ package com.logistimo.orders.service;
 
 import com.logistimo.config.models.LeadTimeAvgConfig;
 import com.logistimo.conversations.entity.IMessage;
+import com.logistimo.deliveryrequest.models.DeliveryRequestModel;
 import com.logistimo.exception.LogiException;
 import com.logistimo.exception.ValidationException;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.ITransaction;
+import com.logistimo.models.shipments.ShipmentModel;
 import com.logistimo.orders.OrderResults;
 import com.logistimo.orders.entity.IDemandItem;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.orders.models.OrderFilters;
 import com.logistimo.orders.models.PDFResponseModel;
+import com.logistimo.orders.models.ShipNowRequest;
 import com.logistimo.orders.models.UpdateOrderTransactionsModel;
 import com.logistimo.orders.models.UpdatedOrder;
 import com.logistimo.pagination.PageParams;
@@ -65,16 +68,11 @@ public interface OrderManagementService {
 
   /**
    * Creates a shipment with all demand items in this Order and marks the shipment as shipped.
-   *
-   * @param order - Order object
-   * @param transporter - transporter name
-   * @param trackingId - tracking Id
-   * @param reason - reason code string
+   *  @param order - Order object
    * @param expectedFulfilmentDate - Expected fulfilment date (optional)
    */
-  String shipNow(IOrder order, String transporter, String trackingId, String reason,
-      Date expectedFulfilmentDate,
-                 String userId, String ps, int source, String salesRefId, Boolean updateOrderFields)
+  String shipNow(IOrder order, String userId, ShipNowRequest shipmentNowRequest,
+                 int source, Boolean updateOrderFields, Date expectedFulfilmentDate)
       throws ServiceException, ObjectNotFoundException, ValidationException;
 
   /**
@@ -264,7 +262,7 @@ public interface OrderManagementService {
       LeadTimeAvgConfig leadTimeAvgConfig, float leadTimeDefaultInConfig) throws ServiceException;
 
   void updateOrderMetadata(Long orderId, String updatedBy, PersistenceManager pm, String salesRefId,
-                           Date estimatedArrivalDate, Boolean updateOrderFields);
+                           Date estimatedArrivalDate, boolean updateOrderFields);
 
   void updateOrderMetadata(Long orderId, String updatedBy, PersistenceManager pm);
 
@@ -280,4 +278,6 @@ public interface OrderManagementService {
 
   OrderResults createOrder(UpdateOrderTransactionsModel updateOrderTransactionsRequest)
       throws ServiceException;
+
+  DeliveryRequestModel createDeliveryRequest(DeliveryRequestModel model) throws LogiException;
 }

@@ -76,7 +76,7 @@ public class UpdateOrderStatusRequest {
    */
   public String trsp;
   /**
-   * Transporter tracking ID
+   * Tracking ID
    */
   public String trid;
   /**
@@ -125,6 +125,15 @@ public class UpdateOrderStatusRequest {
   @SerializedName(value = "sales_ref_id")
   private String salesRefId;
 
+  @SerializedName(value = "cst_pick")
+  private boolean isCustomerPickup;
+
+  @SerializedName(value = "cnsgnmnt")
+  private MobileConsignmentModel consignment;
+
+  @SerializedName(value = "transporter")
+  private MobileTransporterModel transporter;
+
   public boolean hasPackageSize() {
     return StringUtils.isNotEmpty(pksz);
   }
@@ -159,4 +168,28 @@ public class UpdateOrderStatusRequest {
 
   public void setSalesrefId(String sales_ref_id) {
     this.salesRefId = sales_ref_id; }
+
+  public boolean isCustomerPickup() {
+    return isCustomerPickup;
+  }
+
+  public void setIsCustomerPickup(boolean isCustomerPickup) {
+    this.isCustomerPickup = isCustomerPickup;
+  }
+
+  public MobileConsignmentModel getConsignment() {
+    return consignment;
+  }
+
+  public void setConsignment(MobileConsignmentModel consignment) {
+    this.consignment = consignment;
+  }
+
+  public MobileTransporterModel getTransporter() {
+    return transporter;
+  }
+
+  public void setTransporter(MobileTransporterModel transporter) {
+    this.transporter = transporter;
+  }
 }

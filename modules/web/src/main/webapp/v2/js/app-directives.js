@@ -150,6 +150,34 @@ logistimoApp.directive('editableText', function () {
         }]
     }
 });
+
+logistimoApp.directive('editableNumber', function () {
+    return {
+        restrict: 'E',
+        template: '<div style="position:relative;"><input type="number" min="{{min}}" max="{{max}}" placeholder="{{placeHolder}}"' +
+        ' maxlength="{{maxLength}}" class="form-control input-sm" ng-model="editModel" sync-focus-with="setFocus"> <span class="fix-bot-right"> <span ng-click="ok()" class="glyphicons glyphicons-ok clickable editBtn"></span> <span ng-click="cancel()" class="glyphicons glyphicons-remove clickable editBtn"></span></span></div>',
+        scope: {
+            editModel: '=',
+            onOkCallback: '&onOk',
+            onCancelCallback: '&onCancel',
+            placeHolder: '@',
+            setFocus: '@',
+            min: '@',
+            max: '@',
+            maxLength:'@'
+        },
+        controller: ['$scope', function ($scope) {
+            $scope.maxLength = $scope.maxLength || 255;
+            $scope.ok = function () {
+                $scope.onOkCallback();
+            };
+
+            $scope.cancel = function () {
+                $scope.onCancelCallback();
+            };
+        }]
+    }
+});
 logistimoApp.directive('onDemandEditableText', function () {
     return {
         restrict: 'E',
@@ -736,11 +764,12 @@ logistimoApp.directive('childDomainSelect', function () {
         restrict: 'AE',
         replace: true,
         template: '<div>' +
-        '<lg-uib-select multiple="multiple" query="query(q)" ui-model="childDomainModel" place-holder="Select Domains"> </lg-uib-select>' +
+        '<lg-uib-select multiple="multiple" query="query(q)" ui-model="childDomainModel" place-holder="{{placeHolder}}"> </lg-uib-select>' +
         '</div>',
         scope: {
             childDomainModel: '=childDomainModel',
-            domainId: '='
+            domainId: '=',
+            placeHolder: '@',
         },
         controller: ['$scope', '$location', 'linkedDomainService', function ($scope, $location, linkedDomainService) {
             $scope.isSelected = function (i) {
@@ -1214,12 +1243,13 @@ logistimoApp.directive('materialDropDown', function () {
         restrict: 'E',
         replace: true,
         template: '<span>' +
-        '<lg-uib-select allow-clear="allow-clear" ng-disabled="disabled" query="query(q)" ui-model="ngModel" place-holder="All"> </lg-uib-select>' +
+        '<lg-uib-select allow-clear="allow-clear" ng-disabled="disabled" query="query(q)" ui-model="ngModel" place-holder="{{placeHolder}}"> </lg-uib-select>' +
         '</span>',
         scope: {
             ngModel: "=",
             disabled: "=",
-            mtag: "="
+            mtag: "=",
+            placeHolder:'@'
         },
         controller: ['$scope', 'matService',
             function ($scope, matService) {
@@ -1411,7 +1441,7 @@ logistimoApp.directive('onlyAlphabets', function () {
         },
         link: function (scope, element, attr, ctrl) {
             var filterAlbhabets = function (value) {
-                var testStr = /^([a-z ]*)$/i;
+                var testStr = new RegExp('^([\\p{L}\\p{M} ]*)$','u');
                 if (testStr.test(value))
                     return value;
                 return '';
@@ -1609,6 +1639,82 @@ logistimoApp.directive('datePicker', function ($compile) {
             }
             $compile(iElement.contents())(scope);
         }
+    }
+});
+logistimoApp.directive('dateTimePicker', function() {
+    return {
+        restrict: 'AE',
+        template: '<div class="col-sm-6 nopad"> <date-picker date-model="dateModel" place-holder="Date" min-date="minDate"></date-picker></div><div class="col-sm-6 nopad lPad10"> <select ng-model="timeModel" ng-change="onChange()"  class="form-control"><option ng-repeat="time in times" name="{{time.display}}" value="{{time.value}}">{{time.display}}</option></select></div>',
+        scope: {
+            dateTimeModel:"=",
+            hourStep: "=",
+            minDate:"=",
+            maxDate: '=',
+            minuteStep: "="
+        },
+        controller: ['$scope', function ($scope) {
+            if(checkNullEmpty($scope.hourStep)) {
+                $scope.hourStep = 1;
+            }
+            if(checkNullEmpty($scope.minuteStep)) {
+                $scope.minuteStep = 30;
+            }
+            const hours = {min: 0, max: 23};
+            const minutes = {min: 0, max: 59};
+            $scope.dateTimeModel = new Date();
+            $scope.dateModel = moment().startOf('day').toDate();
+            $scope.times = [];
+            function populateTimeArrs() {
+                const hourArr = [];
+                var i = hours.min;
+                while(i <= hours.max) {
+                    hourArr.push(i);
+                    i += $scope.hourStep;
+                }
+
+                const minArr = [];
+                i = minutes.min;
+                while(i <= minutes.max) {
+                    minArr.push(i);
+                    i += $scope.minuteStep;
+                }
+                const now = new Date();
+                hourArr.forEach(function(h) {
+                    minArr.forEach(function(m) {
+                        var d = moment().startOf('day').toDate();
+                        d.setHours(h);
+                        d.setMinutes(m);
+                        const time = {date: d, display: moment(d).format("h:mm A"), value: d.getTime()};
+                        if(checkNullEmpty($scope.timeModel) ||
+                            (checkNotNullEmpty($scope.timeModel)
+                                && now.getTime() < d.getTime()
+                                && Number.parseInt($scope.timeModel) < now.getTime())) {
+                            $scope.timeModel = time.value.toString();
+                        }
+                        $scope.times.push(time);
+                    })
+                });
+            }
+            populateTimeArrs();
+            $scope.onChange = function() {
+
+            };
+            $scope.$watch("dateModel", function (nVal, oVal) {
+                if(checkNotNullEmpty(nVal)) {
+                    $scope.dateTimeModel = nVal;
+                    var timeModel = new Date(Number.parseInt($scope.timeModel));
+                    $scope.dateTimeModel.setHours(timeModel.getHours());
+                    $scope.dateTimeModel.setMinutes(timeModel.getMinutes());
+                }
+            }, true);
+            $scope.$watch("timeModel", function (nVal, oVal) {
+                if(nVal != oVal && checkNotNullEmpty(nVal)) {
+                    var timeModel = new Date(Number.parseInt(nVal));
+                    $scope.dateTimeModel.setHours(timeModel.getHours());
+                    $scope.dateTimeModel.setMinutes(timeModel.getMinutes());
+                }
+            });
+        }]
     }
 });
 logistimoApp.directive('autoFocus', function ($timeout) {
@@ -1986,6 +2092,14 @@ logistimoApp.directive('fusionChart', function () {
                     function constructDataSource() {
                         var dataSource = {};
                         dataSource.chart = $scope.chartOptions;
+                        if(dataSource.chart.exportEnabled) {
+                            dataSource.chart.exportFormats =
+                                "PNG="+$scope.$parent.resourceBundle['fusioncharts.export.as.png'] +
+                                "|JPG="+$scope.$parent.resourceBundle['fusioncharts.export.as.jpg'] +
+                                "|PDF="+$scope.$parent.resourceBundle['fusioncharts.export.as.pdf'] +
+                                "|SVG="+$scope.$parent.resourceBundle['fusioncharts.export.as.svg'] +
+                                "|XLS="+$scope.$parent.resourceBundle['fusioncharts.export.as.xls'];
+                        }
                         if ($scope.simple) {
                             dataSource.data = $scope.chartData;
                         } else {
@@ -2325,14 +2439,14 @@ logistimoApp.directive('noteData', function () {
     var noteTemplate ='<div class="box topbox">' +
         '<div>' +
         '<div class="modal-header">' +
-        '<h3 class="modal-title">Note</h3>' +
+        '<h3 class="modal-title">{{title}}</h3>' +
         '</div>'+
         '<div class="modal-body">' +
         '<p>{{msg}}</p>' +
         '</div>' +
         '<div class="modal-footer">' +
-        '<button class="btn btn-primary" ng-click="confirm()">OK</button>' +
-        '<button class="btn btn-default" ng-click="close()">Cancel</button>'
+        '<button class="btn btn-primary" ng-click="confirm()">{{okLabel}}</button>' +
+        '<button class="btn btn-default" ng-click="close()">{{cancelLabel}}</button>'
     '</div>' +
     '</div>' +
     '</div>';
@@ -2340,6 +2454,9 @@ logistimoApp.directive('noteData', function () {
         restrict: 'AE',
         controller:['$scope','$uibModal','demandService', function ($scope, $uibModal, demandService) {
             $scope.open = function (data) {
+                $scope.okLabel = $scope.resourceBundle['ok'];
+                $scope.cancelLabel = $scope.resourceBundle['cancel'];
+                $scope.title=$scope.resourceBundle['note'];
                 if(data == "crc") {
                     if($scope.inv.crc == -1 && $scope.inv.mmType == '1') {
                         $scope.msg = $scope.resourceBundle['config.set.consumption.rate'];
@@ -2363,7 +2480,7 @@ logistimoApp.directive('noteData', function () {
                 } else if(data == 'falloc' || data == 'alloc')  {
                     $scope.alloc = true;
                     $scope.type = data;
-                    $scope.msg = "Are you sure you want to clear allocations?";
+                    $scope.msg = $scope.resourceBundle['orders.clear.allocation.warning'];
                     $scope.modalInstance = $uibModal.open({
                         template: noteTemplate,
                         scope: $scope
@@ -2397,29 +2514,27 @@ logistimoApp.directive('export', function () {
     return {
         restrict: 'E',
         controller: ExportController,
-        template: '<button class="btn btn-sm btn-primary" ng-click="confirmExport()">Export</button>'
+        template: '<button class="btn btn-sm btn-primary" ng-click="confirmExport()">{{$parent.resourceBundle.export}}</button>'
     };
 });
 
-function ExportController($scope, $uibModal,AnalyticsService) {
-
-    const NO_FILTER_TEMPLATE = "You have chosen to export all '{0}'. If needed, please filter the data before you export to ensure faster delivery of the export file. " +
-        "Exported data will be emailed to {1}. Continue?";
-    const FILTER_TEMPLATE = "You have chosen to export '{0}' with filters as specified below. Exported data will be emailed to {1}. Continue?";
-    const DEFAULT_TEMPLATE = "You have chosen to export all '{0}'. Exported data will be emailed to {1}. Continue?";
+function ExportController($scope, $uibModal, AnalyticsService) {
+    const NO_FILTER_TEMPLATE = $scope.$parent.resourceBundle['export.no.filter.template'];
+    const FILTER_TEMPLATE = $scope.$parent.resourceBundle['export.filter.template'];
+    const DEFAULT_TEMPLATE = $scope.$parent.resourceBundle['export.default.template'];
     var exportModal = '<div class="modal-header ws">' +
-        '<h3 class="modal-title">Export data</h3>' +
+        '<h3 class="modal-title">'+ $scope.$parent.resourceBundle['export.data'] + '</h3>' +
         '</div>' +
         '<div class="modal-body ws">' +
         '<p>{{message}}</p>' +
-        '<p ng-if="exportFilters" class="litetext word-wrap" style="white-space: pre-wrap"><b>Filters:</b> {{exportFilters}}</p>' +
+        '<p ng-if="exportFilters" class="litetext word-wrap" style="white-space: pre-wrap"><b>' + $scope.$parent.resourceBundle['filters.uppercase'] + ':</b> {{exportFilters}}</p>' +
         '<span ng-show="exportShowIncludeBatch">' +
-        '<input type="checkbox" ng-model="exportIncludeBatch"> Include batch details' +
-        '<input style="margin-left:10px" type="checkbox" ng-model="fullInventoryExport"> Include all fields' +
+        '<input type="checkbox" ng-model="exportIncludeBatch"> ' + $scope.$parent.resourceBundle['inventory.includebatchdetails'] +
+        '<input style="margin-left:10px" type="checkbox" ng-model="fullInventoryExport"> ' + $scope.$parent.resourceBundle['export.inventory.include.all.fields'] +
         '</span></div>' +
         '<div class="modal-footer ws">' +
-        '<button class="btn btn-primary" ng-click="startExport()">OK</button>' +
-        '<button class="btn btn-default" ng-click="close()">Cancel</button>' +
+        '<button class="btn btn-primary" ng-click="startExport()">' + $scope.$parent.resourceBundle['ok'] + '</button>' +
+        '<button class="btn btn-default" ng-click="close()">' + $scope.$parent.resourceBundle['cancel'] + '</button>' +
         '</div>';
 
     function messageFormat(text) {
@@ -2892,12 +3007,12 @@ logistimoApp.directive('multiSelect', function () {
         restrict: 'AE',
         replace: true,
         template: '<div>' +
-        '<lg-uib-select multiple="multiple" ng-disabled="disabled" query="query(q)" ui-model="ngModel" place-holder="{{placeHolder?placeHolder:\'Type text and press enter\'}}"> </lg-uib-select>' +
+        '<lg-uib-select multiple="multiple" ng-disabled="disabled" query="query(q)" ui-model="ngModel" place-holder="{{placeHolder}}"> </lg-uib-select>' +
         '</div>',
         scope: {
             ngModel: '=',
             name: '=',
-            placeHolder: '=',
+            placeHolder: '@',
             type: '='
         },
         controller: ['$scope', function ($scope) {
@@ -3035,10 +3150,11 @@ logistimoApp.directive('userDomainSelect', function () {
         restrict: 'E',
         replace: true,
         template: '<div>' +
-        '<lg-uib-select multiple="multiple" query="query(q)" ui-model="model" place-holder="Choose Domains"> </lg-uib-select>' +
+        '<lg-uib-select multiple="multiple" query="query(q)" ui-model="model" place-holder="{{placeHolder}}"> </lg-uib-select>' +
         '</div>',
         scope: {
-            model: '='
+            model: '=',
+            placeHolder: '@'
         },
         controller: ['$scope', 'domainService', function ($scope, domainService) {
             $scope.query = function (query) {
@@ -3260,5 +3376,62 @@ logistimoApp.directive('noDoubleQuotes', function() {
                 return cleanInputValue;
             });
         }
+    }
+});
+logistimoApp.directive('transporterSelect', function ($q) {
+    return {
+        restrict: 'AE',
+        template: '<div><div class="has-feedback"><input ng-disabled = "disable == true"  type="text" class="{{classes}}" typeahead-editable="true" ng-model="transporterModel" ' +
+        'placeholder="{{placeHolder}}" uib-typeahead="transporter as transporter.name for transporter in query($viewValue) |' +
+        ' limitTo:8" class="form-control" maxlength="50" typeahead-wait-ms = "500"' +
+        ' typeahead-on-select="setModel($item)" ng-blur="blurCallback()"' +
+        ' typeahead-loading="loadingTransporter"/>' +
+        '<span ng-show="loadingTransporter" class="form-control-feedback typehead-loading" aria-hidden="true"> <span class="glyphicons glyphicons-cogwheel spin"></span> </span></div>' +
+        '<span ng-if="showConfirm == true" class="fix-bot-right"> <span ng-click="ok()" class="glyphicons glyphicons-ok' +
+        ' clickable editBtn"></span> <span ng-click="cancel()" class="glyphicons glyphicons-remove clickable editBtn"></span></span></div>',
+        scope: {
+            transporterModel: '=',
+            disable: '=',
+            showConfirm: '=',
+            callback: '&onSelect',
+            bCallback: '&onBlur',
+            placeHolder: '@',
+            transporterId: "=",
+            classes: "@",
+            apiEnabled: "@",
+            onOkCallback: '&onOk',
+            onCancelCallback: '&onCancel'
+        },
+        controller: ['$scope', 'transporterServices', '$timeout', function ($scope, transporterServices, $timeout) {
+            $scope.classes = $scope.classes || 'form-control';
+
+            $scope.ok = function() {
+                $scope.onOkCallback({transporter: $scope.transporterModel})
+            };
+
+            $scope.cancel = function() {
+                $scope.onCancelCallback();
+            };
+
+            $scope.blurCallback = function () {
+                $scope.bCallback();
+            };
+
+            $scope.setModel = function (newVal) {
+                $scope.transporterModel = angular.copy(newVal);
+                $scope.callback(newVal);
+            };
+
+            $scope.query = function (term) {
+                var deferred = $q.defer();
+                transporterServices.getDomainTransporters(term, 0, 10, $scope.apiEnabled).then(function (data) {
+                    deferred.resolve(data.data.results);
+                }).catch(function error(msg) {
+                    $scope.$parent.showErrorMsg(msg);
+                    deferred.reject(msg);
+                });
+                return deferred.promise;
+            }
+        }]
     }
 });

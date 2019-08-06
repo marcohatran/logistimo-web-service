@@ -51,9 +51,9 @@
                              style="margin-left:3%; background-color: #ffffff">
                             <div class="row pt10">
                                 <div class="col-sm-12">
-                                    <span class="codegray">All monitored assets</span>
+                                    <span class="codegray">{{resourceBundle['assets.all.monitored']}}</span>
                                     <span class="float-right dummyLink" ng-click="selectAll('md')"
-                                          style="cursor: pointer">Select all</span>
+                                          style="cursor: pointer">{{resourceBundle['select']}} {{resourceBundle['all.lower']}}</span>
                                 </div>
                             </div>
                             <div class="row" style="margin-bottom: 0" ng-repeat="(key,value) in mAssetFilters.md">
@@ -65,9 +65,9 @@
                             <div class="separator norow"></div>
                             <div class="row" style="padding-bottom: 5px; margin-bottom: 0">
                                 <div class="col-sm-12">
-                                    <span class="codegray">All monitoring assets</span>
+                                    <span class="codegray">{{resourceBundle['assets.all.monitoring']}}</span>
                                     <span class="float-right dummyLink" ng-click="selectAll('mg')"
-                                          style="cursor: pointer">Select all</span>
+                                          style="cursor: pointer">{{resourceBundle['select']}} {{resourceBundle['all.lower']}}</span>
                                 </div>
                             </div>
                             <div class="row" style="margin-bottom: 0" ng-repeat="(key,value) in mAssetFilters.mg">
@@ -80,9 +80,9 @@
                                 <div class="col-sm-12">
                                     <span class="pull-right">
                                         <input type="button" class="btn btn-sm btn-primary" ng-click="applyFilter()"
-                                               value="Filter">
+                                               value="{{resourceBundle['filter']}}">
                                         <input type="button" class="btn btn-sm btn-default" ng-click="toggleFilter()"
-                                               value="Cancel">
+                                               value="{{resourceBundle['cancel']}}">
                                     </span>
                                 </div>
                             </div>
@@ -91,7 +91,7 @@
                 </div>
                 <div class="row">
                     <div class="col-sm-3 pt20 norightpad" style="width: 26%">
-                        <span class="filter-label">Relationships:</span>
+                        <span class="filter-label">{{resourceBundle['relationships']}}:</span>
                         <div class="btn-group btn-group-blk btn-group-top" uib-dropdown is-open="isaropen">
                             <button type="button" class="btn btn-outline dropdown-toggle" uib-dropdown-toggle>
                                 {{tempAwrDisplay}} <span class="caret"></span>

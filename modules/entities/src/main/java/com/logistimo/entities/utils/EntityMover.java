@@ -31,6 +31,7 @@ import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.pagination.processor.MoveProcessor;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
+import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.TaskSchedulingException;
 import com.logistimo.logger.XLog;
 import com.logistimo.pagination.PageParams;
@@ -84,7 +85,7 @@ public class EntityMover {
     List<IKiosk> kioskList = as.getKiosksByIds(kiosks);
     Set<String> users = EntityMoveHelper.extractUserIds(kioskList);
     List<String> errors = EntityMoveHelper.validateUsers(users, kiosks);
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", SecurityUtils
+    ResourceBundle backendMessages = Resources.getBundle(SecurityUtils
         .getLocale());
     if (!errors.isEmpty()) {
       String errSt = errors.toString().substring(1);
@@ -134,6 +135,8 @@ public class EntityMover {
     if (StringUtils.isNotEmpty(sDid)) {
       sourceDomainId = Long.parseLong(sDid);
     }
+    //validate domains invloved in entity movement
+    validateDomains(sourceDomainId,destDomainId);
     String relatedObjectsStr = ConfigUtil.get(MOVE_ENTITY_PROP);
     Map<String, String[]> relatedClassesMap = PropertyUtil.parseProperty(relatedObjectsStr);
     for (Map.Entry<String, String[]> relatedClassName : relatedClassesMap.entrySet()) {
@@ -159,7 +162,13 @@ public class EntityMover {
       }
     }
   }
-
+  
+  private static void validateDomains(Long srcDomainID, Long destDomainID) {
+    if(srcDomainID.equals(destDomainID)) {
+      xLogger.warn("Source domain {0} and destination domain {1} can not be same for entity movement request" ,srcDomainID ,destDomainID);
+      throw new InvalidDataException("Invalid source and destination domain for entity movement");
+    }
+  }
   /**
    * GQL supports only limited number of values in contains.
    * Here multiple queries are generated with no of ids limited to maximum of {@code MAX_CONTAINS_VALUE} per query.

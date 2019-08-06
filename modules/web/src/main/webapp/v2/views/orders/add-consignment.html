@@ -1,0 +1,73 @@
+<!--
+  ~ Copyright © 2019 Logistimo.
+  ~
+  ~ This file is part of Logistimo.
+  ~
+  ~ Logistimo software is a mobile & web platform for supply chain management and remote temperature monitoring in
+  ~ low-resource settings, made available under the terms of the GNU Affero General Public License (AGPL).
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+  ~ Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+  ~ later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+  ~ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License along with this program.  If not, see
+  ~ <http://www.gnu.org/licenses/>.
+  ~
+  ~ You can be released from the requirements of the license by purchasing a commercial license. To know more about
+  ~ the commercial license, please contact us at opensource@logistimo.com
+  -->
+<div ng-class="{'grid-wrapper': enableGrid}">
+    <div class="row mb10">
+        <label class="col-sm-4 cbx control-label ml10" ng-class="{'required': pckgReq}">{{resourceBundle['number.of.packages']}}</label>
+
+        <div class="col-sm-7">
+            <input only-digits maxlength="6" class="form-control" ng-model="model.pkgCnt"
+                   placeholder="{{resourceBundle['number.of.packages']}}">
+        </div>
+    </div>
+    <div class="row mb10">
+        <label class="col-sm-4 cbx control-label ml10" ng-class="{'required': wtReq}">{{resourceBundle['total.weight']}} (kg)</label>
+
+        <div class="col-sm-7">
+            <input only-digits allow-decimal maxlength="10" class="form-control" ng-model="model.wt"
+                   placeholder="{{resourceBundle['total.weight']}} (kg)">
+        </div>
+    </div>
+    <div class="row mb10">
+        <label class="col-sm-4 cbx control-label ml10">{{resourceBundle['volume.inches']}}</label>
+
+        <div class="col-sm-7">
+            <input only-digits allow-decimal maxlength="6" class="form-control form-control-override col-sm-2"
+                   ng-model="model.dimension.l" placeholder="{{resourceBundle['length']}}">
+            <input only-digits allow-decimal maxlength="6" class="form-control form-control-override col-sm-2"
+                   ng-model="model.dimension.w" placeholder="{{resourceBundle['width']}}">
+            <input only-digits allow-decimal maxlength="6" class="form-control form-control-override col-sm-2"
+                   ng-model="model.dimension.h" placeholder="{{resourceBundle['height']}}">
+        </div>
+    </div>
+    <div class="row mb10" ng-if="!disableCategory">
+        <label class="col-sm-4 cbx control-label ml10" ng-class="{'required': true}">{{resourceBundle['category']}}</label>
+
+        <div class="col-sm-7">
+            <input class="form-control" ng-model="model.ctg" placeholder="{{resourceBundle['category']}}" max-length="50">
+        </div>
+    </div>
+    <div class="row mb10" ng-if="!disableDeclaration">
+        <label class="col-sm-4 cbx control-label ml10" ng-class="{'required': contentReq}">{{resourceBundle['content.declaration']}}</label>
+
+        <div class="col-sm-7">
+            <input class="form-control" ng-model="model.declaration" placeholder="{{resourceBundle['content.declaration']}}" max-length="100">
+        </div>
+    </div>
+    <div class="row mb10">
+        <label class="col-sm-4 cbx control-label ml10" ng-class="{'required': valueReq}">{{resourceBundle['value']}}</label>
+        <div class="col-sm-7">
+            <input only-digits allow-decimal maxlength="10" class="form-control" ng-model="model.value"
+                   placeholder="{{resourceBundle['value']}}">
+        </div>
+    </div>
+</div>

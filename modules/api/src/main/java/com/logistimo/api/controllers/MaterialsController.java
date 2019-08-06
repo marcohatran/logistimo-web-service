@@ -111,7 +111,7 @@ public class MaterialsController {
   String delete(@RequestBody String materialIds) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     StringBuilder matNames = new StringBuilder();
     if (materialIds == null || materialIds.trim().equals("")) {
       throw new InvalidServiceException(backendMessages.getString("materials.delete.none"));
@@ -147,7 +147,7 @@ public class MaterialsController {
     xLogger.info("AUDITLOG\t{0}\t{1}\tMATERIAL\t " +
         "DELETE\t{2}\t{3}", domainId, sUser.getUsername(), materialIds, matNames.toString());
     return backendMessages.getString("schedule.task.remove.success") + " " + materialsArray.length
-        + " " + backendMessages.getString("materials.lowercase") + ". " + backendMessages
+        + " " + backendMessages.getString("material(s).lowercase") + ". " + backendMessages
         .getString("materials.removal.time");
   }
 
@@ -157,7 +157,7 @@ public class MaterialsController {
   MaterialModel getMaterialById(@PathVariable Long materialId) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     IUserAccount cb = null;
     IUserAccount ub = null;
     try {
@@ -191,7 +191,7 @@ public class MaterialsController {
   boolean checkMaterialExist(@RequestParam String mnm) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     Long domainId = sUser.getCurrentDomainId();
     try {
       IMaterial m = materialCatalogService.getMaterialByName(domainId, mnm);
@@ -219,7 +219,7 @@ public class MaterialsController {
       HttpServletRequest request) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     Long domainId = sUser.getCurrentDomainId();
     try {
       Navigator
@@ -269,7 +269,7 @@ public class MaterialsController {
   String create(@RequestBody MaterialModel materialModel) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
       throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
     }
@@ -308,7 +308,7 @@ public class MaterialsController {
   String updateMaterial(@RequestBody MaterialModel materialModel) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
       throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
     }

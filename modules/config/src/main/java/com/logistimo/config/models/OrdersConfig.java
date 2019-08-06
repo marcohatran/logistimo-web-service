@@ -49,10 +49,10 @@ public class OrdersConfig implements Serializable {
   private static final String TIMES = "times";
   private static final String EXPORTUSERIDS = "expusrids";
   private static final String ENABLED = "enabled";
-  private static final String SOURCEUSERID = "suid"; // source user ID
-  private static final String RSNENABLED = "renabled";
+  private static final String SOURCE_USER_ID = "suid"; // source user ID
+  private static final String RSN_ENABLED = "renabled";
   private static final String OREASON = "orsn"; // Recommended order reason
-  private static final String MANDATORY = "md"; // Mark reasons field optional
+  private static final String MANDATORY_KEY = "md"; // Mark reasons field optional
   private static final String USER_TAGS_SCHEDULE_ORDER_EXPORT = "usertgs";
   private static final String MARK_SALES_ORDER_CONFIRMED = "msoc";
   private static final String ALLOCATE_STOCK_ON_CONFIRMATION = "asc";
@@ -84,6 +84,9 @@ public class OrdersConfig implements Serializable {
   private static final String PURCHASE_REFERENCE_ID_MANDATORY = "purchase_ref_id_mandatory";
   private static final String TRANSFER_REFERENCE_ID_MANDATORY = "transfer_ref_id_mandatory";
   private static final String EAD_MANDATORY = "ead_mandatory";
+  private static final String AUTO_MARK_SHIPPED_ON_PICKUP = "shpd_on_pickup";
+  private static final String AUTO_MARK_FULFILLED_ON_DELIVERY = "fulfilled_on_del";
+  private static final String DISABLE_DELIVERY_REQUEST_BY_CUSTOMER = "disable_dr_cust";
 
   String sourceUserId = null; // user who last created the export specification
   private boolean exportEnabled = false;
@@ -123,6 +126,9 @@ public class OrdersConfig implements Serializable {
   private boolean purchaseReferenceIdMandatory = false;
   private boolean transferReferenceIdMandatory = false;
   private boolean expectedArrivalDateMandatory = false;
+  private boolean markOrderAsShippedOnPickup = true;
+  private boolean markOrderAsFulfilledOnDelivery = true;
+  private boolean disableDeliveryRequestByCustomer = false;
 
 
   public OrdersConfig() {
@@ -145,7 +151,7 @@ public class OrdersConfig implements Serializable {
       // ignore
     }
     try {
-      sourceUserId = json.getString(SOURCEUSERID);
+      sourceUserId = json.getString(SOURCE_USER_ID);
     } catch (JSONException e) {
       // ignore
     }
@@ -155,12 +161,12 @@ public class OrdersConfig implements Serializable {
       //ignore
     }
     try {
-      rsnEnabled = json.getBoolean(RSNENABLED);
+      rsnEnabled = json.getBoolean(RSN_ENABLED);
     } catch (JSONException e) {
       // ignore
     }
     try {
-      mandatory = json.getBoolean(MANDATORY);
+      mandatory = json.getBoolean(MANDATORY_KEY);
     } catch (JSONException e) {
       //ignore
     }
@@ -350,6 +356,24 @@ public class OrdersConfig implements Serializable {
       //ignored
     }
 
+    try {
+      markOrderAsShippedOnPickup = json.getBoolean(AUTO_MARK_SHIPPED_ON_PICKUP);
+    } catch (JSONException e) {
+      markOrderAsShippedOnPickup = true;
+    }
+
+    try {
+      markOrderAsFulfilledOnDelivery = json.getBoolean(AUTO_MARK_FULFILLED_ON_DELIVERY);
+    } catch (JSONException e) {
+      markOrderAsFulfilledOnDelivery = true;
+    }
+
+    try {
+      disableDeliveryRequestByCustomer = json.getBoolean(DISABLE_DELIVERY_REQUEST_BY_CUSTOMER);
+    } catch (JSONException e) {
+      disableDeliveryRequestByCustomer = false;
+    }
+
   }
 
   public JSONObject toJSONObject() throws ConfigurationException {
@@ -363,7 +387,7 @@ public class OrdersConfig implements Serializable {
         json.put(TIMES, exportTimesCSV);
       }
       if (sourceUserId != null && !sourceUserId.isEmpty()) {
-        json.put(SOURCEUSERID, sourceUserId);
+        json.put(SOURCE_USER_ID, sourceUserId);
       }
 
       if (orReasons != null && !orReasons.isEmpty()) {
@@ -390,7 +414,7 @@ public class OrdersConfig implements Serializable {
         json.put(CANCELLING_ORDER_REASONS, coReasons);
       }
       json.put(CANCELLING_ORDER_REASONS_MANDATORY, coReasonsMandatory);
-      json.put(MANDATORY, mandatory);
+      json.put(MANDATORY_KEY, mandatory);
       if (userTags != null && !userTags.isEmpty()) {
         json.put(USER_TAGS_SCHEDULE_ORDER_EXPORT, StringUtil.getCSV(userTags));
       }
@@ -414,6 +438,9 @@ public class OrdersConfig implements Serializable {
       json.put(PURCHASE_REFERENCE_ID_MANDATORY, purchaseReferenceIdMandatory);
       json.put(TRANSFER_REFERENCE_ID_MANDATORY, transferReferenceIdMandatory);
       json.put(EAD_MANDATORY, expectedArrivalDateMandatory);
+      json.put(AUTO_MARK_SHIPPED_ON_PICKUP, markOrderAsShippedOnPickup);
+      json.put(AUTO_MARK_FULFILLED_ON_DELIVERY, markOrderAsFulfilledOnDelivery);
+      json.put(DISABLE_DELIVERY_REQUEST_BY_CUSTOMER, disableDeliveryRequestByCustomer);
       return json;
     } catch (JSONException e) {
       throw new ConfigurationException(e.getMessage());
@@ -715,6 +742,30 @@ public class OrdersConfig implements Serializable {
 
   public boolean isTransferReferenceIdMandatory() {
     return transferReferenceIdMandatory;
+  }
+
+  public boolean markOrderAsShippedOnPickup() {
+    return markOrderAsShippedOnPickup;
+  }
+
+  public boolean markOrderAsFulfilledOnDelivery() {
+    return markOrderAsFulfilledOnDelivery;
+  }
+
+  public boolean isDeliveryRequestByCustomerDisabled() {
+    return disableDeliveryRequestByCustomer;
+  }
+
+  public void setMarkOrderAsShippedOnPickup(boolean flag) {
+    this.markOrderAsShippedOnPickup = flag;
+  }
+
+  public void setMarkOrderAsFulfilledOnDelivery(boolean flag) {
+    this.markOrderAsFulfilledOnDelivery = flag;
+  }
+
+  public void setDeliveryRequestByCustomerDisabled(boolean flag) {
+    this.disableDeliveryRequestByCustomer = flag;
   }
 
   public OrdersConfig setTransferReferenceIdMandatory(boolean transferReferenceIdMandatory) {

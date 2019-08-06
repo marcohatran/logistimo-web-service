@@ -36,6 +36,7 @@ import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
 import com.logistimo.constants.Constants;
 import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entity.ILocation;
+import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.logger.XLog;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
@@ -115,6 +116,7 @@ public class DomainConfig implements ILocation, Serializable {
   public static final String APPROVALS = "approvals";
   public static final String STOCK_REBALANCING = "stock_rebalancing";
   public static final String FORMS = "forms";
+  public static final String TRANSPORTERS = "transporters";
   public static final String VENDOR_ID = "vid";
   public static final String EVENTS = "evnts";
   public static final String ORDERS = "orders";
@@ -251,8 +253,8 @@ public class DomainConfig implements ILocation, Serializable {
   private EventsConfig eventsConfig = null;
   // Bulletin board config.
   private BBoardConfig bbConfig = null;
-  // Forms config
   private FormsConfig formsConfig = null;
+  private TransportersConfig transportersConfig = null;
   // Geo-coding strategy
   private String geoCodingStrategy = CapabilityConfig.GEOCODING_STRATEGY_OPTIMISTIC;
   // Creatable entities
@@ -316,6 +318,7 @@ public class DomainConfig implements ILocation, Serializable {
     approvalsConfig = new ApprovalsConfig();
     stockRebalancingConfig = new StockRebalancingConfig();
     formsConfig = new FormsConfig();
+    transportersConfig = new TransportersConfig();
     ordersConfig = new OrdersConfig();
     capabilityMap = new HashMap<>();
     accountingConfig = new AccountingConfig();
@@ -631,6 +634,11 @@ public class DomainConfig implements ILocation, Serializable {
       } catch (JSONException e) {
         formsConfig = new FormsConfig();
       }
+      try{
+        transportersConfig = new TransportersConfig(json.getJSONObject(TRANSPORTERS));
+      } catch (JSONException e) {
+        transportersConfig = new TransportersConfig();
+      }
       // FOR BACKWARD COMPATIBILITY
       try {
         String reasonsCsv = json.getString(CapabilityConfig.WASTAGE_REASONS);
@@ -831,9 +839,9 @@ public class DomainConfig implements ILocation, Serializable {
   }
 
   public static DomainConfig getInstance(Long domainId) {
-    DomainConfig dc = null;
+    DomainConfig dc;
     if (domainId == null) {
-      return null;
+      throw new IllegalArgumentException("Domain Id should not be null");
     }
     // Check the memcache first
     MemcacheService cache = AppFactory.get().getMemcacheService();
@@ -844,7 +852,7 @@ public class DomainConfig implements ILocation, Serializable {
         return dc;
       }
     }
-    // Get from datastore
+    // Get from data store
     try {
       ConfigurationMgmtService cms = StaticApplicationContext
           .getBean(ConfigurationMgmtServiceImpl.class);
@@ -857,10 +865,10 @@ public class DomainConfig implements ILocation, Serializable {
       dc = new DomainConfig(); // default
     } catch (ServiceException e) {
       xLogger.severe("Service exception: {0}", e.getMessage());
-      return null;
+      throw new InvalidServiceException(e);
     } catch (ConfigurationException e) {
       xLogger.severe("Configuration exception: {0}", e.getMessage());
-      return null;
+      throw new InvalidServiceException(e);
     }
     // Update memcache
     if (cache != null) {
@@ -1019,6 +1027,9 @@ public class DomainConfig implements ILocation, Serializable {
       }
       if(formsConfig != null) {
         json.put(FORMS, formsConfig.toJSONObject());
+      }
+      if(transportersConfig != null) {
+        json.put(TRANSPORTERS, transportersConfig.toJSONObject());
       }
       // Events config.
       if (eventsConfig != null) {
@@ -2020,6 +2031,14 @@ public class DomainConfig implements ILocation, Serializable {
 
   public void setFormsConfig(FormsConfig formsConfig) {
     this.formsConfig = formsConfig;
+  }
+
+  public TransportersConfig getTransportersConfig() {
+    return transportersConfig;
+  }
+
+  public void setTransportersConfig(TransportersConfig transportersConfig) {
+    this.transportersConfig = transportersConfig;
   }
 
   public boolean isTwoFactorAuthenticationEnabled() { return enableTwoFactorAuthentication; }

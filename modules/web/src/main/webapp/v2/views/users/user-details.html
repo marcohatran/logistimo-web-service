@@ -47,17 +47,17 @@
                     <button ng-show="!user.en && (iSU || dp.ue) && isUserEditable" type="button"
                             class="btn btn-sm btn-primary"
                             confirmed-click="enableDisableUser('e')"
-                            ng-confirm-click="Are you sure you want to Enable user?">
+                            ng-confirm-click="{{resourceBundle['user.enable.confirm']}}">
                         {{resourceBundle['enable']}}
                     </button>
                     <button ng-show="iAdm && (dp.ua || dp.ue || dp.ur) && isUserEditable" type="button"
                             class="btn btn-sm btn-primary"
-                            ng-confirm-click="Are you sure you want to force logout this user?"
+                            ng-confirm-click="{{resourceBundle['user.logout.confirm']}}"
                             confirmed-click="forceLogout()">{{resourceBundle['mobile.force.logout']}}
                     </button>
                     <button ng-show="user.en && (iSU || dp.ue) && isUserEditable" type="button"
                             class="btn btn-sm btn-default" confirmed-click="enableDisableUser('d')"
-                            ng-confirm-click="Are you sure you want to Disable user?">
+                            ng-confirm-click="{{resourceBundle['user.disable.confirm']}}">
                         {{resourceBundle['disable']}}
                     </button>
                     <span class="caption pull-right cbx">
@@ -433,7 +433,7 @@
                                     </div>
                                     <span class="litetext">{{resourceBundle['uploadmessage']}}</span>
                                     <div class="mt10">
-                                        <input type="button" ng-click="validateImage() && uploadImage()" class="btn btn-primary" value="Upload">
+                                        <input type="button" ng-click="validateImage() && uploadImage()" class="btn btn-primary" value="{{resourceBundle['upload']}}">
                                         <input type="button" ng-click="cancel()" class="btn btn-default" value="{{resourceBundle['cancel']}}">
                                     </div>
                                 </div>
@@ -450,6 +450,9 @@
                             </li>
                             <li ng-show="iSU && user.isAdm" ng-class="{active: subview == 'domains' }" ><a
                                     href="#/setup/users/all/details/domains?userId={{user.id}}"> {{resourceBundle.domains}}	</a>
+                            </li>
+                            <li ng-show="curUser == userId && (user.isAdm || iSU)" ng-class="{active: subview == 'tokens' }">
+                                <a ng-href="#/setup/users/all/details/tokens?userId={{user.id}}"> {{resourceBundle.personlAccessTokens}}	</a>
                             </li>
                         </ul>
                     </div>
@@ -469,6 +472,9 @@
                                         <div ng-init="accDsm=user.accDsm;" ng-include="'views/users/user-domains.html'"></div>
                                     </div>
                                 </div>
+                                <div  class="tab-pane" ng-switch-when="tokens">
+                                    <div ng-include="'views/users/user-tokens.html'"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -487,17 +493,17 @@
                         <button ng-show="!user.en && (iSU || dp.ue) && isUserEditable" type="button"
                                 class="btn btn-sm btn-primary"
                                 confirmed-click="enableDisableUser('e')"
-                                ng-confirm-click="Are you sure you want to Enable user?">
+                                ng-confirm-click="{{resourceBundle['user.enable.confirm']}}">
                             {{resourceBundle['enable']}}
                         </button>
                         <button ng-show="iAdm && (dp.ua || dp.ue || dp.ur) && isUserEditable"
                                 type="button" class="btn btn-sm btn-primary"
-                                ng-confirm-click="Are you sure you want to force logout this user?"
+                                ng-confirm-click="{{resourceBundle['user.logout.confirm']}}"
                                 confirmed-click="forceLogout()">{{resourceBundle['mobile.force.logout']}}
                         </button>
                         <button ng-show="user.en && (iSU || dp.ue) && isUserEditable" type="button"
                                 class="btn btn-sm btn-default" confirmed-click="enableDisableUser('d')"
-                                ng-confirm-click="Are you sure you want to Disable user?">
+                                ng-confirm-click="{{resourceBundle['user.disable.confirm']}}">
                             {{resourceBundle['disable']}}
                         </button>
                     </div>

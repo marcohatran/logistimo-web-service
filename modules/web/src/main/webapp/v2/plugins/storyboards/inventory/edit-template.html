@@ -7,7 +7,7 @@
         <div class="col-sm-5" ng-if="filter.type=='title'">
             <div class="has-feedback">
                 <input type="text" class="form-control" ng-model="widget.conf.title" autocomplete="off"
-                       placeholder="Title">
+                       placeholder="{{resourceBundle['title']}}">
             </div>
         </div>
         <div class="col-sm-5" ng-if="filter.type=='entity'">
@@ -16,39 +16,39 @@
             </entity-select>
         </div>
         <div class="col-sm-5" ng-if="filter.type=='material'">
-            <material-drop-down ng-model="widget.conf.material" mtag="widget.conf.material"></material-drop-down>
+            <material-drop-down ng-model="widget.conf.material" mtag="widget.conf.material" place-holder="{{resourceBundle['all']}}"></material-drop-down>
         </div>
         <div class="col-sm-5" ng-if="filter.type=='entityTag'">
-            <tag-select tags-model="widget.conf.entityTag" place-holder="All"
+            <tag-select tags-model="widget.conf.entityTag" place-holder="{{resourceBundle['all']}}"
                         type="'entity'"
                         force-no-udf="'true'">
             </tag-select>
         </div>
         <div class="col-sm-5" ng-if="filter.type=='exEntityTag'">
-            <tag-select tags-model="widget.conf.exEntityTag" place-holder="All"
+            <tag-select tags-model="widget.conf.exEntityTag" place-holder="{{resourceBundle['all']}}"
                         type="'entity'"
                         force-no-udf="'true'">
             </tag-select>
         </div>
         <div class="col-sm-5" ng-if="filter.type=='materialTag'">
-            <tag-select tags-model="widget.conf.materialTag" place-holder="All"
+            <tag-select tags-model="widget.conf.materialTag" place-holder="{{resourceBundle['all']}}"
                         type="'material'"
                         force-no-udf="'true'">
             </tag-select>
         </div>
         <div class="col-sm-5" ng-if="filter.type=='date'">
-            <date-picker date-model="widget.conf.date" min-date="createdOn" place-holder="Date"
+            <date-picker date-model="widget.conf.date" min-date="createdOn" place-holder="{{resourceBundle['date']}}"
                          max-date="today"></date-picker>
         </div>
         <div class="col-sm-5" ng-if="filter.type=='period'">
             <div class="col-sm-12 noLRpad btn-group">
                 <select ng-model="widget.conf.period" class="form-control">
-                    <option value="0">Now</option>
-                    <option value="1">1 day</option>
-                    <option value="2">2 days</option>
-                    <option value="3">3 days</option>
-                    <option value="7">7 days</option>
-                    <option value="30">30 days</option>
+                    <option value="0">{{resourceBundle['now']}}</option>
+                    <option value="1">1 {{resourceBundle['day']}}</option>
+                    <option value="2">2 {{resourceBundle['days']}}</option>
+                    <option value="3">3 {{resourceBundle['days']}}</option>
+                    <option value="7">7 {{resourceBundle['days']}}</option>
+                    <option value="30">30 {{resourceBundle['days']}}</option>
                 </select>
             </div>
         </div>
@@ -56,11 +56,11 @@
         <div class="col-sm-5" ng-if="filter.type=='widType'">
             <div class="col-sm-12 noLRpad btn-group">
                 <select ng-model="widget.conf.widType" class="form-control">
-                    <option value="ia">Available</option>
-                    <option value="iso">Stock out</option>
-                    <option value="in">Normal</option>
-                    <option value="imin">Min</option>
-                    <option value="imax">Max</option>
+                    <option value="ia">{{resourceBundle['available']}}</option>
+                    <option value="iso">{{resourceBundle['stock.out']}}</option>
+                    <option value="in">{{resourceBundle['normal']}}</option>
+                    <option value="imin">{{resourceBundle['min.label']}}</option>
+                    <option value="imax">{{resourceBundle['max.label']}}</option>
                 </select>
             </div>
         </div>
@@ -68,8 +68,8 @@
         <div class="col-sm-5" ng-if="filter.type=='trendType'">
             <div class="col-sm-12 noLRpad btn-group">
                 <select ng-model="widget.conf.trendType" class="form-control">
-                    <option value="0">Stock Available</option>
-                    <option value="1">Abnormal stock</option>
+                    <option value="0">{{resourceBundle['inventory.status.stock.available']}}</option>
+                    <option value="1">{{resourceBundle['inventory.status.abnormal.stock']}}</option>
                 </select>
             </div>
         </div>
@@ -93,11 +93,11 @@
         <div class="col-sm-5" ng-if="filter.type=='mapType'">
             <div class="col-sm-12 noLRpad btn-group">
                 <select ng-model="widget.conf.mapType" class="form-control">
-                    <option value="4">Available</option>
-                    <option value="0">Normal</option>
-                    <option value="1">Stock Out</option>
-                    <option value="2">Min</option>
-                    <option value="3">Max</option>
+                    <option value="4">{{resourceBundle['available']}}</option>
+                    <option value="0">{{resourceBundle['normal']}}</option>
+                    <option value="1">{{resourceBundle['stock.out']}}</option>
+                    <option value="2">{{resourceBundle['min.label']}}</option>
+                    <option value="3">{{resourceBundle['Max.label']}}</option>
                 </select>
             </div>
         </div>
@@ -105,11 +105,11 @@
         <div class="col-sm-5" ng-if="filter.type=='topTenLocType'">
             <div class="col-sm-12 noLRpad btn-group">
                 <select ng-model="widget.conf.topTenLocType" class="form-control">
-                    <option value="4">Available</option>
-                    <option value="0">Normal</option>
-                    <option value="1">Stock Out</option>
-                    <option value="2">Min</option>
-                    <option value="3">Max</option>
+                    <option value="4">{{resourceBundle['available']}}</option>
+                    <option value="0">{{resourceBundle['normal']}}</option>
+                    <option value="1">{{resourceBundle['stock.out']}}</option>
+                    <option value="2">{{resourceBundle['min.label']}}</option>
+                    <option value="3">{{resourceBundle['max.label']}}</option>
                 </select>
             </div>
         </div>
@@ -117,11 +117,11 @@
         <div class="col-sm-5" ng-if="filter.type=='topTenMatType'">
             <div class="col-sm-12 noLRpad btn-group">
                 <select ng-model="widget.conf.topTenMatType" class="form-control">
-                    <option value="4">Available</option>
-                    <option value="0">Normal</option>
-                    <option value="1">Stock Out</option>
-                    <option value="2">Min</option>
-                    <option value="3">Max</option>
+                    <option value="4">{{resourceBundle['available']}}</option>
+                    <option value="0">{{resourceBundle['normal']}}</option>
+                    <option value="1">{{resourceBundle['stock.out']}}</option>
+                    <option value="2">{{resourceBundle['min.label']}}</option>
+                    <option value="3">{{resourceBundle['max.label']}}</option>
                 </select>
             </div>
         </div>
@@ -129,16 +129,16 @@
 
         <div class="col-sm-5" ng-if="filter.type=='assetType'">
             <lg-uib-select multiple="'multiple" query="filterAssets(q)" ui-model="widget.conf.asset"
-                           place-holder="All"></lg-uib-select>
+                           place-holder="{{resourceBundle['all']}}"></lg-uib-select>
         </div>
 
         <div class="col-sm-5" ng-if="filter.type=='assetStatus'">
             <div class="col-sm-12 noLRpad btn-group">
                 <select ng-model="widget.conf.assetStatus" class="form-control">
-                    <option value="tn">Normal</option>
-                    <option value="tl">Low</option>
-                    <option value="th">High</option>
-                    <option value="tu">Unknown</option>
+                    <option value="tn">{{resourceBundle['overview.temperature.dashboard.status.normal']}}</option>
+                    <option value="tl">{{resourceBundle['overview.temperature.dashboard.status.low']}}</option>
+                    <option value="th">{{resourceBundle['overview.temperature.dashboard.status.high']}}</option>
+                    <option value="tu">{{resourceBundle['overview.temperature.dashboard.status.unknown']}}</option>
                 </select>
             </div>
         </div>
@@ -146,35 +146,35 @@
         <div class="col-sm-5" ng-if="filter.type=='tPeriod'">
             <div class="col-sm-12 noLRpad">
                 <select ng-model="widget.conf.tPeriod" class="form-control">
-                    <option value="M_0">Now</option>
-                    <option value="M_30">30 minutes</option>
-                    <option value="H_1">1 hour</option>
-                    <option value="H_2">2 hours</option>
-                    <option value="H_3">3 hours</option>
-                    <option value="H_6">6 hours</option>
-                    <option value="H_12">12 hours</option>
-                    <option value="D_1">1 day</option>
-                    <option value="D_2">2 days</option>
-                    <option value="D_3">3 days</option>
-                    <option value="D_7">7 days</option>
-                    <option value="D_15">15 days</option>
-                    <option value="D_30">30 days</option>
+                    <option value="M_0">{{resourceBundle['now']}}</option>
+                    <option value="M_30">30 {{resourceBundle['minutes']}}</option>
+                    <option value="H_1">1 {{resourceBundle['hour']}}</option>
+                    <option value="H_2">2 {{resourceBundle['hours.lower']}}</option>
+                    <option value="H_3">3 {{resourceBundle['hours.lower']}}</option>
+                    <option value="H_6">6 {{resourceBundle['hours.lower']}}</option>
+                    <option value="H_12">12 {{resourceBundle['hours.lower']}}</option>
+                    <option value="D_1">1 {{resourceBundle['day']}}</option>
+                    <option value="D_2">2 {{resourceBundle['days']}}</option>
+                    <option value="D_3">3 {{resourceBundle['days']}}</option>
+                    <option value="D_7">7 {{resourceBundle['days']}}</option>
+                    <option value="D_15">15 {{resourceBundle['days']}}</option>
+                    <option value="D_30">30 {{resourceBundle['days']}}</option>
                 </select>
             </div>
         </div>
 
         <div class="col-sm-5" ng-if="filter.type=='exTempState'">
             <lg-uib-select multiple="'multiple" query="filterStatus(q)" ui-model="widget.conf.exTempState"
-                           place-holder="None"></lg-uib-select>
+                           place-holder="{{resourceBundle['none']}}"></lg-uib-select>
         </div>
 
         <div class="col-sm-5" ng-if="filter.type=='periodicity'">
             <div class="col-sm-12 noLRpad btn-group">
                 <select ng-model="widget.conf.period" class="form-control" ng-change="widget.conf.duration = ''">
-                    <option value="">-- Select period --</option>
-                    <option value="m">Monthly</option>
-                    <option value="w">Weekly</option>
-                    <option value="d">Daily</option>
+                    <option value="">-- {{resourceBundle['select']}} {{resourceBundle['config.period']}} --</option>
+                    <option value="m">{{resourceBundle['monthly']}}</option>
+                    <option value="w">{{resourceBundle['weekly']}}</option>
+                    <option value="d">{{resourceBundle['daily']}}</option>
                 </select>
             </div>
         </div>
@@ -182,7 +182,7 @@
         <div class="col-sm-5" ng-if="filter.type=='duration'">
             <div class="col-sm-12 noLRpad btn-group">
                 <select ng-model="widget.conf.duration" class="form-control">
-                    <option value="">-- Select period --</option>
+                    <option value="">-- {{resourceBundle['select']}} {{resourceBundle['config.period']}} --</option>
                     <option value="3" ng-show="widget.conf.period=='m'">3</option>
                     <option value="4" ng-show="widget.conf.period=='w'">4</option>
                     <option value="6" ng-show="widget.conf.period=='m'">6</option>

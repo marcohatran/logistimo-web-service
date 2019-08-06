@@ -1933,3 +1933,57 @@ userControllers.controller('UserDomainListController', ['$scope','$route','reque
         };
     }
 ]);
+
+
+userControllers.controller('PersonalAccessTokensController', ['$scope','$route','requestContext', 'userService',
+    function ($scope, $route, requestContext, userService) {
+        $scope.tokens = {results:[]};
+
+
+        $scope.fetchTokens = function() {
+            $scope.showLoading();
+            userService.getTokens().then(function(data) {
+                $scope.tokens = data.data;
+            }).catch(function error(msg) {
+                $scope.showWarning($scope.resourceBundle['fetch.tokens.error'] + msg);
+            }).finally( function(){
+                $scope.hideLoading();
+            });
+        };
+
+        $scope.fetchTokens();
+
+        $scope.delete = function(token) {
+            $scope.showLoading();
+            userService.deleteToken(token).then(function(){
+                $scope.showSuccess("Token removed successfully.");
+                $scope.fetchTokens();
+            }).catch(function error(msg){
+                $scope.showError("Unable to remove token : " + msg);
+            }).finally( function(){
+                $scope.hideLoading();
+            });
+        }
+    }
+]);
+
+
+userControllers.controller('CreatePersonalAccessTokenController', ['$scope','$route','requestContext', 'userService',
+    function ($scope, $route, requestContext, userService) {
+        $scope.token = undefined;
+        $scope.tokenDescription = undefined;
+
+
+        $scope.generateToken = function() {
+            $scope.showLoading();
+            userService.generateToken($scope.tokenDescription).then(function(data) {
+                $scope.token = data.data;
+            }).catch(function error(msg) {
+                $scope.showWarning($scope.resourceBundle['users.tokens.create.error'] + msg);
+            }).finally( function(){
+                $scope.hideLoading();
+            });
+        };
+
+    }
+]);

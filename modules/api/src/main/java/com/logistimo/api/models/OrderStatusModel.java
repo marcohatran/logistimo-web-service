@@ -23,6 +23,8 @@
 
 package com.logistimo.api.models;
 
+import com.logistimo.models.shipments.ConsignmentModel;
+
 import java.util.List;
 
 /**
@@ -37,6 +39,18 @@ public class OrderStatusModel {
    * transporter
    */
   public String t;
+  /**
+   * transporter Id
+   */
+  public Long transporterId;
+  /**
+   * Contact phone number from tracking
+   */
+  public String phone;
+  /**
+   * Vehicle details
+   */
+  public String vehicle;
   /**
    * tracking id
    */
@@ -56,4 +70,14 @@ public class OrderStatusModel {
    * Reference id
    */
   public String salesRefId;
+
+  /**
+   * Customer pick up
+   */
+  public boolean customerPickup;
+
+  /**
+   * Consignment model in case of shipped status
+   */
+  public ConsignmentModel consignment;
 }

@@ -819,7 +819,7 @@ public class BulkExportMgr {
   }
 
   public static String getExportJobStatusDisplay(int status, Locale locale) {
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+    ResourceBundle messages = Resources.getBundle(locale);
     if (messages == null) {
       return "unknown";
     }

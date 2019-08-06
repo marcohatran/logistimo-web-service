@@ -224,7 +224,7 @@ public class BulkUploadController {
     Map<String, List<String>> blobMap = blobstoreService.getUploads(request);
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     String blobKeyStr = null;
     if (blobMap != null) {
       List<String> keys = blobMap.get("data");
@@ -338,7 +338,7 @@ public class BulkUploadController {
                           HttpServletRequest request) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     String timezone = sUser.getTimezone();
     Long domainId = sUser.getCurrentDomainId();
     DomainConfig dc = DomainConfig.getInstance(domainId);

@@ -1,0 +1,76 @@
+<!--
+  ~ Copyright © 2018 Logistimo.
+  ~
+  ~ This file is part of Logistimo.
+  ~
+  ~ Logistimo software is a mobile & web platform for supply chain management and remote temperature monitoring in
+  ~ low-resource settings, made available under the terms of the GNU Affero General Public License (AGPL).
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+  ~ Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+  ~ later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+  ~ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License along with this program.  If not, see
+  ~ <http://www.gnu.org/licenses/>.
+  ~
+  ~ You can be released from the requirements of the license by purchasing a commercial license. To know more about
+  ~ the commercial license, please contact us at opensource@logistimo.com
+  -->
+
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Cache-Control" content="max-age=0" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>Logistimo</title>
+    <link rel="stylesheet" href="../../../../css/3rdparty/bootstrap.min.css">
+    <link rel="stylesheet" href="../../../../css/logistimo.css">
+    <link rel="stylesheet" href="../../../../css/help.css">
+    <link rel="shortcut icon" href="../../../../../titleiconnew.ico">
+</head>
+<body class="mainbody">
+<div class="container" style="border-bottom: 2px solid #F56C64;padding:10px 0">
+    <div>
+        <div class="row">
+            <div class="col-sm-12">
+                <img style="max-height: 60px;max-width: 360px;" src="../../../../images/acquia_marina_logo.png">
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container" style="margin-top:15px;min-height: 90%">
+    <div class="mh300">
+        <div class="page-header" style="margin-top: 20px">
+            <div class="heading">Temps de réponse de réapprovisionnement</div>
+        </div>
+        <p>
+            Le rapport sur le temps de réponse des réapprovisionnements permet de comprendre le temps moyen nécessaire pour réapprovisionner les stocks d'un niveau de stock zéro à un niveau de stock non nul, ou d'un niveau < min à un niveau normal (dans la plage) ou >= max. , ou un passage d'un niveau de stock> max (à un stock normal, < min ou même nul).
+        </p>
+
+        <p>
+            Les métriques de ce rapport, décrites ci-dessous:
+        </p>
+        <ul>
+            <li>
+                <b>Reconstituer à partir du stock zéro:</b> Cette mesure représente le temps nécessaire pour qu'un niveau de stock d'un article de stock passe d'un niveau de stock zéro à un niveau de stock non nul, qui peut être un niveau de stock normal, < minimum ou > maximum. Aux niveaux globaux, le temps moyen pour tous les événements de stock zéro clôturé est calculé. La durée de réapprovisionnement est attribuée à la période au cours de laquelle le stock zéro a été réapprovisionné (ou l'événement a été clôturé).
+            </li>
+            <li>
+                <b>Reconstituer de < min:</b>
+                Cette mesure représente le temps (moyen) nécessaire pour qu'un niveau de stock d'un article de stock passe de < niveau de stock minimal à un niveau de stock normal (dans la plage) ou> niveaux maximum. Aux niveaux globaux, le temps moyen entre les événements de stock fermés < min est calculé. La durée de réapprovisionnement est attribuée à la période au cours de laquelle le stock < min est reconstitué (ou l'événement a été clôturé).
+            </li>
+            <li>
+                <b>Changer de > max:</b> Cette mesure représente le temps (moyen) nécessaire pour qu'un niveau de stock d'un article de stock passe d'un niveau de stock> max à un niveau de stock a = max, normal (dans la plage), < min ou zéro. Au niveau agrégé, le temps moyen entre événements sur stocks fermés> max est de
+                calculé. La durée de modification est attribuée à la période au cours de laquelle le stock > maximum a été modifié pour passer en dessous du niveau maximal (ou l'événement a été clôturé).
+            </li>
+        </ul>
+    </div>
+</div>
+</body>
+</html>

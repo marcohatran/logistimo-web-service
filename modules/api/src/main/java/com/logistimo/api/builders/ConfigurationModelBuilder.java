@@ -23,6 +23,9 @@
 
 package com.logistimo.api.builders;
 
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+
 import com.logistimo.AppFactory;
 import com.logistimo.api.constants.ConfigConstants;
 import com.logistimo.api.models.MenuStatsModel;
@@ -77,6 +80,9 @@ import com.logistimo.config.models.ReturnsConfig;
 import com.logistimo.config.models.StockRebalancingConfig;
 import com.logistimo.config.models.SupportConfig;
 import com.logistimo.config.models.SyncConfig;
+import com.logistimo.config.models.TransportersConfig;
+import com.logistimo.api.models.configuration.TransportersConfigModel;
+import com.logistimo.config.models.TransportersSystemConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
@@ -102,6 +108,8 @@ import com.logistimo.services.ServiceException;
 import com.logistimo.services.storage.StorageUtil;
 import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.tags.TagUtil;
+import com.logistimo.transporters.actions.GetTransportersAction;
+import com.logistimo.transporters.model.ConsignmentCategoryModel;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.utils.LocalDateUtil;
@@ -112,10 +120,12 @@ import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Type;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -152,6 +162,8 @@ public class ConfigurationModelBuilder {
   private EntitiesService entitiesService;
   private ConfigurationMgmtService configurationMgmtService;
   private UserBuilder userBuilder;
+  private GetTransportersAction getTransportersAction;
+  private ModelMapper modelMapper = new ModelMapper();
 
   @Autowired
   public void setUsersService(UsersService usersService) {
@@ -176,6 +188,11 @@ public class ConfigurationModelBuilder {
   @Autowired
   public void setConfigurationMgmtService(ConfigurationMgmtService configurationMgmtService) {
     this.configurationMgmtService = configurationMgmtService;
+  }
+
+  @Autowired
+  public void setGetTransportersAction(GetTransportersAction getTransportersAction) {
+    this.getTransportersAction = getTransportersAction;
   }
 
   public MenuStatsModel buildMenuStats(SecureUserDetails user, DomainConfig config, Locale locale,
@@ -1367,6 +1384,50 @@ public class ConfigurationModelBuilder {
     return formsConfigModel;
   }
 
+  public TransportersConfigModel buildTransportersConfigModel(TransportersConfig config,
+                                                              Locale locale, String timezone)
+      throws ServiceException {
+    TransportersConfigModel transportersConfigModel = new TransportersConfigModel();
+    if(config.getLastUpdated() != null) {
+      transportersConfigModel.setLastUpdated(
+          LocalDateUtil.format(new Date(Long.parseLong(config.getLastUpdated())),
+              locale, timezone));
+    }
+    transportersConfigModel.setUpdatedBy(config.getUpdatedBy());
+    transportersConfigModel.setUpdatedByName(getFullName(config.getUpdatedBy()));
+    IConfig systemConfig = configurationMgmtService.getConfiguration(IConfig.TRANSPORTER_CONFIG);
+    TransportersSystemConfig tConfig = new Gson().fromJson(systemConfig.getConfig(), TransportersSystemConfig
+        .class);
+    Map<String, TransportersConfig.TSPConfig> transporterConfigMap = new HashMap<>();
+    if(CollectionUtils.isNotEmpty(config.getEnabledTransporters())) {
+      config.getEnabledTransporters()
+          .forEach(c -> transporterConfigMap.put(c.getTspId(), c));
+    }
+    if(CollectionUtils.isNotEmpty(tConfig.getTransporters())) {
+      tConfig.getTransporters().forEach(model -> {
+        TransportersConfigModel.TransporterConfigModel tConfigModel =
+            new TransportersConfigModel.TransporterConfigModel();
+        tConfigModel.setTspId(model.getId());
+        if(CollectionUtils.isNotEmpty(model.getCategories())) {
+          Type targetType = new TypeToken<List<ConsignmentCategoryModel>>() {}.getType();
+          tConfigModel.setCategories(modelMapper.map(model.getCategories(), targetType));
+        }
+        tConfigModel.setName(model.getName());
+        if (transporterConfigMap.containsKey(model.getId())) {
+          TransportersConfig.TSPConfig TSPConfig = transporterConfigMap.get(
+              model.getId());
+          tConfigModel.setDefaultCategory(TSPConfig.getDefaultCategoryId());
+          tConfigModel.setEnabled(true);
+        } else {
+          tConfigModel.setEnabled(false);
+          tConfigModel.setDefaultCategory("");
+        }
+        transportersConfigModel.addTransporterConfigModel(tConfigModel);
+      });
+    }
+    return transportersConfigModel;
+  }
+
   public DashboardConfigModel buildDashboardConfigModel(DashboardConfig config, Long domainId,
                                                         Locale locale, String timezone) {
     DashboardConfigModel model = new DashboardConfigModel();
@@ -1510,6 +1571,11 @@ public class ConfigurationModelBuilder {
       model.setPurchaseReferenceIdMandatory(oc.isPurchaseReferenceIdMandatory());
       model.setTransferReferenceIdMandatory(oc.isTransferReferenceIdMandatory());
       model.setExpectedArrivalDateMandatory(oc.isExpectedArrivalDateMandatory());
+      model.setMarkShippedOnPickup(oc.markOrderAsShippedOnPickup());
+      model.setMarkFulfilledOnDelivery(oc.markOrderAsFulfilledOnDelivery());
+      model.setDisableDeliveryRequestByCustomer(oc.isDeliveryRequestByCustomerDisabled());
+      model.tspc = CollectionUtils.isNotEmpty(
+          getTransportersAction.invoke(domainId, true, null, null).getResults());
     }
     if (dbc != null) {
       if (dbc.isPublic()) {
@@ -1597,7 +1663,7 @@ public class ConfigurationModelBuilder {
   public SupportConfigModel buildSCModelForWebDisplay() {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     Long domainId = sUser.getCurrentDomainId();
     String timezone = sUser.getTimezone();
     try {
@@ -1648,7 +1714,7 @@ public class ConfigurationModelBuilder {
     Locale locale = user.getLocale();
     SupportConfigModel scm = new SupportConfigModel();
 
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     try {
       IConfig c = configurationMgmtService.getConfiguration(IConfig.GENERALCONFIG);
       if (c != null && c.getConfig() != null) {
@@ -1806,22 +1872,6 @@ public class ConfigurationModelBuilder {
       reasonConfigByTagMap.put(mTagReason.mtg, buildReasonConfig(mTagReason.rsnCfgModel));
     }
     return reasonConfigByTagMap;
-  }
-
-  public String trimReasons(String reasonsCSV) {
-    if(StringUtils.isEmpty(reasonsCSV)) {
-      return "";
-    }
-    String csv = reasonsCSV;
-    csv = csv.trim();
-    if (StringUtils.isEmpty(csv)) {
-      return "";
-    }
-    csv = StringUtil.getCSV(StringUtil.trim(StringUtil.getArray(csv)));
-    if (StringUtils.isEmpty(csv)) {
-      return "";
-    }
-    return csv;
   }
 
   public ActualTransConfig buildActualTransConfig(String actTransConfig) {

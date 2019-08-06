@@ -206,7 +206,7 @@ public class ReportsUtil {
       DomainsService ds = StaticApplicationContext.getBean(DomainsServiceImpl.class);
       MaterialCatalogService mcs =
           StaticApplicationContext.getBean(MaterialCatalogServiceImpl.class);
-      ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+      ResourceBundle messages = Resources.getBundle(locale);
       if (messages == null) {
         xLogger.warn("Could not get (null) resource bundle Messages_{0}",
             (locale == null ? null : locale.toString()));

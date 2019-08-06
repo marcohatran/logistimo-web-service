@@ -42,8 +42,7 @@ public class PatternConstants {
       EMAIL =
       "^(?=.{1,254}$)(?=.{1,64}@)[-!#$%&'*+/0-9=?A-Z^_`a-z{|}~]+(\\.[-!#$%&'*+/0-9=?A-Z^_`a-z{|}~]+)*@[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$";
   public static final String USERID = "[a-z0-9\\.\\-_@\\s]+";
-  public static final String FIRSTNAME = "[A-Za-z ]+";
-  public static final String LASTNAME = "[A-Za-z ]*";
+  public static final String NAME = "^([\\p{L}\\p{M} ]*)$";
   public static final String ZIPCODE = "[A-Za-z0-9- ]{1," + FieldLimits.TEXT_FIELD_MAX_LENGTH + "}";
 
   public static final String ESCAPE_INSIDE_DOUBLE_QUOTES = "(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)";

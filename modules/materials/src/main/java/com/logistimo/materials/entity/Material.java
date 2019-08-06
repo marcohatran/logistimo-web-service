@@ -70,6 +70,7 @@ public class Material implements IMaterial {
   @Persistent
   private String vertical;
   @Persistent
+  @Column(length = 512)
   private String name;
   @Persistent
   @Column(length = 400)
@@ -110,6 +111,7 @@ public class Material implements IMaterial {
   @Persistent
   private String currency = Constants.CURRENCY_DEFAULT;
   @Persistent
+  @Column(length = 512)
   private String uName; // unique name code - for sorting purposes
   @Persistent
   private String scode; // short-code (say, 0, 1, 2, ...) for sending over SMS

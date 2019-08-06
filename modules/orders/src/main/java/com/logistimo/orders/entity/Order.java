@@ -383,8 +383,9 @@ public class Order implements IOrder {
         if (oldStatusDate != null) {
           setDeliveryLeadTime(newDate.getTime() - oldStatusDate.getTime());
         }
-      } else if ((PENDING.equals(prevStatus) || CONFIRMED.equals(prevStatus)) && (
-          COMPLETED.equals(st) || FULFILLED.equals(st))) {
+      } else if ((PENDING.equals(prevStatus) || CONFIRMED.equals(prevStatus)
+                    || READY_FOR_DISPATCH.equals(prevStatus))
+                 && (COMPLETED.equals(st) || FULFILLED.equals(st))) {
         setProcessingTime(newDate.getTime() - getVendorVisibilityTime().getTime());
         // If product is shipped, update accounting as needed
         doAccounting(getTotalPrice(), BigDecimal.ZERO);

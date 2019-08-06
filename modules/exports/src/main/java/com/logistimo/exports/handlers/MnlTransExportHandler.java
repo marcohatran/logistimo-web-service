@@ -57,7 +57,7 @@ public class MnlTransExportHandler implements IExportHandler {
   }
   @Override
   public String getCSVHeader(Locale locale, DomainConfig dc, String type) {
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+    ResourceBundle messages = Resources.getBundle(locale);
     // Note: The following code block is the same as the code in getUploadableCSVHeader except that "closingstock" is also included here.
     String
         header =

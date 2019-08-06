@@ -85,14 +85,14 @@ public class ShipmentUtils {
   }
 
   // Generate shipment events, if configured
-  public static void generateEvent(Long domainId, int eventId, IShipment s, String message,
-                             List<String> userIds) {
+  public static void generateEvent(Long domainId, int eventId, String shipmentId,
+                                   ShipmentStatus status, String message, List<String> userIds) {
     try {
       Map<String, Object> params = null;
 
       if (eventId == IEvent.STATUS_CHANGE) {
         params = new HashMap<>(1);
-        params.put(EventConstants.PARAM_STATUS, s.getStatus().toString());
+        params.put(EventConstants.PARAM_STATUS, status.toString());
       }
       // Custom options
       CustomOptions customOptions = new CustomOptions();
@@ -106,10 +106,10 @@ public class ShipmentUtils {
       }
       // Generate event, if needed
       EventPublisher.generate(domainId, eventId, params,
-          JDOUtils.getImplClass(IShipment.class).getName(), s.getShipmentId(), customOptions);
+          JDOUtils.getImplClass(IShipment.class).getName(), shipmentId, customOptions);
     } catch (Exception e) {
       xLogger.severe("{0} when generating Shipment event {1} for shipment {2} in domain {3}: {4}",
-          e.getClass().getName(), eventId, s.getShipmentId(), domainId, e);
+          e.getClass().getName(), eventId, shipmentId, domainId, e);
     }
   }
 

@@ -25,28 +25,29 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:mvc="http://www.springframework.org/schema/mvc"
        xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
        xsi:schemaLocation="http://www.springframework.org/schema/mvc
        http://www.springframework.org/schema/mvc/spring-mvc-3.2.xsd
         http://www.springframework.org/schema/context
 	    http://www.springframework.org/schema/context/spring-context-2.5.xsd
 	    http://www.springframework.org/schema/beans
-        http://www.springframework.org/schema/beans/spring-beans-3.2.xsd">
+        http://www.springframework.org/schema/beans/spring-beans-3.2.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
 
-     <context:component-scan base-package="com.logistimo" />
+    <context:component-scan base-package="com.logistimo"/>
+    <aop:aspectj-autoproxy proxy-target-class="true"/>
 
-	<mvc:annotation-driven content-negotiation-manager="contentNegotiationManager">
+    <mvc:annotation-driven content-negotiation-manager="contentNegotiationManager">
         <mvc:message-converters>
             <bean class="org.springframework.http.converter.json.GsonHttpMessageConverter">
                 <property name="gson">
-                    <bean class="com.google.gson.Gson" factory-bean="gsonBuilder" factory-method="create"/>
+                    <bean id="gson" class="com.logistimo.gson.LogiGsonFactory" factory-method="create"/>
                 </property>
+                <property name="prefixJson" value="true"/>
             </bean>
         </mvc:message-converters>
     </mvc:annotation-driven>
 
-    <bean id="gsonBuilder" class="com.google.gson.GsonBuilder">
-        <property name="dateFormat" value="yyyy-MM-dd'T'HH:mm:ss.SSSZ"/>
-    </bean>
+
 
     <bean id="contextHolder" class="com.logistimo.context.StaticApplicationContext"/>
     
@@ -54,5 +55,5 @@
         <!-- Turn off working out content type based on URL file extension, should fall back to looking at the Accept headers -->
         <property name="favorPathExtension" value="false"/>
     </bean>
- 
+
 </beans>

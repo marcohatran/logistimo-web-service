@@ -100,6 +100,7 @@ import org.json.JSONObject;
 import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
+import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.ZoneId;
@@ -147,31 +148,38 @@ public class BulkUploadMgr {
   public static final String MESSAGE_DELIMITER = "@@@@@";
   public static final String INTERLINE_DELIMITER = "%%%%%";
   public static final String INTRALINE_DELIMITER = ":::::";
-  // Inventory model - user-specified replenishment
-  public static final String INVNTRY_MODEL_USERSPECIFIED = "us";
+
   public static final int ERROR_MESSAGE_MAX_LENGTH = 1800;
-  // need in bulk-upload, so that empty cell can be supported to indicate that no change be made
-  // Logger
+  public static final String BULKUPLOAD_MIN_INVALID = "bulkupload.min.invalid";
+  public static final String BULKUPLOAD_MAX_INVALID = "bulkupload.max.invalid";
+
   private static final XLog xLogger = XLog.getLog(BulkUploadMgr.class);
   public static final String ASSET_YOM = "yom";
   public static final String DEV_YOM = "dev.yom";
   public static final int LOWER_BOUND_FOR_YOM = 1980;
-  public static final String TEMP_MIN = "Temperature Min.";
-  public static final String TEMP_MAX = "Temperature Max.";
+  public static final String TEMP_MIN = "Temperature min.";
+  public static final String TEMP_MAX = "Temperature max.";
+  private static final String BULKUPLOAD_NO_FIELDS_SPECIFIED = "bulkupload.no.fields.specified";
+  private static final String
+      BULKUPLOAD_RETAILER_PRICE_INVALID =
+      "bulkupload.retailer.price.invalid";
+  private static final String BULKUPLOAD_ENTITY_NAME_INVALID = "bulkupload.entity.name.invalid";
 
-  private static final String MAX_LENGTH_MSG = " cannot be greater than ";
-  private static final String CHARACTERS = " characters";
-  private static final String TEXT_FIELD_MAX_LENGTH_MSG = MAX_LENGTH_MSG + FieldLimits.TEXT_FIELD_MAX_LENGTH + CHARACTERS + CharacterConstants.DOT;
-  private static final String MOBILE_PHONE_MAX_LENGTH_MSG = MAX_LENGTH_MSG + FieldLimits.MOBILE_PHONE_MAX_LENGTH + CHARACTERS + CharacterConstants.DOT;
-  private static final String LAND_PHONE_MAX_LENGTH_MSG = MAX_LENGTH_MSG + FieldLimits.LAND_PHONE_MAX_LENGTH + CHARACTERS + CharacterConstants.DOT;
-  private static final String EMAIL_MAX_LENGTH_MSG = MAX_LENGTH_MSG + FieldLimits.EMAIL_MAX_LENGTH + CHARACTERS + CharacterConstants.DOT;
-  private static final String MATERIAL_SHORT_NAME_MAX_LENGTH_MSG = MAX_LENGTH_MSG + FieldLimits.MATERIAL_SHORTNAME_MAX_LENGTH + CHARACTERS;
-  private static final String MATERIAL_DESC_MAX_LENGTH_MSG = MAX_LENGTH_MSG + FieldLimits.MATERIAL_DESCRIPTION_MAX_LENGTH + CHARACTERS + CharacterConstants.DOT;
-  private static final String MATERIAL_ADD_INFO_MAX_LENGTH_MSG = MAX_LENGTH_MSG + FieldLimits.MATERIAL_ADDITIONAL_INFO_MAX_LENGTH + CHARACTERS + CharacterConstants.DOT;
-  private static final String STREET_ADDRESS_MAX_LENGTH_MSG = MAX_LENGTH_MSG + FieldLimits.STREET_ADDRESS_MAX_LENGTH + CHARACTERS + CharacterConstants.DOT;
   private static final String ERROR_COUNT_MSG = "Remaining number of errors: ";
   private static final String ERRORS_TRUNCATED_MSG = "... Message truncated due to too many errors. ";
   private static final String SALT_HASH_SEPARATOR = "####";
+  private static final String BULKUPLOAD_NO_FIELDS_SPECIFIED_AFTER = "bulkupload.no.fields.specified.after";
+  private static final String BULKUPLOAD_TEXTFIELD_LENGTH_LIMITS = "bulkupload.textfield.length.limits";
+  private static final String STATES = "states";
+  private static final String DISTRICTS = "districts";
+  private static final String TALUKS = "taluks";
+  private static final String BULKUPLOAD_MATERIAL_TEMPERATURE_INVALID = "bulkupload.material.temperature.invalid";
+  private static final String BULKUPLOAD_LATITUDE_LONGITUDE_INVALID = "bulkupload.latitude.longitude.invalid";
+  private static final String NO_FIELDS_SPECIFIED = "No fields specified";
+  private static final String BULKUPLOAD_INVALID_OPERATION = "bulkupload.invalid.operation";
+  private static final String BULKUPLOAD_TALUK_CONFIGURATION_NOT_AVAILABLE = "bulkupload.taluk.configuration.not.available";
+  private static final String BULKUPLOAD_TEMPERATURE_CONFIGURATION_NOT_AVAILABLE = "bulkupload.temperature.configuration.not.available";
+  private static final String USERS = "users";
 
   private static DomainsService domainsService;
   private static EntitiesService entitiesService;
@@ -227,10 +235,10 @@ public class BulkUploadMgr {
   }
   // Get the display name of a given type
   public static String getDisplayName(String type, Locale locale) {
-    ResourceBundle bundle = Resources.get().getBundle("Messages", locale);
+    ResourceBundle bundle = Resources.getBundle(locale);
     switch(type) {
       case TYPE_USERS:
-        return bundle.getString("users");
+        return bundle.getString(USERS);
       case TYPE_MATERIALS:
         return bundle.getString("materials");
       case TYPE_KIOSKS:
@@ -394,7 +402,7 @@ public class BulkUploadMgr {
     } else if (TYPE_ASSETS.equals(type)) {
       entityContainer = processAssetEntity(tokens, domainId, sourceUserId);
     } else {
-      xLogger.warn("Unkown type {0} in BulkUploadMgr.processEntity() by user {1} in domain {2}",
+      xLogger.warn("Unknown type {0} in BulkUploadMgr.processEntity() by user {1} in domain {2}",
           type, sourceUserId, domainId);
     }
 
@@ -419,19 +427,18 @@ public class BulkUploadMgr {
 
     try {
       if (tokens == null || tokens.length == 0) {
-        throw new ServiceException("No fields specified");
+        throw new ServiceException(NO_FIELDS_SPECIFIED);
       }
 
       IUserAccount su = getUsersService().getUserAccount(sourceUserId);
-      backendMessages = Resources.get().getBundle("BackendMessages", su.getLocale());
+      backendMessages = Resources.getBundle(su.getLocale());
       //Entity Name
       int i = 0;
       int size = tokens.length;
       String eName = tokens[i].trim();
-      if (eName.length() > 50) {
-        throw new ServiceException(backendMessages.getString("kiosk")
-            + " name: Name is greater than 50 characters. Please specify a valid " + backendMessages
-            .getString("kiosks.lowercase") + " name.");
+      if (eName.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
+        throw new ServiceException(MessageFormat.format(backendMessages.getString(
+            BULKUPLOAD_ENTITY_NAME_INVALID), eName, FieldLimits.TEXT_FIELD_MAX_LENGTH));
       }
       PersistenceManager pm = PMF.get().getPersistenceManager();
       List<String> tags = new ArrayList<>(1);
@@ -451,7 +458,7 @@ public class BulkUploadMgr {
         try {
           q.closeAll();
         } catch (Exception ignored) {
-
+          // ignored
         }
         pm.close();
       }
@@ -485,13 +492,13 @@ public class BulkUploadMgr {
               monitoredAsset = AssetUtil.verifyAndRegisterAsset(domainId, sourceUserId, kioskId,
                   variableMap, metaDataMap);
             } else {
-              throw new ServiceException("No fields specified after manufacturer name");
+              throw new ServiceException(MessageFormat.format(backendMessages.getString(BULKUPLOAD_NO_FIELDS_SPECIFIED_AFTER), backendMessages.getString("monitoring.asset.manufacturer.name")));
             }
           } else {
-            throw new ServiceException("No fields specified after serial number");
+            throw new ServiceException(MessageFormat.format(backendMessages.getString(BULKUPLOAD_NO_FIELDS_SPECIFIED_AFTER), backendMessages.getString("asset.serial.number")));
           }
         } else {
-          throw new ServiceException("No fields specified after asset type");
+          throw new ServiceException(MessageFormat.format(backendMessages.getString(BULKUPLOAD_NO_FIELDS_SPECIFIED_AFTER), backendMessages.getString("asset.type")));
         }
       }
 
@@ -510,8 +517,7 @@ public class BulkUploadMgr {
             if (mobileNumber != null) {
               metaDataMap.put(AssetUtil.GSM_SIM_PHN_NUMBER, mobileNumber);
             } else {
-              ec.messages.add("Mobile phone: Number (" + tokens[i].trim()
-                  + ") format is invalid. It should be +[country-code][phone-number-without-spacesORdashes]");
+              ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.user.mobile.pattern"),tokens[i].trim()));
             }
           }
           if (++i < size) {
@@ -526,8 +532,7 @@ public class BulkUploadMgr {
             if (mobileNumber != null) {
               metaDataMap.put(AssetUtil.GSM_ALTSIM_PHN_NUMBER, mobileNumber);
             } else {
-              ec.messages.add("Alternate mobile phone: Number (" + tokens[i].trim()
-                  + ") format is invalid. It should be +[country-code][phone-number-without-spacesORdashes]");
+              ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.asset.alternate.mobile.pattern"),tokens[i].trim()));
             }
           }
           if (++i < size) {
@@ -632,15 +637,13 @@ public class BulkUploadMgr {
         IAssetRelation assetRelation = getAssetManagementService().getAssetRelationByRelatedAsset(sensorAsset.getId());
         if (assetRelation != null && !Objects
             .equals(assetRelation.getAssetId(), monitoredAsset.getId())) {
-          throw new ServiceException("Given monitoring asset " + sensorAsset.getSerialId()
-              + " is related to another asset, before adding new relationship, remove existing relationship.");
+          throw new ServiceException(MessageFormat.format(backendMessages.getString("bulkupload.monitoring.asset.relationship.exists"), sensorAsset.getSerialId()));
         }
 
         assetRelation = getAssetManagementService().getAssetRelationByAsset(monitoredAsset.getId());
         if (assetRelation != null && !Objects
             .equals(assetRelation.getRelatedAssetId(), sensorAsset.getId())) {
-          throw new ServiceException("Given monitored asset " + monitoredAsset.getSerialId()
-              + " is related to another asset, before adding new relationship, remove existing relationship.");
+          throw new ServiceException(MessageFormat.format(backendMessages.getString("bulkupload.monitored.asset.relationship.exists"), monitoredAsset.getSerialId()));
         }
 
         //Creating asset relation
@@ -652,7 +655,7 @@ public class BulkUploadMgr {
       String message = getErrorMessage(e.getCode(), e.getMessage(), asset);
       ec.messages.add(message);
     } catch (Exception e) {
-      ec.messages.add("Error: " + e.getMessage());
+      ec.messages.add(e.getMessage());
       xLogger.warn("Exception: {0}, Message: {1}", e.getClass().getName(), e.getMessage(), e);
     } finally {
       xLogger.fine("Exiting processAssetEntity");
@@ -758,16 +761,15 @@ public class BulkUploadMgr {
 
   private static EntityContainer processInventoryEntity(String[] tokens, Long domainId,
                                                         String sourceUserId) {
-    xLogger.fine("Entered processInventoryEntity");
     ResourceBundle backendMessages;
     EntityContainer ec = new EntityContainer();
     if (tokens == null || tokens.length == 0) {
-      ec.messages.add("No fields specified");
+      ec.messages.add(NO_FIELDS_SPECIFIED);
       return ec;
     }
     try {
       IUserAccount su = getUsersService().getUserAccount(sourceUserId);
-      backendMessages = Resources.get().getBundle("BackendMessages", su.getLocale());
+      backendMessages = Resources.getBundle(su.getLocale());
       IDomainPermission
           permission =
           getDomainService().getLinkedDomainPermission(
@@ -775,27 +777,26 @@ public class BulkUploadMgr {
                   : domainId);
       int i = 0;
       int size = tokens.length;
-      String op = tokens[i].trim(); // operation
+      String op = tokens[i].trim();
       if (!op.isEmpty()) {
         ec.operation = op;
       }
 
       if (++i == size) {
-        ec.messages.add("No fields specified");
+        ec.messages.add(backendMessages.getString(BULKUPLOAD_NO_FIELDS_SPECIFIED));
         return ec;
       }
       if (!OP_ADD.equals(ec.operation) && !OP_EDIT.equals(ec.operation) && !OP_DELETE
           .equals(ec.operation)) {
-        ec.messages.add("Invalid Operation. Please enter a = add / e = edit / d = delete.");
+        ec.messages.add(backendMessages.getString(BULKUPLOAD_INVALID_OPERATION));
         return ec;
       }
 
       //Entity Name
       String eName = tokens[i].trim();
-      if (eName.isEmpty() || eName.length() > 50) {
-        ec.messages.add(backendMessages.getString("kiosk")
-            + " name: Name is not specified or is greater than 50 characters. Please specify a valid "
-            + backendMessages.getString("kiosks.lowercase") + " name.");
+      if (eName.isEmpty() || eName.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
+        ec.messages.add(MessageFormat.format(backendMessages.getString(
+            BULKUPLOAD_ENTITY_NAME_INVALID),eName,FieldLimits.TEXT_FIELD_MAX_LENGTH));
         return ec;
       }
       Long kioskId = null;
@@ -817,12 +818,12 @@ public class BulkUploadMgr {
         try {
           q.closeAll();
         } catch (Exception ignored) {
-
+          // ignored
         }
         pm.close();
       }
       if (kioskId == null) {
-        ec.messages.add(backendMessages.getString("kiosk") + " " + eName + " does not exist.");
+        ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.entity.not.found"), eName));
         return ec;
       }
 
@@ -833,12 +834,12 @@ public class BulkUploadMgr {
         mName = tokens[i].trim();
         if (mName.isEmpty()) {
           ec.messages
-              .add("Material name: Name is not specified. Please specify a valid material name.");
+              .add(backendMessages.getString("bulkupload.material.name.not.specified"));
           return ec;
         }
         materialId = getMaterialId(domainId, mName, null);
         if (materialId == null) {
-          ec.messages.add("Material '" + mName + "' not found.");
+          ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.material.not.found"), mName));
           return ec;
         }
       }
@@ -852,21 +853,19 @@ public class BulkUploadMgr {
       if (permission != null) {
         boolean iSU = SecurityConstants.ROLE_SUPERUSER.equalsIgnoreCase(su.getRole());
         if (isAdd && !(iSU || permission.isInventoryAdd())) {
-          ec.messages.add("Cannot add inventory. User does not have permission to add.");
+          ec.messages.add(backendMessages.getString("bulkupload.cannot.add.inventory"));
           return ec;
         } else if (isDel && !(iSU || permission.isInventoryRemove())) {
-          ec.messages.add("Cannot delete inventory. User does not have permission to delete.");
+          ec.messages.add(backendMessages.getString("bulkupload.cannot.delete.inventory"));
           return ec;
         } else if (!isAdd && !isDel && !(iSU || permission.isInventoryEdit())) {
-          ec.messages.add("Cannot edit inventory. User does not have permission to edit.");
+          ec.messages.add(backendMessages.getString("bulkupload.cannot.edit.inventory"));
           return ec;
         }
       }
       if (isDel) {
         if (invntry == null) {
-          ec.messages.add(
-              "Inventory material '" + mName + "' is not available at '" + backendMessages
-                  .getString("kiosk.lowercase") + " " + eName + "' for delete.");
+          ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.inventory.material.does.not.exist"), mName, eName));
           return ec;
         }
         ims.removeInventory(domainId, kioskId, Collections.singletonList(materialId));
@@ -883,16 +882,12 @@ public class BulkUploadMgr {
           invntry.setUpdatedBy(sourceUserId);
           invntry.setTimestamp(new Date());
         } else {
-          ec.messages.add(
-              "Inventory material '" + mName + "' is already available at '" + backendMessages
-                  .getString("kiosk.lowercase") + " " + eName + "' , cannot add this.");
+          ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.inventory.material.already.exists"), mName, eName));
           return ec;
         }
       } else { //Edit
         if (invntry == null) {
-          ec.messages.add(
-              "Inventory material '" + mName + "' is not available at '" + backendMessages
-                  .getString("kiosk.lowercase") + " " + eName + "' for edit.");
+          ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.inventory.material.does.not.exist"), mName, eName));
           return ec;
         }
       }
@@ -905,33 +900,34 @@ public class BulkUploadMgr {
         if (!min.isEmpty()) {
           if (isMinMaxAbsoluteQty) {
             if (min.contains(CharacterConstants.DOT)) {
-              ec.messages.add("Invalid value " + min + " for Min. It should be a whole number.");
+              ec.messages.add(MessageFormat.format(backendMessages.getString(BULKUPLOAD_MIN_INVALID),
+                  min, FieldLimits.MIN_MAX_LOWER_LIMIT, FieldLimits.MIN_MAX_UPPER_LIMIT));
               return ec;
             }
             try {
               invntry.setReorderLevel(new BigDecimal(min));
               if (BigUtil.lesserThanZero(invntry.getReorderLevel()) || BigUtil
                   .gtMax(invntry.getReorderLevel())) {
-                ec.messages.add(
-                    "Invalid value " + min + " for Min. It should be between 0 and 1 trillion");
+                ec.messages.add(MessageFormat.format(backendMessages.getString(BULKUPLOAD_MIN_INVALID),
+                    min, FieldLimits.MIN_MAX_LOWER_LIMIT, FieldLimits.MIN_MAX_UPPER_LIMIT));
                 return ec;
               }
             } catch (NumberFormatException e) {
-              ec.messages.add("Invalid value " + min + " for Min. It should be a number");
-              return ec;
+              ec.messages.add(MessageFormat.format(backendMessages.getString(BULKUPLOAD_MIN_INVALID),
+                  min, FieldLimits.MIN_MAX_LOWER_LIMIT, FieldLimits.MIN_MAX_UPPER_LIMIT));
             }
           } else {
             try {
               invntry.setMinDuration(new BigDecimal(min));
               if (BigUtil.lesserThanZero(invntry.getMinDuration()) || BigUtil
                   .gtMax(invntry.getMinDuration())) {
-                ec.messages.add("Invalid value " + min
-                    + " for Minimum duration of stock. It should be between 0 and 1 trillion");
+                ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.min.duration.invalid"),
+                    min, FieldLimits.MIN_MAX_LOWER_LIMIT, FieldLimits.MIN_MAX_UPPER_LIMIT));
                 return ec;
               }
             } catch (NumberFormatException e) {
-              ec.messages.add(
-                  "Invalid value " + min + " for Minimum duration of stock. It should be a number");
+              ec.messages.add(MessageFormat.format(backendMessages.getString(BULKUPLOAD_MIN_INVALID),
+                  min, FieldLimits.MIN_MAX_LOWER_LIMIT, FieldLimits.MIN_MAX_UPPER_LIMIT));
               return ec;
             }
           }
@@ -958,7 +954,8 @@ public class BulkUploadMgr {
           if (isMinMaxAbsoluteQty) {
             try {
               if (max.contains(CharacterConstants.DOT)) {
-                ec.messages.add("Invalid value " + max + " for Max. It should be a whole number.");
+                ec.messages.add(MessageFormat.format(backendMessages.getString(BULKUPLOAD_MAX_INVALID),
+                    max, FieldLimits.MIN_MAX_LOWER_LIMIT, FieldLimits.MIN_MAX_UPPER_LIMIT));
                 return ec;
               }
               if (BigUtil.equalsZero(invntry.getReorderLevel()) || BigUtil
@@ -966,17 +963,19 @@ public class BulkUploadMgr {
                 invntry.setMaxStock(maxBD);
                 if (BigUtil.lesserThanZero(invntry.getMaxStock()) || BigUtil
                     .gtMax(invntry.getMaxStock())) {
-                  ec.messages.add(
-                      "Invalid value " + max + " for Max. It should be between 0 and 1 trillion");
+                  ec.messages.add(MessageFormat.format(backendMessages.getString(BULKUPLOAD_MAX_INVALID),
+                      max, FieldLimits.MIN_MAX_LOWER_LIMIT, FieldLimits.MIN_MAX_UPPER_LIMIT));
                   return ec;
                 }
               } else {
                 ec.messages
-                    .add("Min is greater than or equal to max for " + invntry.getMaterialName());
+                    .add(MessageFormat.format(
+                        backendMessages.getString("bulkupload.min.greater.than.or.equal.to.max"), mName));
                 return ec;
               }
             } catch (NumberFormatException e) {
-              ec.messages.add("Invalid value " + max + " for Max. It should be a number");
+              ec.messages.add(MessageFormat.format(backendMessages.getString(BULKUPLOAD_MAX_INVALID),
+                  max, FieldLimits.MIN_MAX_LOWER_LIMIT, FieldLimits.MIN_MAX_UPPER_LIMIT));
               return ec;
             }
           } else {
@@ -986,19 +985,20 @@ public class BulkUploadMgr {
                 invntry.setMaxDuration(maxBD);
                 if (BigUtil.lesserThanZero(invntry.getMaxDuration()) || BigUtil
                     .gtMax(invntry.getMaxDuration())) {
-                  ec.messages.add("Invalid value " + max
-                      + " for Maximum duration of stock. It should be between 0 and 1 trillion");
+                  ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.max.duration.invalid"),
+                      max, FieldLimits.MIN_MAX_LOWER_LIMIT, FieldLimits.MIN_MAX_UPPER_LIMIT));
                   return ec;
                 }
               } else {
-                ec.messages.add(
-                    "Minimum duration of stock is greater than or equal to maximum duration of stock for "
-                        + invntry.getMaterialName());
+                ec.messages
+                    .add(MessageFormat.format(
+                        backendMessages.getString("bulkupload.min.duration.greater.than.or.equal.to.max.duration"),
+                        mName));
                 return ec;
               }
             } catch (NumberFormatException e) {
-              ec.messages.add(
-                  "Invalid value " + max + " for Maximum duration of stock. It should be a number");
+              ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.max.duration.invalid"),
+                  max, FieldLimits.MIN_MAX_LOWER_LIMIT, FieldLimits.MIN_MAX_UPPER_LIMIT));
               return ec;
             }
           }
@@ -1013,8 +1013,8 @@ public class BulkUploadMgr {
             invntry.setConsumptionRateManual(new BigDecimal(cr));
             if (BigUtil.lesserThanZero(invntry.getConsumptionRateManual()) || BigUtil
                 .gtMax(invntry.getConsumptionRateManual())) {
-              ec.messages.add("Invalid value " + cr
-                  + " for Manual consumption rate. It should be between 0 and 1 trillion");
+              ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.consumption.rate.invalid"),
+                  cr, FieldLimits.CONSUMPTION_RATE_LOWER_LIMIT, FieldLimits.CONSUMPTION_RATE_UPPER_LIMIT));
               return ec;
             }
             if (!isMinMaxAbsoluteQty) {
@@ -1026,8 +1026,10 @@ public class BulkUploadMgr {
               }
             }
           } catch (NumberFormatException e) {
-            ec.messages
-                .add("Invalid value " + cr + " for Consumption rate(s). It should be a number");
+            ec.messages.add(MessageFormat
+                .format(backendMessages.getString("bulkupload.consumption.rate.invalid"),
+                    cr, FieldLimits.CONSUMPTION_RATE_LOWER_LIMIT,
+                    FieldLimits.CONSUMPTION_RATE_UPPER_LIMIT));
             return ec;
           }
         }
@@ -1041,13 +1043,15 @@ public class BulkUploadMgr {
             invntry.setRetailerPrice(new BigDecimal(price));
             if (BigUtil.lesserThanZero(invntry.getRetailerPrice()) || BigUtil
                 .gtMax(invntry.getRetailerPrice())) {
-              ec.messages.add(
-                  "Invalid value " + price + " for Price. It should be between 0 and 1 trillion");
+              ec.messages.add(MessageFormat.format(backendMessages.getString(
+                      BULKUPLOAD_RETAILER_PRICE_INVALID),
+                  price, FieldLimits.MIN_PRICE, FieldLimits.MAX_PRICE));
               return ec;
             }
           } catch (NumberFormatException e) {
-            ec.messages
-                .add("Invalid value " + price + " for Retailer's price. It should be a number");
+            ec.messages.add(
+                MessageFormat.format(backendMessages.getString(BULKUPLOAD_RETAILER_PRICE_INVALID),
+                    price, FieldLimits.MIN_PRICE, FieldLimits.MAX_PRICE));
             return ec;
           }
         }
@@ -1060,12 +1064,14 @@ public class BulkUploadMgr {
           try {
             invntry.setTax(new BigDecimal(tax));
             if (BigUtil.lesserThanZero(invntry.getTax()) || BigUtil.gtMax(invntry.getTax())) {
-              ec.messages
-                  .add("Invalid value " + tax + " for Tax. It should be between 0 and 1 trillion");
+              ec.messages.add(
+                  MessageFormat.format(backendMessages.getString(BULKUPLOAD_RETAILER_PRICE_INVALID),
+                      tax, FieldLimits.TAX_MIN_VALUE, FieldLimits.TAX_MAX_VALUE));
               return ec;
             }
           } catch (NumberFormatException e) {
-            ec.messages.add("Invalid value " + tax + " for Tax. It should be a number");
+            ec.messages.add(MessageFormat.format(backendMessages.getString(BULKUPLOAD_RETAILER_PRICE_INVALID),
+                tax, FieldLimits.TAX_MIN_VALUE, FieldLimits.TAX_MAX_VALUE));
             return ec;
           }
         }
@@ -1075,12 +1081,12 @@ public class BulkUploadMgr {
       if (++i < size) {
         String im = tokens[i].trim();
         if (!im.isEmpty()) {
-          if (INVNTRY_MODEL_USERSPECIFIED.equals(im)) {
+          if (FieldLimits.USER_SPECIFIED_REPLENISHMENT.equals(im)) {
             invntry.setInventoryModel(IInvntry.MODEL_NONE);
           } else if (IInvntry.MODEL_SQ.equals(im)) {
             invntry.setInventoryModel(IInvntry.MODEL_SQ);
           } else {
-            ec.messages.add("Inventory model '" + im + "' is not supported.");
+            ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.inventory.model.not.supported"), im));
             return ec;
           }
         }
@@ -1093,18 +1099,18 @@ public class BulkUploadMgr {
           if (invntry.getInventoryModel() == null || IInvntry.MODEL_NONE
               .equals(invntry.getInventoryModel())) {
             ec.messages
-                .add("Cannot set service-level for user specified replenishment inventory model.");
+                .add(backendMessages.getString("bulkupload.cannot.set.service.level"));
             return ec;
           } else {
             try {
               int s = Integer.parseInt(ser);
-              if (s < 65 || s > 99) {
+              if (s < FieldLimits.MIN_SERVICE_LEVEL || s > FieldLimits.MAX_SERVICE_LEVEL) {
                 throw new NumberFormatException();
               }
               invntry.setServiceLevel(s);
             } catch (NumberFormatException e) {
-              ec.messages.add("Service level: " + ser
-                  + " is not valid. Please specify a valid number between 65-99.");
+              ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.service.level.invalid"),
+                  ser, FieldLimits.MIN_SERVICE_LEVEL, FieldLimits.MAX_SERVICE_LEVEL));
               return ec;
             }
           }
@@ -1118,7 +1124,7 @@ public class BulkUploadMgr {
         ims.updateInventory(Collections.singletonList(invntry), sourceUserId);
       }
     } catch (Exception e) {
-      ec.messages.add("Error: " + e.getMessage());
+      ec.messages.add(e.getMessage());
       xLogger.warn("Exception: {0}, Message: {1}", e.getClass().getName(), e.getMessage(), e);
     } finally {
       xLogger.fine("Exiting processInventoryEntity");
@@ -1132,7 +1138,7 @@ public class BulkUploadMgr {
     ResourceBundle backendMessages;
     EntityContainer ec = new EntityContainer();
     if (tokens == null || tokens.length == 0) {
-      ec.messages.add("No fields specified");
+      ec.messages.add(NO_FIELDS_SPECIFIED);
       return ec;
     }
     try {
@@ -1141,15 +1147,18 @@ public class BulkUploadMgr {
       IUserAccount u = null;
       IUserAccount su = as.getUserAccount(sourceUserId);
       DomainsService ds = StaticApplicationContext.getBean(DomainsServiceImpl.class);
-      backendMessages = Resources.get().getBundle("BackendMessages", su.getLocale());
+      backendMessages = Resources.getBundle(su.getLocale());
       IDomainPermission userDomainPermission = ds.getLinkedDomainPermission(su.getDomainId());
       IDomainPermission currentDomainPermission = ds.getLinkedDomainPermission(domainId);
       ConfigurationMgmtService cms =
           StaticApplicationContext.getBean(ConfigurationMgmtServiceImpl.class);
       IConfig c = cms.getConfiguration(IConfig.LOCATIONS);
       IConfig ln = cms.getConfiguration(IConfig.LANGUAGES);
-      JSONObject jsonLocationObject, jsonLanguageObject, intermediateJsonObject = null;
-      Set<String> countryKey, languageKey;
+      JSONObject jsonLocationObject;
+      JSONObject jsonLanguageObject;
+      JSONObject intermediateJsonObject = null;
+      Set<String> countryKey;
+      Set<String> languageKey;
       countryKey = languageKey = null;
       // for auditlog
       String uname = CharacterConstants.EMPTY;
@@ -1162,23 +1171,24 @@ public class BulkUploadMgr {
         ec.operation = op;
       }
       if (++i == size) {
-        ec.messages.add("No fields specified");
+        ec.messages.add(backendMessages.getString(BULKUPLOAD_NO_FIELDS_SPECIFIED));
         return ec;
       }
       if (!isOperationValid(ec.operation)) {
-        ec.messages.add("Invalid Operation. Please enter a = add / e = edit / d = delete.");
+        ec.messages.add(backendMessages.getString(BULKUPLOAD_INVALID_OPERATION));
         return ec;
       }
       // User ID
       String userId = tokens[i].trim();
       if (userId.length() < FieldLimits.USERID_MIN_LENGTH || userId.length() > FieldLimits.USERID_MAX_LENGTH) {
-        ec.messages.add("User ID: '" + userId
-            + "'  is empty, or not between " + FieldLimits.USERID_MIN_LENGTH + "-" + FieldLimits.USERID_MAX_LENGTH + " characters. None of these are allowed.");
+        ec.messages.add(MessageFormat.format(
+            backendMessages.getString("bulkupload.userid.invalid.length"), userId,
+            FieldLimits.USERID_MIN_LENGTH, FieldLimits.USERID_MAX_LENGTH));
         return ec;
       }
       boolean isUserIdValid = userId.matches(PatternConstants.USERID);
       if (!isUserIdValid) {
-        ec.messages.add("User ID: '" + userId + "is invalid. It can have only alphabets, numbers, dot, hyphen, underscore, @ and space.");
+        ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.userid.invalid.pattern"), userId));
       }
       boolean isAdd = (OP_ADD.equals(ec.operation));
       boolean isEdit = (OP_EDIT.equals(ec.operation));
@@ -1187,18 +1197,17 @@ public class BulkUploadMgr {
         boolean iSU = SecurityConstants.ROLE_SUPERUSER.equals(su.getRole());
         if (isAdd && !(iSU || userDomainPermission.isUsersAdd() || currentDomainPermission
             .isUsersAdd())) {
-          ec.messages
-              .add("Cannot add user '" + userId + "'. User does not have permission to add.");
+          ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.cannot.add.user"),userId));
           return ec;
         } else if (isEdit && !(iSU || userDomainPermission.isUsersEdit() || currentDomainPermission
             .isUsersEdit())) {
-          ec.messages
-              .add("Cannot edit user '" + userId + "'. User does not have permission to edit.");
+          ec.messages.add(
+              MessageFormat.format(backendMessages.getString("bulkupload.cannot.edit.user"), userId));
           return ec;
         } else if (isDelete && !(iSU || userDomainPermission.isUsersRemove()
             || currentDomainPermission.isUsersRemove())) {
-          ec.messages
-              .add("Cannot delete user '" + userId + "'. User does not have permission to delete.");
+          ec.messages.add(
+              MessageFormat.format(backendMessages.getString("bulkupload.cannot.delete.user"), userId));
           return ec;
         }
       }
@@ -1210,7 +1219,7 @@ public class BulkUploadMgr {
           u = as.getUserAccount(userId.toLowerCase());
         }
         if (!isAdd && !domainId.equals(u.getDomainId())) {
-          ec.messages.add("Cannot access user '" + userId + "'. Permission denied.");
+          ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.cannot.access.user"),userId));
           return ec;
         }
       } catch (ObjectNotFoundException e) {
@@ -1219,14 +1228,14 @@ public class BulkUploadMgr {
       // Delete, if needed
       if (isDelete) {
         if (u == null) {
-          ec.messages.add("Cannot delete. User " + userId + " does not exist");
+          ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.user.does.not.exist"),userId));
           return ec;
         }
         if ((su.getRole().equals(SecurityConstants.ROLE_SERVICEMANAGER) && !u.getRole()
             .equals(SecurityConstants.ROLE_KIOSKOWNER))
             || (su.getRole().equals(SecurityConstants.ROLE_DOMAINOWNER) && u.getRole()
             .equals(SecurityConstants.ROLE_SUPERUSER))) {
-          ec.messages.add("Cannot delete user '" + userId + "'. Permission denied.");
+          ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.cannot.delete.user"),userId));
           return ec;
         }
         List<String> userIds = new ArrayList<>(1);
@@ -1238,7 +1247,7 @@ public class BulkUploadMgr {
       if (isAdd) {
         if (u != null) {
           ec.messages
-              .add("User with ID " + userId + " already exists. Cannot add this user again.");
+              .add(MessageFormat.format(backendMessages.getString("bulkupload.user.already.exists"),userId));
           return ec;
         }
         // Set the other metadata - such as domainId, registeredby and creation timestamps
@@ -1251,156 +1260,166 @@ public class BulkUploadMgr {
         u.setMemberSince(new Date());
       } else { // edit
         if (u == null) {
-          ec.messages.add("User with ID " + userId + " not found. Cannot edit/delete this user.");
+          ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.user.does.not.exist"),userId));
           return ec;
         }
         if ((su.getRole().equals(SecurityConstants.ROLE_SERVICEMANAGER) && !userId.equals(sourceUserId)
             && !u.getRole().equals(SecurityConstants.ROLE_KIOSKOWNER))
             || (su.getRole().equals(SecurityConstants.ROLE_DOMAINOWNER) && u.getRole()
             .equals(SecurityConstants.ROLE_SUPERUSER))) {
-          ec.messages.add("Cannot edit user '" + userId + "'. Permission denied.");
+          ec.messages.add(
+              MessageFormat.format(backendMessages.getString("bulkupload.cannot.edit"), userId));
           return ec;
         }
         u.setUpdatedBy(sourceUserId);
       }
       if (++i == size) {
-        ec.messages.add("No fields specified after user ID");
+        ec.messages.add(MessageFormat.format(
+            backendMessages.getString(BULKUPLOAD_NO_FIELDS_SPECIFIED_AFTER), backendMessages.getString("user.id")));
         return ec;
       }
       // Password - get the password fields now, and process them later depending on add/edit
       String password = tokens[i].trim();
 
       if (++i == size) {
-        ec.messages.add("No fields specified after password");
+        ec.messages.add(MessageFormat.format(
+            backendMessages.getString(BULKUPLOAD_NO_FIELDS_SPECIFIED_AFTER), backendMessages.getString("login.password")));
         return ec;
       }
 
       // Confirm password
       String confirmPassword = tokens[i].trim();
       if (++i == size) {
-        ec.messages.add("No fields specified after Confirm Password");
+        ec.messages.add(MessageFormat.format(
+            backendMessages.getString(BULKUPLOAD_NO_FIELDS_SPECIFIED_AFTER), backendMessages.getString("user.confirmpassword")));
         return ec;
       }
       // Role
       String role = tokens[i].trim();
       if (!SecurityConstants.ROLE_DOMAINOWNER.equals(role) && !SecurityConstants.ROLE_SERVICEMANAGER
           .equals(role) && !SecurityConstants.ROLE_KIOSKOWNER.equals(role)) {
-        ec.messages.add("Role: Invalid role '" + role + "'. Role should be one of "
-            + SecurityConstants.ROLE_DOMAINOWNER + " (Administrator) or "
-            + SecurityConstants.ROLE_KIOSKOWNER + " (" + backendMessages.getString("kiosk")
-            + " Operator) or " + SecurityConstants.ROLE_SERVICEMANAGER + " (" + backendMessages
-            .getString("kiosk") + " Manager)");
+        ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.invalid.user.role"), role, SecurityConstants.ROLE_DOMAINOWNER, SecurityConstants.ROLE_SERVICEMANAGER, SecurityConstants.ROLE_KIOSKOWNER));
         return ec;
       } else if ((su.getRole().equals(SecurityConstants.ROLE_SERVICEMANAGER) &&
           ((!userId.equals(sourceUserId) && !role.equals(SecurityConstants.ROLE_KIOSKOWNER) || (
               userId.equals(sourceUserId) && !role.equals(SecurityConstants.ROLE_SERVICEMANAGER)))))
           || (su.getRole().equals(SecurityConstants.ROLE_DOMAINOWNER) && role
           .equals(SecurityConstants.ROLE_SUPERUSER))) {
-        ec.messages.add("Cannot edit user '" + userId + "'. Permission denied.");
+        ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.cannot.edit"),userId));
         return ec;
       } else {
         u.setRole(role);
       }
       if (++i == size) {
-        ec.messages.add("No fields specified after Role");
+        ec.messages.add(MessageFormat.format(
+            backendMessages.getString(BULKUPLOAD_NO_FIELDS_SPECIFIED_AFTER), backendMessages.getString("user.role")));
         return ec;
       }
 
       String permission = tokens[i].trim();
       if (!isPermissionValid(permission)) {
-        ec.messages.add("Permission: Invalid value '" + permission + "'. Value should be either "
-            + IUserAccount.PERMISSION_DEFAULT + " (Default) or " + IUserAccount.PERMISSION_VIEW
-            + " (View only) or " + IUserAccount.PERMISSION_ASSET + " (Asset view only)");
+        ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.invalid.user.permission"), permission,
+            IUserAccount.PERMISSION_DEFAULT, IUserAccount.PERMISSION_VIEW, IUserAccount.PERMISSION_ASSET));
       } else {
         u.setPermission(permission.isEmpty() ? IUserAccount.PERMISSION_DEFAULT : permission);
       }
       if (++i == size) {
-        ec.messages.add("No fields specified after Permission");
+        ec.messages.add(MessageFormat.format(
+            backendMessages.getString(BULKUPLOAD_NO_FIELDS_SPECIFIED_AFTER), backendMessages.getString("user.permission")));
         return ec;
       }
 
       String tokenExpiry = tokens[i].trim();
       if (!isTokenExpiryValid(tokenExpiry)) {
-        ec.messages.add("Token expiry: Invalid value '" + tokenExpiry + "'. Value should be between "
-            + FieldLimits.TOKEN_EXPIRY_MIN + " and " + FieldLimits.TOKEN_EXPIRY_MAX + " days");
+        ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.invalid.token.expiry"), tokenExpiry,
+            FieldLimits.TOKEN_EXPIRY_MIN, FieldLimits.TOKEN_EXPIRY_MAX));
       } else {
         u.setAuthenticationTokenExpiry(tokenExpiry.isEmpty() ? 0 : Integer.parseInt(tokenExpiry));
       }
       if (++i == size) {
-        ec.messages.add("No fields specified after Token expiry");
+        ec.messages.add(MessageFormat.format(
+            backendMessages.getString(BULKUPLOAD_NO_FIELDS_SPECIFIED_AFTER), backendMessages.getString("user.token.expiry")));
         return ec;
       }
 
       // First name
       String firstName = tokens[i].trim();
       if (firstName.length() < FieldLimits.FIRSTNAME_MIN_LENGTH || firstName.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
-        ec.messages.add("First name: '" + firstName + "' should be between " + FieldLimits.FIRSTNAME_MIN_LENGTH + "-" + FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters");
+        ec.messages.add(MessageFormat.format(
+            backendMessages.getString("bulkupload.user.firstname.length.limits"), firstName, FieldLimits.FIRSTNAME_MIN_LENGTH, FieldLimits.TEXT_FIELD_MAX_LENGTH));
       } else {
-        boolean isAlpha = firstName.matches(PatternConstants.FIRSTNAME);
+        boolean isAlpha = firstName.matches(PatternConstants.NAME);
         if (isAlpha) {
           u.setFirstName(firstName);
         } else {
-          ec.messages.add("First name can have only alphabets and space : " + firstName);
+          ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.user.firstname.pattern"),firstName));
         }
         //for auditlog
         uname = firstName;
       }
       if (++i == size) {
-        ec.messages.add("No fields specified after First Name");
+        ec.messages.add(MessageFormat.format(
+            backendMessages.getString(BULKUPLOAD_NO_FIELDS_SPECIFIED_AFTER), backendMessages.getString("user.firstname")));
         return ec;
       }
       // Last name (optional)
       String lastName = tokens[i].trim();
       if (lastName.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
-        ec.messages.add("Last name: '" + lastName + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG);
+        ec.messages.add(MessageFormat.format(backendMessages.getString(
+            BULKUPLOAD_TEXTFIELD_LENGTH_LIMITS), backendMessages.getString("user.lastname"), lastName, FieldLimits.TEXT_FIELD_MAX_LENGTH));
       } else {
-        boolean isAlpha = lastName.matches(PatternConstants.LASTNAME);
+        boolean isAlpha = lastName.matches(PatternConstants.NAME);
         uname += CharacterConstants.SPACE + lastName;
         if (isAlpha) {
           u.setLastName(lastName);
         } else {
-          ec.messages.add("Last name can have only alphabets and space : " + lastName);
+          ec.messages.add(backendMessages.getString("bulkupload.user.lastname.pattern"));
         }
       }
       if (++i == size) {
-        ec.messages.add("No fields specified after Last Name");
+        ec.messages.add(MessageFormat.format(
+            backendMessages.getString(BULKUPLOAD_NO_FIELDS_SPECIFIED_AFTER), backendMessages.getString("user.lastname")));
         return ec;
       }
 
       // Mobile phone
       String mobilePhone = tokens[i].trim();
       if (StringUtils.isNotEmpty(mobilePhone) && mobilePhone.length() > FieldLimits.MOBILE_PHONE_MAX_LENGTH) {
-        ec.messages.add("Mobile phone: '" + mobilePhone + CharacterConstants.S_QUOTE + MOBILE_PHONE_MAX_LENGTH_MSG);
+        ec.messages.add(MessageFormat.format(backendMessages.getString(
+            BULKUPLOAD_TEXTFIELD_LENGTH_LIMITS),
+            backendMessages.getString("user.mobile"), mobilePhone, FieldLimits.MOBILE_PHONE_MAX_LENGTH));
       }
       String validatedMobilePhone = validPhone(mobilePhone);
       if (validatedMobilePhone != null) {
         u.setMobilePhoneNumber(validatedMobilePhone);
       } else {
-        ec.messages.add("Mobile phone: Number (" + mobilePhone
-            + ") format is invalid. It should be +[country-code][space][phone-number-without-spacesORdashes]; ensure space between country code and number.");
+        ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.user.mobile.pattern"),mobilePhone));
       }
       if (++i == size) {
-        ec.messages.add("No fields specified after Mobile Phone");
+        ec.messages.add(MessageFormat.format(
+            backendMessages.getString(BULKUPLOAD_NO_FIELDS_SPECIFIED_AFTER), backendMessages.getString("user.mobile")));
         return ec;
       }
       // Email
       String email = tokens[i].trim();
       if (!SecurityConstants.ROLE_KIOSKOWNER.equals(role) && email.isEmpty()) {
-        ec.messages.add(
-            "Email: Email is mandatory for all roles other than Operator");
+        ec.messages.add(backendMessages.getString("bulkupload.email.mandatory"));
       }
       if (!email.isEmpty()) {
         if (email.length() > FieldLimits.EMAIL_MAX_LENGTH) {
-          ec.messages.add("Email: '" + email + CharacterConstants.S_QUOTE + EMAIL_MAX_LENGTH_MSG);
+          ec.messages.add(MessageFormat.format(backendMessages.getString(
+              BULKUPLOAD_TEXTFIELD_LENGTH_LIMITS),
+              backendMessages.getString("user.email"), email, FieldLimits.EMAIL_MAX_LENGTH));
         } else if (!emailValid(email)){
-          ec.messages.add("Email: Email (" + email
-              + ") format is invalid. It should be in the format 'testuser@email.com'");
+          ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.email.pattern"),email));
         } else {
           u.setEmail(email);
         }
       }
       if (++i == size) {
-        ec.messages.add("No fields specified after Email");
+        ec.messages.add(MessageFormat.format(
+            backendMessages.getString(BULKUPLOAD_NO_FIELDS_SPECIFIED_AFTER),
+            backendMessages.getString("user.email")));
         return ec;
       }
 
@@ -1422,15 +1441,15 @@ public class BulkUploadMgr {
           u.setCountry(country);
           intermediateJsonObject = intermediateJsonObject.getJSONObject(country);
         } else {
-          ec.messages.add("Country: Country code '" + country
-              + "' is not available in the configuration. Please enter the proper country code.");
+          ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.country.code.invalid"),country));
         }
       } else {
-        ec.messages.add(
-            "Country code is mandatory. Please specify proper country code. It should be a valid 2-letter ISO-3166 code");
+        ec.messages.add(backendMessages.getString("bulkupload.country.code.mandatory"));
       }
       if (++i == size) {
-        ec.messages.add("No fields specified after Country");
+        ec.messages.add(MessageFormat.format(
+            backendMessages.getString(BULKUPLOAD_NO_FIELDS_SPECIFIED_AFTER),
+            backendMessages.getString("country")));
         return ec;
       }
       String language = tokens[i].trim();
@@ -1447,16 +1466,16 @@ public class BulkUploadMgr {
         if (languageKey.contains(language) && language.length() == 2) {
           u.setLanguage(language);
         } else {
-          ec.messages.add("Language: Language code '" + language + CharacterConstants.S_QUOTE
-              + " is not available in the configuration. Please enter the proper language code.");
+          ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.language.code.invalid"),language));
         }
       } else {
-        ec.messages.add(
-            "Language code is mandatory. Please specify proper language code. It should be a valid 2-letter ISO-630-1 code.");
+        ec.messages.add(backendMessages.getString("bulkupload.language.code.mandatory"));
       }
 
       if (++i == size) {
-        ec.messages.add("No fields specified after language");
+        ec.messages.add(MessageFormat.format(
+            backendMessages.getString(BULKUPLOAD_NO_FIELDS_SPECIFIED_AFTER),
+            backendMessages.getString("language")));
         return ec;
       }
       // Timezone
@@ -1472,45 +1491,48 @@ public class BulkUploadMgr {
       }
       String timezone = tokens[i].trim();
       if (timezone.isEmpty() || !timezone.contains("/")) {
-        ec.messages.add(
-            "Timezone: Timezone is not specified or is of incorrect format (i.e. missing a /). It should be an entry from the URL given in the header.");
+        ec.messages.add(backendMessages.getString("bulkupload.timezone.invalid.format"));
       } else {
         //Validating the timezone with the system configuration
         if (timezoneCode.contains(timezone)) {
           u.setTimezone(timezone);
         } else {
-          ec.messages.add("Timezone:Timezone " + timezone
-              + " is not available in the given configuration. Please enter the proper timezone code."
-              +
-              " It should be an entry from the URL given in the header");
+          ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.timezone.code.invalid"),timezone));
         }
       }
 
       if (++i < size && !tokens[i].isEmpty()) {
         String gender = tokens[i].trim();
         if (!isGenderValid(gender)) {
-          ec.messages.add("Gender: Invalid value '" + gender + "'. Value should be either "
-              + IUserAccount.GENDER_MALE + " = Male or " + IUserAccount.GENDER_FEMALE
-              + " = Female or " + IUserAccount.GENDER_OTHER + " = Other");
+          ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.gender.invalid"), gender, IUserAccount.GENDER_MALE,
+              backendMessages.getString("gender.male"), IUserAccount.GENDER_FEMALE, backendMessages.getString("gender.female"),
+              IUserAccount.GENDER_OTHER, backendMessages.getString("gender.other")));
         } else {
           u.setGender(gender.toLowerCase());
         }
       }
 
-      String dateOfBirth;
-      if (++i < size && !(dateOfBirth = tokens[i].trim()).isEmpty()) {
-        try {
-          DateTimeFormatter formatter = DateTimeFormatter.ofPattern(Constants.DATE_FORMAT_EXCEL);
-          LocalDate birthDate = LocalDate.parse(dateOfBirth, formatter);
-          if (!isDateOfBirthValid(birthDate, LocalDate.now())) {
-            ec.messages
-                .add("Date of birth: " + dateOfBirth + " is not valid. A valid date of birth in the format " + Constants.DATE_FORMAT_EXCEL + " between today and 100 years before today should be specified.");
-          } else {
-            u.setBirthdate(Date.from(birthDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant()));
-          }
-        } catch (DateTimeParseException e) {
-          ec.messages
-              .add("Date of birth: " + dateOfBirth + " is not valid. A valid date of birth in the format " + Constants.DATE_FORMAT_EXCEL + " between today and 100 years before today should be specified.");
+      if (++i < size && !tokens[i].isEmpty()) {
+        String dateOfBirth = tokens[i].trim();
+        if (!dateOfBirth.isEmpty()) {
+            try {
+              DateTimeFormatter formatter = DateTimeFormatter.ofPattern(Constants.DATE_FORMAT_EXCEL);
+              LocalDate birthDate = LocalDate.parse(dateOfBirth, formatter);
+              if (!isDateOfBirthValid(birthDate, LocalDate.now())) {
+                ec.messages.add(MessageFormat
+                    .format(backendMessages.getString("bulkupload.date.of.birth.invalid"),
+                        dateOfBirth,
+                        Constants.DATE_FORMAT_EXCEL, FieldLimits.MAX_USER_AGE));
+              } else {
+                u.setBirthdate(
+                    Date.from(birthDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant()));
+              }
+            } catch (DateTimeParseException e) {
+              ec.messages.add(MessageFormat
+                  .format(backendMessages.getString("bulkupload.date.of.birth.invalid"),
+                      dateOfBirth,
+                      Constants.DATE_FORMAT_EXCEL, FieldLimits.MAX_USER_AGE));
+            }
         }
       }
       // Land phone
@@ -1519,14 +1541,15 @@ public class BulkUploadMgr {
         landPhone = tokens[i].trim();
         if (!landPhone.isEmpty()) {
           if (landPhone.length() > FieldLimits.LAND_PHONE_MAX_LENGTH) {
-            ec.messages.add("Land line number: '" + landPhone + CharacterConstants.S_QUOTE + LAND_PHONE_MAX_LENGTH_MSG);
+            ec.messages.add(MessageFormat.format(
+                backendMessages.getString(BULKUPLOAD_TEXTFIELD_LENGTH_LIMITS),
+                backendMessages.getString("user.landline"), landPhone, FieldLimits.LAND_PHONE_MAX_LENGTH));
           }
           String validatedLandPhone = validPhone(landPhone);
           if (validatedLandPhone != null) {
             u.setLandPhoneNumber(validatedLandPhone);
           } else {
-            ec.messages.add("Land line number: Number (" + landPhone
-                + ") format is invalid. It should be +[country-code][space][phone-number-without-spacesORdashes]; ensure space between country code and number.");
+            ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.landline.invalid"),landPhone));
           }
         } else {
           u.setLandPhoneNumber(landPhone);
@@ -1537,21 +1560,19 @@ public class BulkUploadMgr {
       if (u.getCountry() != null) {
         state = tokens[++i].trim();
         if (state.isEmpty()) {
-          ec.messages.add("State is not specified. State is mandatory for the user");
+          ec.messages.add(backendMessages.getString("bulkupload.state.mandatory"));
         } else {
           //validating state with system configuration
-          if (intermediateJsonObject.isNull("states")) {
-            ec.messages.add(
-                "States for the country" + country + " are not available in the configuration");
+          if (intermediateJsonObject.isNull(STATES)) {
+            ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.state.configuration.not.available"),country));
           } else {
-            Set<String> stateCode = intermediateJsonObject.getJSONObject("states").keySet();
+            Set<String> stateCode = intermediateJsonObject.getJSONObject(STATES).keySet();
             if (stateCode != null && stateCode.contains(state)) {
               u.setState(state);
               intermediateJsonObject =
-                  intermediateJsonObject.getJSONObject("states").getJSONObject(state);
+                  intermediateJsonObject.getJSONObject(STATES).getJSONObject(state);
             } else {
-              ec.messages.add("State: " + state
-                  + " is not available in the configuration.Please enter the proper state name");
+              ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.state.invalid"),state));
             }
           }
         }
@@ -1562,18 +1583,19 @@ public class BulkUploadMgr {
         district = tokens[i].trim();
         if (!district.isEmpty()) {
           //validating district with system configuration
-          if (intermediateJsonObject.isNull("districts")) {
+          if (intermediateJsonObject.isNull(DISTRICTS)) {
             ec.messages
-                .add("Districts for the State" + state + " are not available in the configuration");
+                .add(MessageFormat.format(
+                    backendMessages.getString("bulkupload.district.configuration.not.available"),
+                    state));
           } else {
-            Set<String> districtCode = intermediateJsonObject.getJSONObject("districts").keySet();
+            Set<String> districtCode = intermediateJsonObject.getJSONObject(DISTRICTS).keySet();
             if (districtCode != null && districtCode.contains(district)) {
               u.setDistrict(district);
               intermediateJsonObject =
-                  intermediateJsonObject.getJSONObject("districts").getJSONObject(district);
+                  intermediateJsonObject.getJSONObject(DISTRICTS).getJSONObject(district);
             } else {
-              ec.messages.add("District: " + district
-                  + " is not available in the configuration. Please enter the proper district name");
+              ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.district.invalid"),district));
             }
           }
         } else {
@@ -1586,11 +1608,11 @@ public class BulkUploadMgr {
         taluk = tokens[i].trim();
         if (!taluk.isEmpty()) {
           //validating taluk with system configuration
-          if (intermediateJsonObject.isNull("taluks")) {
-            ec.messages.add(
-                "Taluks for the district " + district + " are not available in the configuration");
+          if (intermediateJsonObject.isNull(TALUKS)) {
+            ec.messages.add(MessageFormat.format(backendMessages.getString(
+                BULKUPLOAD_TALUK_CONFIGURATION_NOT_AVAILABLE),district));
           } else {
-            JSONArray taluks = intermediateJsonObject.getJSONArray("taluks");
+            JSONArray taluks = intermediateJsonObject.getJSONArray(TALUKS);
             if (taluks.length() > 0) {
               ArrayList<String> talukCode = new ArrayList<>();
               for (int j = 0; j < taluks.length(); j++) {
@@ -1600,12 +1622,11 @@ public class BulkUploadMgr {
               if (!talukCode.isEmpty() && talukCode.contains(taluk)) {
                 u.setTaluk(taluk);
               } else {
-                ec.messages.add("Taluk: " + taluk
-                    + " is not available in the configuration.Please enter the proper taluk name");
+                ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.taluk.invalid"), taluk));
               }
             } else {
-              ec.messages.add("Taluks for the district " + district
-                  + " are not available in the configuration");
+              ec.messages.add(MessageFormat.format(backendMessages.getString(
+                  BULKUPLOAD_TALUK_CONFIGURATION_NOT_AVAILABLE), district));
             }
           }
         } else {
@@ -1617,7 +1638,9 @@ public class BulkUploadMgr {
       if (++i < size) {
         city = tokens[i].trim();
         if (city.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
-          ec.messages.add("Village/City: '" + city + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG);
+          ec.messages.add(MessageFormat.format(backendMessages.getString(
+              BULKUPLOAD_TEXTFIELD_LENGTH_LIMITS),
+              backendMessages.getString("village"), city, FieldLimits.TEXT_FIELD_MAX_LENGTH));
         } else {
           u.setCity(city);
         }
@@ -1627,7 +1650,9 @@ public class BulkUploadMgr {
       if (++i < size) {
         street = tokens[i].trim();
         if (street.length() > FieldLimits.STREET_ADDRESS_MAX_LENGTH) {
-          ec.messages.add("Street Address: '" + street + CharacterConstants.S_QUOTE + STREET_ADDRESS_MAX_LENGTH_MSG);
+          ec.messages.add(MessageFormat.format(backendMessages.getString(
+              BULKUPLOAD_TEXTFIELD_LENGTH_LIMITS),
+              backendMessages.getString("streetaddress"), street, FieldLimits.STREET_ADDRESS_MAX_LENGTH));
         } else {
           u.setStreet(street);
         }
@@ -1640,8 +1665,7 @@ public class BulkUploadMgr {
           if (pinCode.matches(PatternConstants.ZIPCODE)) {
             u.setPinCode(pinCode);
           } else {
-            ec.messages.add("Invalid format: Zip/PIN code '" + pinCode
-                + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG + " and can contain only uppercase, lowercase, digits, hyphen and spaces.");
+            ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.pincode.invalid.format"), pinCode, FieldLimits.TEXT_FIELD_MAX_LENGTH));
           }
         } else {
           u.setPinCode(pinCode);
@@ -1682,14 +1706,16 @@ public class BulkUploadMgr {
                     .getMessage());
           }
         } else {
-          ec.messages.add("Password: Password and Confirm Password field values do not match");
+          ec.messages.add(backendMessages.getString("password.confirm.mismatch"));
         }
       }
 
       if (++i < size) {
         String customId = tokens[i].trim();
         if (customId.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
-          ec.messages.add("Custom ID '" + customId + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG);
+          ec.messages.add(MessageFormat.format(backendMessages.getString(
+              BULKUPLOAD_TEXTFIELD_LENGTH_LIMITS),
+              backendMessages.getString("customid.user"), customId, FieldLimits.TEXT_FIELD_MAX_LENGTH));
         } else {
           u.setCustomId(customId);
         }
@@ -1698,7 +1724,9 @@ public class BulkUploadMgr {
       if (++i < size) {
         String phoneBrand = tokens[i].trim();
         if (phoneBrand.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
-          ec.messages.add("Mobile Phone Brand '" + phoneBrand + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG);
+          ec.messages.add(MessageFormat.format(backendMessages.getString(
+              BULKUPLOAD_TEXTFIELD_LENGTH_LIMITS),
+              backendMessages.getString("user.mobilebrand"), phoneBrand, FieldLimits.TEXT_FIELD_MAX_LENGTH));
         } else {
           u.setPhoneBrand(phoneBrand);
         }
@@ -1707,7 +1735,9 @@ public class BulkUploadMgr {
       if (++i < size) {
         String phoneModel = tokens[i].trim();
         if (phoneModel.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
-          ec.messages.add("Mobile Phone Model '" + phoneModel + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG);
+          ec.messages.add(MessageFormat.format(backendMessages.getString(
+              BULKUPLOAD_TEXTFIELD_LENGTH_LIMITS),
+              backendMessages.getString("user.mobilemodel"), phoneModel, FieldLimits.TEXT_FIELD_MAX_LENGTH));
         } else {
           u.setPhoneModelNumber(phoneModel);
         }
@@ -1716,7 +1746,9 @@ public class BulkUploadMgr {
       if (++i < size) {
         String imei = tokens[i].trim();
         if (imei.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
-          ec.messages.add("IMEI number '" + imei + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG);
+          ec.messages.add(MessageFormat.format(backendMessages.getString(
+              BULKUPLOAD_TEXTFIELD_LENGTH_LIMITS),
+              backendMessages.getString("user.imei"), imei, FieldLimits.TEXT_FIELD_MAX_LENGTH));
         }
         u.setImei(imei);
       }
@@ -1724,7 +1756,9 @@ public class BulkUploadMgr {
       if (++i < size) {
         String serviceProvider = tokens[i].trim();
         if (serviceProvider.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
-          ec.messages.add("SIM Provider '" + serviceProvider + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG);
+          ec.messages.add(MessageFormat.format(backendMessages.getString(
+              BULKUPLOAD_TEXTFIELD_LENGTH_LIMITS),
+              backendMessages.getString("user.mobileoperator"), serviceProvider, FieldLimits.TEXT_FIELD_MAX_LENGTH));
         } else {
           u.setPhoneServiceProvider(serviceProvider);
         }
@@ -1733,14 +1767,16 @@ public class BulkUploadMgr {
       if (++i < size) {
         String simId = tokens[i].trim();
         if (simId.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
-          ec.messages.add("SIM ID '" + simId + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG);
+          ec.messages.add(MessageFormat.format(backendMessages.getString(
+              BULKUPLOAD_TEXTFIELD_LENGTH_LIMITS),
+              backendMessages.getString("user.simId"), simId, FieldLimits.TEXT_FIELD_MAX_LENGTH));
         } else {
           u.setSimId(simId);
         }
       }
       // Tags
       if (++i < size) {
-        processTags(tokens[i], domainId, ec, TagUtil.TYPE_USER, u);
+        processTags(tokens[i], domainId, ec, TagUtil.TYPE_USER, u, backendMessages);
       } else if (u.getTags()
           != null) { // The user being updated had tags earlier but now being edited to remove tags
         u.setTags(new ArrayList<>());
@@ -1749,12 +1785,9 @@ public class BulkUploadMgr {
       if (++i < size) {
         String guiTheme = tokens[i].trim();
         if (!isGuiThemeValid(guiTheme)) {
-          ec.messages
-              .add("Store app GUI theme: Invalid value '" + guiTheme + "'. Value should be either "
-                  + FieldLimits.GUI_THEME_SAME_AS_IN_DOMAIN_CONFIGURATION
-                  + " (Same as in domain configuration) or " + FieldLimits.GUI_THEME_DEFAULT
-                  + " (Default) or " + FieldLimits.GUI_THEME_SIDEBAR_AND_LANDING_SCREEN
-                  + " (Sidebar & Landing screen)");
+          ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.gui.theme.invalid"), guiTheme,
+              FieldLimits.GUI_THEME_SAME_AS_IN_DOMAIN_CONFIGURATION, backendMessages.getString("gui.theme.same.as.in.domain.configuration"),
+              FieldLimits.GUI_THEME_DEFAULT, backendMessages.getString("gui.theme.default"), FieldLimits.GUI_THEME_SIDEBAR_AND_LANDING_SCREEN, backendMessages.getString("sidebar.landing.screen")));
         } else {
           int actualGuiTheme = Constants.GUI_THEME_SAME_AS_IN_DOMAIN_CONFIGURATION;
           if (!guiTheme.isEmpty()) {
@@ -1778,7 +1811,7 @@ public class BulkUploadMgr {
       xLogger.info("AUDITLOG\t{0}\t{1}\tUSER\t " +
           "{2}\t{3}\t{4}", domainId, sourceUserId, ec.operation, userId, uname.trim());
     } catch (Exception e) {
-      ec.messages.add("Error: " + e.getMessage());
+      ec.messages.add(e.getMessage());
       xLogger.warn("Error while processing bulk upload of user", e);
     }
     xLogger.fine("Exiting processUserEntity");
@@ -1791,7 +1824,7 @@ public class BulkUploadMgr {
     xLogger.info("Entered processMaterialEntity");
     EntityContainer ec = new EntityContainer();
     if (tokens == null || tokens.length == 0) {
-      ec.messages.add("No fields specified");
+      ec.messages.add(NO_FIELDS_SPECIFIED);
       return ec;
     }
     // Process material fields
@@ -1809,7 +1842,7 @@ public class BulkUploadMgr {
       IMaterial m;
       ConfigurationMgmtService cms =
           StaticApplicationContext.getBean(ConfigurationMgmtServiceImpl.class);
-      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", su.getLocale());
+      ResourceBundle backendMessages = Resources.getBundle(su.getLocale());
       IConfig cn = cms.getConfiguration(IConfig.CURRENCIES);
       JSONObject jsonCurrencyObject;
       Set<String> currencyKey = null;
@@ -1821,28 +1854,27 @@ public class BulkUploadMgr {
         ec.operation = op;
       }
       if (++i == size) {
-        ec.messages.add("No fields specified");
+        ec.messages.add(backendMessages.getString(BULKUPLOAD_NO_FIELDS_SPECIFIED));
         return ec;
       }
       if (!OP_ADD.equals(ec.operation) && !OP_EDIT.equals(ec.operation) && !OP_DELETE
           .equals(ec.operation)) {
-        ec.messages.add("Invalid Operation. Please enter a = add / e = edit / d = delete.");
+        ec.messages.add(backendMessages.getString(BULKUPLOAD_INVALID_OPERATION));
         return ec;
       }
       // Material Name
       String name = tokens[i].trim();
       if (name.isEmpty()) {
         ec.messages
-            .add("Material name: Name is not specified. Please specify a valid material name.");
+            .add(backendMessages.getString("bulkupload.material.name.not.specified"));
         return ec;
       }
-      if (name.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
-        ec.messages
-            .add("Material name: '" + name + "' is invalid. It should be between " + FieldLimits.MATERIAL_NAME_MIN_LENGTH + CharacterConstants.HYPHEN + FieldLimits.TEXT_FIELD_MAX_LENGTH + CHARACTERS);
+      if (name.length() > FieldLimits.MATERIAL_NAME_MAX_LENGTH) {
+        ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.material.name.invalid"), name,
+            FieldLimits.MATERIAL_NAME_MIN_LENGTH, FieldLimits.MATERIAL_NAME_MAX_LENGTH));
       }
       // Get the material ID, if present
       Long materialId = getMaterialId(domainId, name, null);
-      xLogger.fine("MATERIAL ID: {0}, operation: {1}", materialId, ec.operation);
       boolean isAdd = (OP_ADD.equals(ec.operation));
       boolean isEdit = (OP_EDIT.equals(ec.operation));
       boolean isDelete = (OP_DELETE.equals(ec.operation));
@@ -1850,21 +1882,22 @@ public class BulkUploadMgr {
         boolean iSU = SecurityConstants.ROLE_SUPERUSER.equals(su.getRole());
         if (isAdd && !(iSU || permission.isMaterialAdd())) {
           ec.messages
-              .add("Cannot add material '" + name + "'. User does not have permission to add.");
+              .add(MessageFormat.format(backendMessages.getString("bulkupload.cannot.add.material"),name));
           return ec;
         } else if (isEdit && !(iSU || permission.isMaterialEdit())) {
           ec.messages
-              .add("Cannot edit material '" + name + "'. User does not have permission to edit.");
+              .add(MessageFormat.format(backendMessages.getString("bulkupload.cannot.edit.material"),name));
           return ec;
         } else if (isDelete && !(iSU || permission.isMaterialRemove())) {
-          ec.messages.add(
-              "Cannot delete material '" + name + "'. User does not have permission to delete.");
+          ec.messages
+              .add(MessageFormat
+                  .format(backendMessages.getString("bulkupload.cannot.delete.material"), name));
           return ec;
         }
       }
       if (isDelete) {
         if (materialId == null) {
-          ec.messages.add("Cannot delete. Material '" + name + "' could not be found.");
+          ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.material.does.not.exist"),name));
           return ec;
         }
         List<Long> materialIds = new ArrayList<>();
@@ -1877,14 +1910,14 @@ public class BulkUploadMgr {
       // Check operation and instantiate accordingly
       if (isAdd) {
         if (materialId != null) {
-          ec.messages.add("Cannot add material '" + name + "'. It already exists.");
+          ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.material.already.exists"),name));
           return ec;
         }
         m = JDOUtils.createInstance(IMaterial.class);
         m.setName(name);
       } else { // edit
         if (materialId == null) {
-          ec.messages.add("Cannot edit material '" + name + "'. It could not be found.");
+          ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.material.does.not.exist"),name));
           return ec;
         }
         // Get existing entity
@@ -1896,7 +1929,9 @@ public class BulkUploadMgr {
       if (++i < size) {
         sname = tokens[i].trim();
         if (sname.length() > FieldLimits.MATERIAL_SHORTNAME_MAX_LENGTH) {
-          ec.messages.add("Short name '" + sname + CharacterConstants.S_QUOTE + MATERIAL_SHORT_NAME_MAX_LENGTH_MSG);
+          ec.messages.add(MessageFormat.format(
+              backendMessages.getString(BULKUPLOAD_TEXTFIELD_LENGTH_LIMITS),
+              backendMessages.getString("shortname"), sname, FieldLimits.MATERIAL_SHORTNAME_MAX_LENGTH));
         } else {
           m.setShortName(sname);
         }
@@ -1906,7 +1941,9 @@ public class BulkUploadMgr {
       if (++i < size) {
         description = tokens[i].trim();
         if (description.length() > FieldLimits.MATERIAL_DESCRIPTION_MAX_LENGTH) {
-          ec.messages.add("Description '" + description + CharacterConstants.S_QUOTE + MATERIAL_DESC_MAX_LENGTH_MSG);
+          ec.messages.add(MessageFormat.format(backendMessages.getString(
+              BULKUPLOAD_TEXTFIELD_LENGTH_LIMITS),
+              backendMessages.getString("description"), description, FieldLimits.MATERIAL_DESCRIPTION_MAX_LENGTH));
         } else {
         m.setDescription(description);
         }
@@ -1916,7 +1953,9 @@ public class BulkUploadMgr {
       if (++i < size) {
         info = tokens[i].trim();
         if (info.length() > FieldLimits.MATERIAL_ADDITIONAL_INFO_MAX_LENGTH) {
-          ec.messages.add("Additional info '" + info + CharacterConstants.S_QUOTE + MATERIAL_ADD_INFO_MAX_LENGTH_MSG);
+          ec.messages.add(MessageFormat.format(backendMessages.getString(
+              BULKUPLOAD_TEXTFIELD_LENGTH_LIMITS),
+              backendMessages.getString("material.addinfo"), info, FieldLimits.MATERIAL_ADDITIONAL_INFO_MAX_LENGTH));
         } else {
           m.setInfo(info);
         }
@@ -1929,7 +1968,7 @@ public class BulkUploadMgr {
       m.setInfoDisplay(dispInfo);
       // Tags
       if (++i < size) {
-        processTags(tokens[i], domainId, ec, TagUtil.TYPE_MATERIAL, m);
+        processTags(tokens[i], domainId, ec, TagUtil.TYPE_MATERIAL, m, backendMessages);
       }
       // Is seasonal?
       boolean seasonal = false;
@@ -1944,13 +1983,14 @@ public class BulkUploadMgr {
           try {
             m.setMSRP(new BigDecimal(msrp));
           } catch (Exception e) {
-            ec.messages.add("MSRP: Price " + msrp + " is invalid. It should be a valid number");
+            ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.msrp.invalid"),
+                msrp, FieldLimits.MIN_PRICE, FieldLimits.MAX_PRICE));
             return ec;
           }
         } else {
-          ec.messages
-              .add(
-                  "MSRP: Price " + msrp  + " is invalid. It should be between 0 and 1 billion, rounded to two decimal places maximum");
+          ec.messages.add(MessageFormat
+              .format(backendMessages.getString("bulkupload.msrp.invalid"), msrp,
+                  FieldLimits.MIN_PRICE, FieldLimits.MAX_PRICE));
           return ec;
         }
       }
@@ -1961,14 +2001,15 @@ public class BulkUploadMgr {
           try {
             m.setRetailerPrice(new BigDecimal(retailerPrice));
           } catch (Exception e) {
-            ec.messages.add("Retailer price: Price " + retailerPrice
-                + " is invalid. It should be a valid number");
+            ec.messages.add(MessageFormat.format(backendMessages.getString(
+                    BULKUPLOAD_RETAILER_PRICE_INVALID), retailerPrice,
+                FieldLimits.MIN_PRICE, FieldLimits.MAX_PRICE));
             return ec;
           }
         } else {
-          ec.messages
-              .add(
-                  "Retailer: Price " + retailerPrice  + " is invalid. It should be between 0 and 1 billion, rounded to two decimal places maximum");
+          ec.messages.add(MessageFormat
+              .format(backendMessages.getString(BULKUPLOAD_RETAILER_PRICE_INVALID), retailerPrice,
+                  FieldLimits.MIN_PRICE, FieldLimits.MAX_PRICE));
           return ec;
         }
       }
@@ -1986,9 +2027,9 @@ public class BulkUploadMgr {
             if (currencyKey.contains(currency)) {
               m.setCurrency(currency);
             } else {
-              ec.messages
-                  .add("Currency code:" + currency + " is not available in the configuration. " +
-                      " Please enter the proper currency code.It should be a valid 3-letter ISO-4217 currency code. ");
+              ec.messages.add(MessageFormat
+                  .format(backendMessages.getString("bulkupload.currency.code.not.available"),
+                      currency));
             }
           }
         }
@@ -1999,8 +2040,7 @@ public class BulkUploadMgr {
         newName = tokens[i].trim();
         if (isEdit && !newName.isEmpty()) {
           if (newName.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
-            ec.messages
-                .add("Material name [new]: '" + name + "' is invalid. It should be between " + FieldLimits.MATERIAL_NAME_MIN_LENGTH + CharacterConstants.HYPHEN + FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters");
+            ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.new.material.name.invalid"), name, FieldLimits.MATERIAL_NAME_MIN_LENGTH, FieldLimits.MATERIAL_NAME_MAX_LENGTH));
           } else {
             m.setName(newName);
           }
@@ -2011,7 +2051,9 @@ public class BulkUploadMgr {
       if (++i < size) {
         customId = tokens[i].trim();
         if (customId.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
-          ec.messages.add("Custom ID '" + customId + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG);
+          ec.messages.add(MessageFormat.format(backendMessages.getString(
+              BULKUPLOAD_TEXTFIELD_LENGTH_LIMITS), backendMessages.getString("customid.material"),
+              customId, FieldLimits.TEXT_FIELD_MAX_LENGTH));
         } else {
           m.setCustomId(customId);
         }
@@ -2049,18 +2091,19 @@ public class BulkUploadMgr {
         float tempMin = 0;
         if (temperatureMin.isEmpty()) {
           // Get the tempMin from Config
-          tempMin = (float) getTempFromConfig(domainId, TEMP_MIN, ec);
+          tempMin = (float) getTempFromConfig(domainId, TEMP_MIN, ec, backendMessages);
         } else {
           if (!temperatureMin.matches(PatternConstants.TEMPERATURE)) {
-            ec.messages.add(
-                "Temperature Min.: " + temperatureMin + " is invalid. It should be between " + FieldLimits.TEMP_MIN_VALUE + " and " + FieldLimits.TEMP_MAX_VALUE + " rounded to two decimal places maximum.");
+            ec.messages.add(MessageFormat.format(backendMessages.getString(
+                BULKUPLOAD_MATERIAL_TEMPERATURE_INVALID), backendMessages.getString("temperature.min"),
+                temperatureMin, FieldLimits.TEMP_MIN_VALUE, FieldLimits.TEMP_MAX_VALUE));
           } else {
             try {
               tempMin = Float.parseFloat(temperatureMin);
             } catch (Exception e) {
-              ec.messages.add(
-                  "Temperature Min.: " + temperatureMin
-                      + " is invalid. It should be a valid number");
+              ec.messages.add(MessageFormat.format(backendMessages.getString(
+                  BULKUPLOAD_MATERIAL_TEMPERATURE_INVALID), backendMessages.getString("temperature.min"),
+                  temperatureMin, FieldLimits.TEMP_MIN_VALUE, FieldLimits.TEMP_MAX_VALUE));
             }
           }
         }
@@ -2073,20 +2116,19 @@ public class BulkUploadMgr {
         float tempMax = 0;
         if (temperatureMax.isEmpty()) {
           // Get the tempMax from Config
-          tempMax = (float) getTempFromConfig(domainId, TEMP_MAX, ec);
+          tempMax = (float) getTempFromConfig(domainId, TEMP_MAX, ec, backendMessages);
         } else {
           if (!temperatureMax.matches(PatternConstants.TEMPERATURE)) {
-            ec.messages.add(
-                "Temperature Max.: " + temperatureMax + " is invalid. It should be between "
-                    + FieldLimits.TEMP_MIN_VALUE + " and " + FieldLimits.TEMP_MAX_VALUE
-                    + " rounded to two decimal places maximum.");
+            ec.messages.add(MessageFormat.format(backendMessages.getString(
+                BULKUPLOAD_MATERIAL_TEMPERATURE_INVALID), backendMessages.getString("temperature.max"),
+                temperatureMax, FieldLimits.TEMP_MIN_VALUE, FieldLimits.TEMP_MAX_VALUE));
           } else {
             try {
               tempMax = Float.parseFloat(temperatureMax);
             } catch (Exception e) {
-              ec.messages.add(
-                  "Temperature Max.: " + temperatureMax
-                      + " is invalid. It should be a valid number");
+              ec.messages.add(MessageFormat.format(backendMessages.getString(
+                  BULKUPLOAD_MATERIAL_TEMPERATURE_INVALID), backendMessages.getString("temperature.max"),
+                  temperatureMax, FieldLimits.TEMP_MIN_VALUE, FieldLimits.TEMP_MAX_VALUE));
             }
           }
         }
@@ -2094,11 +2136,9 @@ public class BulkUploadMgr {
       }
       if (tempMonitoringEnabled) {
         if (m.getTemperatureMin() == m.getTemperatureMax()) {
-          ec.messages.add(
-              "Temperature Min. cannot be same as Temperature Max.");
+          ec.messages.add(backendMessages.getString("bulkupload.temperature.min.max.same"));
         } else if (m.getTemperatureMin() > m.getTemperatureMax()) {
-          ec.messages.add(
-              "Temperature Min. cannot be greater than Temperature Max.");
+          ec.messages.add(backendMessages.getString("bulkupload.temperature.min.greater.than.max"));
         }
       }
       // If there are errors, return
@@ -2119,7 +2159,7 @@ public class BulkUploadMgr {
       xLogger.info("AUDITLOG\t{0}\t{1}\tMATERIAL\t " +
           "{2}\t{3}\t{4}", domainId, sourceUserId, ec.operation, materialId, name);
     } catch (Exception e) {
-      ec.messages.add("Error: " + e.getMessage());
+      ec.messages.add(e.getMessage());
       xLogger.info("Exception: {0}, Message: {1}", e.getClass().getName(), e.getMessage());
     }
     xLogger.info("Exiting processMaterialEntity");
@@ -2133,14 +2173,14 @@ public class BulkUploadMgr {
     ResourceBundle backendMessages;
     EntityContainer ec = new EntityContainer();
     if (tokens == null || tokens.length == 0) {
-      ec.messages.add("No fields specified");
+      ec.messages.add(NO_FIELDS_SPECIFIED);
       return ec;
     }
     // Process material fields
     try {
       UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
       IUserAccount su = as.getUserAccount(sourceUserId);
-      backendMessages = Resources.get().getBundle("BackendMessages", su.getLocale());
+      backendMessages = Resources.getBundle(su.getLocale());
       IDomainPermission
           permission =
           getDomainService().getLinkedDomainPermission(
@@ -2152,33 +2192,35 @@ public class BulkUploadMgr {
       IConfig c = cms.getConfiguration(IConfig.LOCATIONS);
       //Currency Configuration
       IConfig cn = cms.getConfiguration(IConfig.CURRENCIES);
-      JSONObject jsonLocationObject, jsonCurrencyObject, intermediateJsonObject = null;
-      Set<String> countryKey, currencyKey;
+      JSONObject jsonLocationObject;
+      JSONObject jsonCurrencyObject;
+      JSONObject intermediateJsonObject = null;
+      Set<String> countryKey;
+      Set<String> currencyKey;
       countryKey = currencyKey = null;
 
       IKiosk k;
 
       int i = 0;
       int size = tokens.length;
-      String op = tokens[i].trim(); // operation
+      String op = tokens[i].trim();
       if (!op.isEmpty()) {
         ec.operation = op;
       }
       if (++i == size) {
-        ec.messages.add("No fields specified");
+        ec.messages.add(backendMessages.getString(BULKUPLOAD_NO_FIELDS_SPECIFIED));
         return ec;
       }
       if (!OP_ADD.equals(ec.operation) && !OP_EDIT.equals(ec.operation) && !OP_DELETE
           .equals(ec.operation)) {
-        ec.messages.add("Invalid Operation. Please enter a = add / e = edit / d = delete.");
+        ec.messages.add(backendMessages.getString(BULKUPLOAD_INVALID_OPERATION));
         return ec;
       }
-      // Kiosk Name
+
       String name = tokens[i].trim();
       if (name == null || name.isEmpty() || name.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
-        ec.messages.add(backendMessages.getString("kiosk")
-            + " name: Name is not specified or is greater than " + FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters. Please specify a valid "
-            + backendMessages.getString("kiosk.lowercase") + " name.");
+        ec.messages.add(MessageFormat.format(backendMessages.getString(
+            BULKUPLOAD_ENTITY_NAME_INVALID),name,FieldLimits.TEXT_FIELD_MAX_LENGTH));
         return ec;
       }
       // Get the kiosk ID, if present
@@ -2201,7 +2243,7 @@ public class BulkUploadMgr {
         try {
           q.closeAll();
         } catch (Exception ignored) {
-
+          // ignored
         }
         pm.close();
       }
@@ -2212,27 +2254,19 @@ public class BulkUploadMgr {
       if (permission != null) {
         iSU = SecurityConstants.ROLE_SUPERUSER.equals(su.getRole());
         if (isAdd && !(iSU || permission.isEntityAdd())) {
-          ec.messages.add(
-              "Cannot add " + backendMessages.getString("kiosk.lowercase") + " " + "'" + name
-                  + "'. User does not have permission to add.");
+          ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.cannot.add.entity"), name));
           return ec;
         } else if (isEdit && !(iSU || permission.isEntityEdit())) {
-          ec.messages.add(
-              "Cannot edit " + backendMessages.getString("kiosk.lowercase") + " " + "'" + name
-                  + "'. User does not have permission to edit.");
+          ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.cannot.edit.entity"), name));
           return ec;
         } else if (isDelete && !(iSU || permission.isEntityRemove())) {
-          ec.messages.add(
-              "Cannot delete " + backendMessages.getString("kiosk.lowercase") + " " + "'" + name
-                  + "'. User does not have permission to delete.");
+          ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.cannot.delete.entity"), name));
           return ec;
         }
       }
       if (isDelete) {
         if (kioskId == null) {
-          ec.messages.add(
-              "Cannot delete. " + backendMessages.getString("kiosk.lowercase") + " " + "'" + name
-                  + "' could not be found.");
+          ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.entity.does.not.exist"), name));
           return ec;
         }
         List<Long> kioskIds = new ArrayList<>();
@@ -2242,12 +2276,10 @@ public class BulkUploadMgr {
             "DELETE\t{3}\t{4}", domainId, sourceUserId, ec.operation, kioskId, name);
         return ec;
       }
-      // Check operation and instantiate accordingly
+
       if (isAdd) {
         if (kioskId != null) {
-          ec.messages.add(
-              "Cannot add " + backendMessages.getString("kiosk.lowercase") + " " + "'" + name
-                  + "'. It already exists.");
+          ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.entity.already.exists"), name));
           return ec;
         }
         k = JDOUtils.createInstance(IKiosk.class);
@@ -2256,56 +2288,55 @@ public class BulkUploadMgr {
         k.setRegisteredBy(sourceUserId);
       } else { // edit
         if (kioskId == null) {
-          ec.messages.add(
-              "Cannot edit " + backendMessages.getString("kiosk.lowercase") + " " + "'" + name
-                  + "'. It could not be found.");
+          ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.entity.does.not.exist"), name));
           return ec;
         }
-        // Get existing entity
+
         k = getEntitiesService().getKiosk(kioskId);
       }
       k.setUpdatedBy(sourceUserId);
       // Set other entity parameters, if any
       if (++i == size) {
-        ec.messages.add("No fields specified beyond name");
+        ec.messages.add(MessageFormat.format(backendMessages.getString(
+            BULKUPLOAD_NO_FIELDS_SPECIFIED_AFTER), backendMessages.getString("kiosk.name")));
         return ec;
       }
       // Entity manager(s) and operators
       String usersStr = tokens[i].trim();
       if (usersStr.isEmpty()) {
-        ec.messages.add("User IDs not specified. At least one user ID has to be specified");
+        ec.messages.add(backendMessages.getString("bulkupload.entity.no.users.specified"));
       } else {
         Set<String> userIdsSet = getUniqueUserIds(usersStr,CharacterConstants.SEMICOLON);
-        if (userIdsSet == null) {
-          ec.messages.add("User IDs not specified. At least one user ID has to be specified");
+        if (CollectionUtils.isEmpty(userIdsSet)) {
+          ec.messages.add(backendMessages.getString("bulkupload.entity.no.users.specified"));
         } else {
           List<IUserAccount> users = new ArrayList<>();
           for (String userId : userIdsSet) {
             try {
               IUserAccount u = as.getUserAccount(userId);
               if (u.getDomainId().compareTo(domainId) != 0) {
-                ec.messages.add("User with ID " + userId + " does not belong to this domain");
+                ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.entity.user.does.belong.to.domain"), userId));
                 continue;
               }
               users.add(u);
             } catch (ObjectNotFoundException e) {
-              ec.messages.add("User with ID '" + userId + "' not found.");
+              ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.entity.user.not.found"), userId));
             } catch (Exception e) {
               ec.messages
-                  .add("Error when fetching user with ID '" + userId + "': " + e.getMessage());
+                  .add(MessageFormat.format(backendMessages.getString("bulkupload.entity.error.fetching.user"), userId, e.getMessage()));
             }
           }
           // Set users for this kiosk
           if (users.isEmpty()) {
-            ec.messages.add("No valid users to associate with this " + backendMessages
-                .getString("kiosk.lowercase"));
+            ec.messages.add(backendMessages.getString("bulkupload.entity.no.valid.users"));
           } else {
             k.setUsers(users);
           }
         }
       }
       if (++i == size) {
-        ec.messages.add("No fields specified beyond users");
+        ec.messages.add(MessageFormat.format(backendMessages.getString(
+            BULKUPLOAD_NO_FIELDS_SPECIFIED_AFTER), backendMessages.getString(USERS)));
         return ec;
       }
       // Country
@@ -2326,59 +2357,55 @@ public class BulkUploadMgr {
           k.setCountry(country);
           intermediateJsonObject = intermediateJsonObject.getJSONObject(country);
         } else {
-          ec.messages.add("Country: Country code '" + country
-              + "' is not available in the configuration. Please enter the proper country code.");
+          ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.country.code.invalid"),country));
         }
       } else {
-        ec.messages.add(
-            "Country code is mandatory. Please specify proper country code. It should be a valid 2-letter ISO-3166 code");
+        ec.messages.add(backendMessages.getString("bulkupload.country.code.mandatory"));
       }
 
       if (++i == size) {
-        ec.messages.add("No fields specified beyond country");
+        ec.messages.add(MessageFormat.format(
+            backendMessages.getString(BULKUPLOAD_NO_FIELDS_SPECIFIED_AFTER),
+            backendMessages.getString("country")));
         return ec;
       }
-      // State
-                        /*if ( state.isEmpty() )
-                                ec.messages.add( "State: State not specified. " );
-			else
-				k.setState(state);*/
       String state = "";
       if (k.getCountry() != null) {
         state = tokens[i].trim();
         if (state.isEmpty()) {
-          ec.messages.add("State is not specified. Please specify a valid state.");
+          ec.messages.add(backendMessages.getString("bulkupload.state.mandatory"));
         } else {
           //validating state with system configuration
-          if (intermediateJsonObject.isNull("states")) {
-            ec.messages.add(
-                "States for the country" + country + " are not available in the configuration");
+          if (intermediateJsonObject.isNull(STATES)) {
+            ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.state.configuration.not.available"),country));
           } else {
-            Set<String> stateCode = intermediateJsonObject.getJSONObject("states").keySet();
+            Set<String> stateCode = intermediateJsonObject.getJSONObject(STATES).keySet();
             if (stateCode != null && stateCode.contains(state)) {
               k.setState(state);
               intermediateJsonObject =
-                  intermediateJsonObject.getJSONObject("states").getJSONObject(state);
+                  intermediateJsonObject.getJSONObject(STATES).getJSONObject(state);
             } else {
-              ec.messages.add("State: " + state
-                  + " is not available in the configuration. Please enter the proper state name");
+              ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.state.invalid"),state));
             }
-
           }
         }
 
       }
       if (++i == size) {
-        ec.messages.add("No fields specified beyond state");
+        ec.messages.add(MessageFormat.format(
+            backendMessages.getString(BULKUPLOAD_NO_FIELDS_SPECIFIED_AFTER),
+            backendMessages.getString("state")));
         return ec;
       }
       // Village/city
       String city = tokens[i].trim();
       if (city.isEmpty()) {
         ec.messages
-            .add("Village/City: Village/City not specified. Please specify a valid village/city");
+            .add(backendMessages.getString("bulkupload.entity.village.not.specified"));
       } else if (city.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
-          ec.messages.add("Village/City: '" + city + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG);
+        ec.messages.add(MessageFormat.format(backendMessages.getString(
+            BULKUPLOAD_TEXTFIELD_LENGTH_LIMITS),
+            backendMessages.getString("village"), city, FieldLimits.TEXT_FIELD_MAX_LENGTH));
       } else {
           k.setCity(city);
       }
@@ -2391,18 +2418,17 @@ public class BulkUploadMgr {
             Double.parseDouble(latitude);
             String trimmedLat = getTruncatedLatLong(latitude);
             if (!trimmedLat.matches(PatternConstants.LATITUDE)) {
-              ec.messages.add("Latitude: " + latitude
-                  + " is out of range. Please specify between " + FieldLimits.LATITUDE_MIN + " and "
-                  + FieldLimits.LATITUDE_MAX + " rounded to eight decimal places maximum" + CharacterConstants.DOT);
+              ec.messages.add(MessageFormat.format(backendMessages.getString(
+                  BULKUPLOAD_LATITUDE_LONGITUDE_INVALID), backendMessages.getString("latitude"),
+                  latitude, FieldLimits.LATITUDE_MIN, FieldLimits.LATITUDE_MAX, FieldLimits.LAT_LONG_MAX_DIGITS_AFTER_DECIMAL));
             } else {
               Double d = Double.valueOf(trimmedLat);
               k.setLatitude(d);
             }
           } catch (NumberFormatException e) {
-            ec.messages
-                .add("Latitude: Invalid number " + latitude
-                    + ". Please specify a valid number between " + FieldLimits.LATITUDE_MIN + " and "
-                    + FieldLimits.LATITUDE_MAX + " rounded to eight decimal places maximum" + CharacterConstants.DOT);
+            ec.messages.add(MessageFormat
+                .format(backendMessages.getString(BULKUPLOAD_LATITUDE_LONGITUDE_INVALID), backendMessages.getString("latitude"), latitude,
+                    FieldLimits.LATITUDE_MIN, FieldLimits.LATITUDE_MAX, FieldLimits.LAT_LONG_MAX_DIGITS_AFTER_DECIMAL));
           }
         }
       }
@@ -2416,18 +2442,19 @@ public class BulkUploadMgr {
             Double.parseDouble(longitude);
             String trimmedLng = getTruncatedLatLong(longitude);
             if (!trimmedLng.matches(PatternConstants.LONGITUDE)) {
-              ec.messages.add("Longitude: " + longitude
-                  + " is out of range. Please specify between " + FieldLimits.LAT_LONG_MAX_DIGITS_AFTER_DECIMAL + " and "
-                  + FieldLimits.LONGITUDE_MAX + " rounded to eight decimal places maximum" + CharacterConstants.DOT);
+              ec.messages.add(MessageFormat.format(backendMessages.getString(
+                  BULKUPLOAD_LATITUDE_LONGITUDE_INVALID), backendMessages.getString("longitude"),
+                  longitude, FieldLimits.LONGITUDE_MIN, FieldLimits.LONGITUDE_MAX, FieldLimits.LAT_LONG_MAX_DIGITS_AFTER_DECIMAL));
             } else {
               Double d = Double.valueOf(trimmedLng);
               k.setLongitude(d);
             }
           } catch (NumberFormatException e) {
-            ec.messages
-                .add("Longitude: Invalid number " + longitude
-                    + ". Please specify a valid number between " + FieldLimits.LONGITUDE_MIN + " and "
-                    + FieldLimits.LONGITUDE_MAX + " rounded to eight decimal places maximum" + CharacterConstants.DOT);
+            ec.messages.add(
+                MessageFormat.format(backendMessages.getString(
+                    BULKUPLOAD_LATITUDE_LONGITUDE_INVALID), backendMessages.getString("longitude"),
+                    longitude, FieldLimits.LONGITUDE_MIN, FieldLimits.LONGITUDE_MAX,
+                    FieldLimits.LAT_LONG_MAX_DIGITS_AFTER_DECIMAL));
           }
         }
       }
@@ -2436,17 +2463,18 @@ public class BulkUploadMgr {
       if (++i < size && k.getState() != null) {
         district = tokens[i].trim();
         if (!district.isEmpty()) {
-          if (intermediateJsonObject.isNull("districts")) {
+          if (intermediateJsonObject.isNull(DISTRICTS)) {
             ec.messages
-                .add("Districts for the State" + state + " are not available in the configuration");
+                .add(MessageFormat.format(
+                    backendMessages.getString("bulkupload.district.configuration.not.available"),
+                    state));
           } else {
-            Set<String> districtCode = intermediateJsonObject.getJSONObject("districts").keySet();
+            Set<String> districtCode = intermediateJsonObject.getJSONObject(DISTRICTS).keySet();
             if (districtCode != null && districtCode.contains(district)) {
               intermediateJsonObject =
-                  intermediateJsonObject.getJSONObject("districts").getJSONObject(district);
+                  intermediateJsonObject.getJSONObject(DISTRICTS).getJSONObject(district);
             } else {
-              ec.messages.add("District: " + district
-                  + " is not available in the configuration. Please enter the proper district name");
+              ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.district.invalid"),district));
             }
           }
         }
@@ -2457,11 +2485,11 @@ public class BulkUploadMgr {
       if (++i < size && StringUtils.isNotEmpty(k.getDistrict())) {
         taluk = tokens[i].trim();
         if (!taluk.isEmpty()) {
-          if (intermediateJsonObject.isNull("taluks")) {
-            ec.messages.add("Taluks for the district " + k.getDistrict()
-                + " are not available in the configuration");
+          if (intermediateJsonObject.isNull(TALUKS)) {
+            ec.messages.add(MessageFormat.format(backendMessages.getString(
+                BULKUPLOAD_TALUK_CONFIGURATION_NOT_AVAILABLE),k.getDistrict()));
           } else {
-            JSONArray taluks = intermediateJsonObject.getJSONArray("taluks");
+            JSONArray taluks = intermediateJsonObject.getJSONArray(TALUKS);
             if (taluks.length() > 0) {
               ArrayList<String> talukCode = new ArrayList<>();
               for (int j = 0; j < taluks.length(); j++) {
@@ -2469,12 +2497,11 @@ public class BulkUploadMgr {
                 talukCode.add(tk);
               }
               if (talukCode.isEmpty() || !talukCode.contains(taluk)) {
-                ec.messages.add("Taluk: " + taluk
-                    + " is not available in the configuration.Please enter the proper taluk name");
+                ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.taluk.invalid"), taluk));
               }
             } else {
-              ec.messages.add("Taluks for the district " + k.getDistrict()
-                  + " are not available in the configuration");
+              ec.messages.add(MessageFormat.format(backendMessages.getString(
+                  BULKUPLOAD_TALUK_CONFIGURATION_NOT_AVAILABLE), k.getDistrict()));
             }
           }
         }
@@ -2484,7 +2511,9 @@ public class BulkUploadMgr {
       if (++i < size) {
         String street = tokens[i].trim();
         if (street.length() > FieldLimits.STREET_ADDRESS_MAX_LENGTH) {
-          ec.messages.add("Street address: '" + street + CharacterConstants.S_QUOTE + STREET_ADDRESS_MAX_LENGTH_MSG);
+          ec.messages.add(MessageFormat.format(backendMessages.getString(
+              BULKUPLOAD_TEXTFIELD_LENGTH_LIMITS),
+              backendMessages.getString("streetaddress"), street, FieldLimits.STREET_ADDRESS_MAX_LENGTH));
         } else {
           k.setStreet(street);
         }
@@ -2496,8 +2525,7 @@ public class BulkUploadMgr {
           if (zipcode.matches(PatternConstants.ZIPCODE)) {
             k.setPinCode(zipcode);
           } else {
-            ec.messages.add("Invalid format: Zip/PIN code '" + zipcode
-                + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG + " and can contain only uppercase, lowercase, digits, hyphen and spaces.");
+            ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.pincode.invalid.format"), zipcode, FieldLimits.TEXT_FIELD_MAX_LENGTH));
           }
         }
       }
@@ -2515,10 +2543,9 @@ public class BulkUploadMgr {
             if (currencyKey.contains(currency)) {
               k.setCurrency(currency);
             } else {
-              ec.messages.add("Currency code:" + currency
-                  + " is not available in the configuration. Please enter the proper currency code."
-                  +
-                  "It should be a valid 3-letter ISO-4217 currency code.");
+              ec.messages.add(MessageFormat
+                  .format(backendMessages.getString("bulkupload.currency.code.not.available"),
+                      currency));
             }
           }
         }
@@ -2533,14 +2560,12 @@ public class BulkUploadMgr {
               BigDecimal tx = new BigDecimal(tax);
               k.setTax(tx);
             } else {
-              ec.messages.add(
-                  "Tax: Not a valid number (" + tax + "). It should be between " + FieldLimits.TAX_MIN_VALUE
-                      + " and " + FieldLimits.TAX_MAX_VALUE + " rounded to two decimal places maximum.");
+              ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.tax.invalid"),
+                  tax, FieldLimits.TAX_MIN_VALUE, FieldLimits.TAX_MAX_VALUE));
             }
           } catch (NumberFormatException e) {
-            ec.messages.add(
-                "Tax: Not a valid number (" + tax + "). It should be between " + FieldLimits.TAX_MIN_VALUE
-                    + " and " + FieldLimits.TAX_MAX_VALUE + " rounded to two decimal places maximum.");
+            ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.tax.invalid"),
+                tax, FieldLimits.TAX_MIN_VALUE, FieldLimits.TAX_MAX_VALUE));
           }
         }
       }
@@ -2548,7 +2573,9 @@ public class BulkUploadMgr {
       if (++i < size) {
         String taxId = tokens[i].trim();
         if (taxId.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
-          ec.messages.add("Tax ID: '" + taxId + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG);
+          ec.messages.add(MessageFormat.format(backendMessages.getString(
+              BULKUPLOAD_TEXTFIELD_LENGTH_LIMITS),
+              backendMessages.getString("tax.id"), taxId, FieldLimits.TEXT_FIELD_MAX_LENGTH));
         } else {
           k.setTaxId(taxId);
         }
@@ -2557,8 +2584,8 @@ public class BulkUploadMgr {
       if (++i < size) {
         String invModel = tokens[i].trim();
         if (!invModel.isEmpty() && (FieldLimits.SYSTEM_DETERMINED_REPLENISHMENT.compareTo(invModel) != 0)) {
-          ec.messages
-              .add("Invalid value " + invModel + " for Inventory model. It should be '" + FieldLimits.SYSTEM_DETERMINED_REPLENISHMENT + "' or blank.");
+          ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.inventory.model.invalid"),
+              invModel, FieldLimits.SYSTEM_DETERMINED_REPLENISHMENT));
         } else {
           k.setInventoryModel(invModel);
         }
@@ -2570,14 +2597,14 @@ public class BulkUploadMgr {
           try {
             int svcLevel = Integer.parseInt(serviceLevel);
             if (svcLevel < FieldLimits.MIN_SERVICE_LEVEL || svcLevel > FieldLimits.MAX_SERVICE_LEVEL) {
-              ec.messages.add(
-                  "Service Level: " + serviceLevel + " is not valid. Please specify a valid level between " + FieldLimits.MIN_SERVICE_LEVEL + " and " + FieldLimits.MAX_SERVICE_LEVEL + CharacterConstants.DOT);
+              ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.service.level.invalid"),
+                  serviceLevel, FieldLimits.MIN_SERVICE_LEVEL, FieldLimits.MAX_SERVICE_LEVEL));
             } else {
             k.setServiceLevel(svcLevel);
             }
           } catch (NumberFormatException e) {
-            ec.messages.add(
-                "Service Level: " + serviceLevel + " is not valid. Please specify a valid level between " + FieldLimits.MIN_SERVICE_LEVEL + " and " + FieldLimits.MAX_SERVICE_LEVEL + CharacterConstants.DOT);
+            ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.service.level.invalid"),
+                serviceLevel, FieldLimits.MIN_SERVICE_LEVEL, FieldLimits.MAX_SERVICE_LEVEL));
           }
         }
       }
@@ -2588,28 +2615,30 @@ public class BulkUploadMgr {
           if (newName.length() <= FieldLimits.TEXT_FIELD_MAX_LENGTH) {
             k.setName(newName);
           } else {
-            ec.messages.add(backendMessages.getString("kiosk") + "'s new name '" + newName
-                + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG);
+            ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.textfield.length.limits"),
+                    backendMessages.getString("bulkupload.entity.name.new"), newName, FieldLimits.TEXT_FIELD_MAX_LENGTH));
           }
         }
       }
-      // Add all materials?
-      boolean addAllMaterials = false, addSomeMaterials;
-      String stockStr = null, materialNamesStr = null, vendorNamesStr = null,
-          customerNamesStr =
-              null;
+
+      boolean addAllMaterials = false;
+      boolean addSomeMaterials;
+      String stockStr = null;
+      String materialNamesStr = null;
+      String vendorNamesStr = null;
+      String customerNamesStr = null;
       boolean addMaterialsToKiosk = false;
-      boolean addVendorLinks = false, addCustomerLinks = false;
+      boolean addVendorLinks = false;
+      boolean addCustomerLinks = false;
       if (isAdd) {
         if (++i < size) {
           addAllMaterials = ("yes".equals(tokens[i].trim()));
         }
-        // Add specific materials?
+
         if (++i < size && !addAllMaterials) {
           materialNamesStr = tokens[i].trim();
         }
         addSomeMaterials = (materialNamesStr != null && !materialNamesStr.isEmpty());
-        // Get initial stock count, if any
         if (++i < size && permission.isInventoryAdd()) {
           stockStr = tokens[i].trim();
         }
@@ -2619,12 +2648,11 @@ public class BulkUploadMgr {
             if (iSU || permission.isInventoryAdd()) {
               addMaterialsToKiosk = true;
             } else {
-              ec.messages.add("No permission to add inventory. Please contact your administrator.");
+              ec.messages.add(backendMessages.getString("bulkupload.cannot.add.inventory"));
             }
           } catch (Exception e) {
-            ec.messages.add(
-                "Error when adding materials to " + backendMessages.getString("kiosk.lowercase")
-                    + " " + "'" + name + "'. Please add them manually [" + e.getMessage() + "]");
+            ec.messages.add(MessageFormat.format(backendMessages
+                .getString("bulkupload.entity.error.adding.materials"), name, e.getMessage()));
           }
         }
 
@@ -2636,14 +2664,12 @@ public class BulkUploadMgr {
               if (iSU || permission.isEntityRelationshipAdd()) {
                 addCustomerLinks = true;
               } else {
-                ec.messages.add(
-                    "No permission to add " + backendMessages.getString("bck.customer.lower")
-                        + "s. Please contact your administrator.");
+                ec.messages.add(backendMessages.getString("bulkupload.cannot.add.customers"));
               }
             } catch (Exception e) {
-              ec.messages.add(
-                  "Error when adding " + backendMessages.getString("bck.customer.lower") + "s '"
-                      + customerNamesStr + "'. Please add them manually [" + e.getMessage() + "]");
+              ec.messages.add(MessageFormat
+                  .format(backendMessages.getString("bulkupload.entity.error.adding.customers"),
+                      customerNamesStr, e.getMessage()));
             }
           }
         }
@@ -2655,36 +2681,31 @@ public class BulkUploadMgr {
               if (iSU || permission.isEntityRelationshipAdd()) {
                 addVendorLinks = true;
               } else {
-                ec.messages.add(
-                    "No permission to add " + backendMessages.getString("bck.vendor.lower")
-                        + "s. Please contact your administrator.");
+                ec.messages.add(backendMessages.getString("bulkupload.cannot.add.vendors"));
               }
             } catch (Exception e) {
-              ec.messages.add(
-                  "Error when adding " + backendMessages.getString("bck.vendor.lower") + "s " + "'"
-                      + vendorNamesStr + "'. Please add them manually [" + e.getMessage() + "]");
+              ec.messages.add(MessageFormat
+                  .format(backendMessages.getString("bulkupload.entity.error.adding.vendors"),
+                      customerNamesStr, e.getMessage()));
             }
           }
         }
       }
-      // Add tags, if any
-      xLogger.info("Adding tags: issues so far: {0}", ec.messages);
-      xLogger.info("i = {0}, size = {1}, isEdit = {2}, isAdd = {3}", i, size, isEdit, isAdd);
 
       if ((isAdd && ++i < size) || (isEdit && (i = i + 6) < size)) {
-        processTags(tokens[i], domainId, ec, TagUtil.TYPE_ENTITY, k);
+        processTags(tokens[i], domainId, ec, TagUtil.TYPE_ENTITY, k, backendMessages);
         xLogger.info("Updated {0}.", name);
       } else if (k.getTags() != null) {
         k.setTags(new ArrayList<>());
       }
-      // Add customId if present.
-      // Custom ID
-      xLogger.info("Uploading customId...");
+
       String customId;
       if (++i < size) {
         customId = tokens[i].trim();
         if (customId.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
-          ec.messages.add("Custom ID '" + customId + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG);
+          ec.messages.add(MessageFormat.format(backendMessages
+              .getString(BULKUPLOAD_TEXTFIELD_LENGTH_LIMITS), backendMessages.getString("customid.material"),
+                  customId, FieldLimits.TEXT_FIELD_MAX_LENGTH));
         } else {
           k.setCustomId(customId);
         }
@@ -2698,8 +2719,7 @@ public class BulkUploadMgr {
         } else if ("true".equalsIgnoreCase(enableBatch)) {
           enableBatchBoolean = false;
         } else {
-          ec.messages.add(
-              "Enable Batch Management '" + enableBatch + "' should be either true/false or empty");
+          ec.messages.add(MessageFormat.format(backendMessages.getString("bulkupload.entity.disable.batch.management.invalid"),enableBatch));
         }
         if (isEdit && (enableBatchBoolean != k.isBatchMgmtEnabled())) {
           InventoryManagementService ims = StaticApplicationContext.getBean(
@@ -2714,8 +2734,6 @@ public class BulkUploadMgr {
         }
         k.setBatchMgmtEnabled(enableBatchBoolean);
       }
-
-      // Check if errors exist
       if (ec.hasErrors()) {
         return ec;
       }
@@ -2749,8 +2767,8 @@ public class BulkUploadMgr {
           "{2}\t{3}\t{4}", domainId, sourceUserId, ec.operation, kioskId, name);
 
     } catch (Exception e) {
-      ec.messages.add("Error: " + e.getMessage());
-      xLogger.warn("Error while processing entity uploaded data:" , e);
+      ec.messages.add(e.getMessage());
+      xLogger.warn("Error while processing entity uploaded data:", e);
     }
     xLogger.fine("Exiting processKioskEntity");
     return ec;
@@ -3000,18 +3018,22 @@ public class BulkUploadMgr {
     return materialId;
   }
 
-  // Method that reads the temperature configuration and returns the temperature min or temperature max depending on tempType
-  private static double getTempFromConfig(Long domainId, String tempType, EntityContainer ec) {
+  /**
+   * Method that reads the temperature configuration and returns the temperature min or temperature max depending on tempType
+   */
+  private static double getTempFromConfig(Long domainId, String tempType, EntityContainer ec, ResourceBundle messages) {
     DomainConfig dc = DomainConfig.getInstance(domainId);
     AssetConfig tc = dc.getAssetConfig();
     if (tc == null) {
-      ec.messages.add(tempType + ": Temperature Configuration is not available.");
+      ec.messages.add(MessageFormat.format(messages.getString(
+          BULKUPLOAD_TEMPERATURE_CONFIGURATION_NOT_AVAILABLE),tempType));
       return 0;
     }
     if (tc.isTemperatureMonitoringWithLogisticsEnabled() || tc.isTemperatureMonitoringEnabled()) {
       AssetConfig.Configuration configuration = tc.getConfiguration();
       if (configuration == null) {
-        ec.messages.add(tempType + ": Temperature Configuration is not available.");
+        ec.messages.add(MessageFormat.format(messages.getString(
+            BULKUPLOAD_TEMPERATURE_CONFIGURATION_NOT_AVAILABLE),tempType));
         return 0;
       }
 
@@ -3020,29 +3042,31 @@ public class BulkUploadMgr {
       } else if (TEMP_MIN.equals(tempType) && configuration.getLowAlarm() != null) {
         return configuration.getLowAlarm().getTemp();
       } else {
-        ec.messages.add(tempType +": Temperature Configuration is not available.");
+        ec.messages.add(MessageFormat.format(messages.getString(
+            BULKUPLOAD_TEMPERATURE_CONFIGURATION_NOT_AVAILABLE),tempType));
         return 0;
       }
     } else {
-      ec.messages.add(tempType + ": Temperature Monitoring is not enabled.");
+      ec.messages.add(MessageFormat.format(messages.getString("bulkupload.temperature.monitoring.not.enabled"), tempType));
       return 0;
     }
   }
 
-  // Check if master data is being uploaded
+  /**
+   * Check if master data is being uploaded
+   */
   public static boolean isUploadMasterData(String type) {
     return (TYPE_USERS.equals(type) || TYPE_MATERIALS.equals(type) || TYPE_KIOSKS.equals(type)
         || TYPE_INVENTORY.equals(type));
   }
 
-  private static boolean processTags(String tokens, Long domainId, EntityContainer ec,
-                                     String tagType, Object uploadable) {
+  private static boolean processTags(String tokens, Long domainId, EntityContainer ec, String tagType, Object uploadable, ResourceBundle messages) {
     String tags = tokens.trim();
     if (!tags.matches("[^,]*")) {
-      ec.messages.add("Invalid value for " + tags + ". It should not contain commas");
+      ec.messages.add(MessageFormat.format(messages.getString("bulkupload.tags.invalid"),tags));
       return false;
     }
-    String tagsFromUserCSV = tokens.trim().replaceAll(";", ","); // replace semi-colons with commas
+    String tagsFromUserCSV = tokens.trim().replaceAll(CharacterConstants.SEMICOLON, CharacterConstants.COMMA);
     List<String> tagsFromUser = StringUtil.getList(tagsFromUserCSV);
     boolean hasTagsFromUser = tagsFromUser != null && !tagsFromUser.isEmpty();
     DomainConfig dc = DomainConfig.getInstance(domainId);
@@ -3074,8 +3098,7 @@ public class BulkUploadMgr {
       update = true;
     } else if (forceTags) {
       if (!hasConfTags) {
-        // Error message
-        ec.messages.add("Tags specified should be configured in the system");
+        ec.messages.add(messages.getString("bulkupload.tags.should.be.configured"));
         update = false;
       } else {
         // If confTags contains tagsFromUser - get Tags equiv and set
@@ -3085,7 +3108,7 @@ public class BulkUploadMgr {
           setUploadableObjTags(tagType, uploadable, tagsFromUser);
           update = true;
         } else {
-          ec.messages.add("Tags specified should be configured in the system");
+          ec.messages.add(messages.getString("bulkupload.tags.should.be.configured"));
           update = false;
         }
       }
@@ -3099,11 +3122,11 @@ public class BulkUploadMgr {
 
   private static Set<String> getUniqueUserIds(String userIdsStr, String separator) {
     if (StringUtils.isEmpty(userIdsStr)) {
-      return null;
+      return Collections.emptySet();
     }
     String[] userIds = userIdsStr.split(separator);
     if (userIds.length == 0) {
-      return null;
+      return Collections.emptySet();
     }
     return (new HashSet<>(Arrays.asList(userIds)));
   }
@@ -3139,7 +3162,7 @@ public class BulkUploadMgr {
   }
 
   public static String getJobStatusDisplay(int status, Locale locale) {
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+    ResourceBundle messages = Resources.getBundle(locale);
     if (status == IUploaded.STATUS_PENDING) {
       return messages.getString("pending");
     } else if (status == IUploaded.STATUS_DONE) {

@@ -45,6 +45,9 @@
 			<li ng-if="iAdm" ng-class="{enable: subview == 'auth'}">
 				<a href="#/setup/auth">{{resourceBundle['bulletin.board']}}</a>
 			</li>
+            <li ng-if="iAdm" ng-class="{enable: subview == 'transporters'}">
+				<a href="#/setup/transporters">{{resourceBundle['transporters']}}</a>
+			</li>
         </ul>
 	</div>
 	<div ng-switch="subview">
@@ -77,6 +80,9 @@
         </div>
 		<div ng-switch-when="auth">
 			<div ng-include="'views/bulletinboard/authorize.html'"></div>
+		</div>
+        <div ng-switch-when="transporters">
+			<div ng-include="'views/transporters/transporters.html'"></div>
 		</div>
 	</div>
 </div>

@@ -23,5 +23,5 @@
 
 <select ng-disabled="ngDisabled" ng-model="filterModel" class="form-control"
         ng-init="resourceBundle = $parent.resourceBundle" ng-options="y for y in years">
-    <option value="">All</option>
+    <option value="">{{resourceBundle['all']}}</option>
 </select>

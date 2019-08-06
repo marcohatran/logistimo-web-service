@@ -163,6 +163,15 @@ userServices.factory('userService', ['APIService','iAuthService','$q', function 
         },
         forceLogoutOnMobile: function (userId) {
             return apiService.get("/s2/api/users/forcelogoutonmobile?userId=" + userId);
+        },
+        getTokens: function () {
+            return apiService.get("/s2/api/users/personal-access-token/");
+        },
+        generateToken: function (tokenDescription) {
+            return apiService.post({payload: tokenDescription}, "/s2/api/users/personal-access-token/");
+        },
+        deleteToken: function(token) {
+            return apiService.delete("/s2/api/users/personal-access-token/"+token);
         }
     }
 }

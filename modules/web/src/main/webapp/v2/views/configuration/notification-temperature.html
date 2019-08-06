@@ -31,27 +31,27 @@
             <div class="row" ng-show="!showSubview">
                     <div class="col-sm-3 mb10">
                         <select class="form-control" ng-model="assetNotfType" ng-change="resetNotfData(assetNotfType)">
-                            <option value="temperature">Monitored asset</option>
-                            <option value="assetAlarms">Monitoring asset</option>
+                            <option value="temperature">{{resourceBundle['monitored.asset']}}</option>
+                            <option value="assetAlarms">{{resourceBundle['monitoring.asset']}}</option>
                         </select>
                     </div>
                     <div class="col-sm-3 mb10">
                         <select ng-model="nof.temp" ng-change="fetchEvent('temperature')" class="form-control"
                                 id="nofMsg">
-                            <option value="">-- {{resourceBundle['select']}} {{'event'}} --</option>
-                            <option ng-repeat="temp in temperatureLabel" value="{{temp.name}}">{{temp.name}}</option>
+                            <option value="">-- {{resourceBundle['select']}} {{resourceBundle['event']}} --</option>
+                            <option ng-repeat="temp in temperatureLabel" value="{{temp.name}}">{{getLabelFromResourceBundle(temp.name)}}</option>
                         </select>
                     </div>
                     <div class="lnk" ng-show="prShow || prSelect">
                         <span class="col-sm-3" ng-show = "prShow">
-                            {{prefixName}}<input type="text" class="form-control w60 stat-bottom" ng-model="nof.pr"
-                                                 id="prefix" placeholder="{{placeHolder}}"
+                            {{getLabelFromResourceBundle(prefixName)}} <input type="text" class="form-control w60 stat-bottom" ng-model="nof.pr"
+                                                 id="prefix" placeholder="{{getLabelFromResourceBundle(placeHolder)}}"
                                                  ng-change="resetStatus('prefix')" only-digits>
                         </span>
                     </div>
                     <div class="lnk col-sm-3" ng-show="showStatus">
                         <select class="form-control w60 stat-bottom" ng-model="nof.pr">
-                            <option value="">-- Select status --</option>
+                            <option value="">{{resourceBundle['select']}} {{resourceBundle['status.lower']}}</option>
                             <option ng-repeat="state in assetWSFilters" value="{{state.status-1}}" ng-show="state.status > 0">{{state.dV}}</option>
                         </select>
                     </div>

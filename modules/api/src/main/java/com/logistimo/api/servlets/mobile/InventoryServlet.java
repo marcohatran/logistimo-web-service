@@ -266,15 +266,15 @@ public class InventoryServlet extends JsonRestServlet {
   }
 
   public void processGet(HttpServletRequest req, HttpServletResponse resp,
-                         ResourceBundle backendMessages, ResourceBundle messages)
+                         ResourceBundle messages)
       throws ServletException, IOException, ServiceException {
     String action = req.getParameter(RestConstantsZ.ACTION);
     if (RestConstantsZ.ACTION_GETINVENTORY.equalsIgnoreCase(action)) {
-      getInventory(req, resp, backendMessages);
+      getInventory(req, resp, messages);
     } else if (RestConstantsZ.ACTION_EXPORT.equals(action)) {
-      scheduleExport(req, resp, backendMessages);
+      scheduleExport(req, resp, messages);
     } else if (ACTION_GETINVENTORYBATCHES.equals(action)) {
-      getInventoryBatches(req, resp, backendMessages);
+      getInventoryBatches(req, resp, messages);
     } else {
       xLogger.severe("Invalid action: " + action);
     }
@@ -282,16 +282,16 @@ public class InventoryServlet extends JsonRestServlet {
 
   // Added by arun, 01/11/09
   public void processPost(HttpServletRequest req, HttpServletResponse resp,
-                          ResourceBundle backendMessages, ResourceBundle messages)
+                          ResourceBundle messages)
       throws ServletException, IOException, ServiceException {
     // Get the post parameters
     String action = req.getParameter(RestConstantsZ.ACTION);
     if (RestConstantsZ.ACTION_GETINVENTORY.equalsIgnoreCase(action)) {
-      getInventory(req, resp, backendMessages);
+      getInventory(req, resp, messages);
     } else if (RestConstantsZ.ACTION_UPDINVENTORY.equalsIgnoreCase(action)) {
-      updateInventoryTransactionsv1(req, resp, backendMessages);
+      updateInventoryTransactionsv1(req, resp, messages);
     } else if (RestConstantsZ.ACTION_UPDATEINVENTORYTRANSACTIONS.equalsIgnoreCase(action)) {
-      updateInventoryTransactions(req, resp, backendMessages);
+      updateInventoryTransactions(req, resp, messages);
     } else {
       throw new ServiceException("Invalid action: " + action);
     }
@@ -832,7 +832,7 @@ public class InventoryServlet extends JsonRestServlet {
       statusCode = HttpServletResponse.SC_BAD_REQUEST;
       errorMessage = e.getMessage();
     } catch (Exception e) {
-      xLogger.severe("Exception when updating inventory transactions {0}", e);
+      xLogger.warn("Exception when updating inventory transactions {0}", e);
       statusCode = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
       errorMessage = backendMessages.getString("error.systemerror");
     }

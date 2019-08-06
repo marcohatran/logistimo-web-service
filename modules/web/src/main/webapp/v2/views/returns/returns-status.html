@@ -23,7 +23,7 @@
 
 <div>
     <div class="modal-header ws">
-        <h3 class="modal-title">{{RETURNS.status[new_status]}}</h3>
+        <h3 class="modal-title">{{getLabelFromResourceBundle(RETURNS.status[new_status])}}</h3>
     </div>
     <div class="modal-body bg-white">
         <form class="form-horizontal" role="form" name="addEntityForm">
@@ -31,7 +31,7 @@
                 <label class="col-sm-4 control-label">{{resourceBundle['order.new.status']}}</label>
 
                 <div class="col-sm-7 cbx">
-                    {{RETURNS.statusLabel[new_status]}}
+                    {{getLabelFromResourceBundle(RETURNS.statusLabel[new_status])}}
                 </div>
             </div>
             <div ng-hide="!(new_status == RETURNS.status.SHIPPED)" class="form-group">

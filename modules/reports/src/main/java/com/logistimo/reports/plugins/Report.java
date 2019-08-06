@@ -206,6 +206,7 @@ public class Report {
   public Long hexd5;
   public Long hexd10;
   public Long cpty;
+  public Double cptyd;
   public Long up70;
   public Long up80;
   public Long up90;
@@ -934,6 +935,10 @@ public class Report {
 
   public Long getTotalSpaceAcrossWorkingAssets() {
     return cpty == null ? 0 : cpty;
+  }
+
+  public Double getTotalSpaceInDecimalAcrossWorkingAssets() {
+    return cptyd == null ? 0.0 : cptyd;
   }
 
   public Long getAssetsWithUpTimeGreaterThan70() {

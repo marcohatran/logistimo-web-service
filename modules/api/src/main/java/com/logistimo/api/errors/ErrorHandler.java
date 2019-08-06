@@ -38,6 +38,7 @@ import com.logistimo.exception.SystemException;
 import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.exception.ValidationException;
 import com.logistimo.logger.XLog;
+import com.logistimo.orders.exception.AllocationNotCompleteException;
 import com.logistimo.security.BadCredentialsException;
 import com.logistimo.security.UserDisabledException;
 import com.logistimo.services.ObjectNotFoundException;

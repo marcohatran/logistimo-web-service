@@ -50,7 +50,7 @@ public class UserUtils {
   }
   // Static display functions
   public static String getRoleDisplay(String role, Locale locale) {
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+    ResourceBundle messages = Resources.getBundle(locale);
     String displayStr = "";
     if (SecurityConstants.ROLE_KIOSKOWNER.equals(role)) {
       displayStr = messages.getString("role.kioskowner");
@@ -67,7 +67,7 @@ public class UserUtils {
 
   //Permission display
   public static String getPermissionDisplay(String permission, Locale locale) {
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+    ResourceBundle messages = Resources.getBundle(locale);
     String dispStr = "";
     if (IUserAccount.PERMISSION_VIEW.equals(permission)) {
       dispStr = messages.getString("user.permission.view");
@@ -78,7 +78,7 @@ public class UserUtils {
   }
 
   public static String getGenderDisplay(String constant, Locale locale) {
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+    ResourceBundle messages = Resources.getBundle(locale);
     String displayStr = "";
     if (IUserAccount.GENDER_MALE.equals(constant)) {
       displayStr = messages.getString("gender.male");

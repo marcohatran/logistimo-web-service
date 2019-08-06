@@ -22,7 +22,7 @@
   -->
 
 <div class="box topbox" ng-controller="FulfilShipmentController">
-    <h3>Fulfill the shipment <a ng-href="#/orders/shipment/detail/{{shipment.sId}}/">{{shipment.sId}}</a>
+    <h3>{{resourceBundle['orders.fulfil.shipment']}} <a ng-href="#/orders/shipment/detail/{{shipment.sId}}/">{{shipment.sId}}</a>
         <span ng-show="shipment.oty == 1">({{resourceBundle['order']}}: <a
                 ng-href="#/orders/detail/{{shipment.orderId}}/" target="_blank">{{shipment.orderId}}</a>)</span>
         <span ng-show="shipment.oty == 0">(
@@ -142,7 +142,7 @@
                                                 id="cm{{item.mId}}{{$index}}"
                                                 popover-trigger="showpopup">
                                             <option ng-repeat="status in matstatus" value="{{status}}"
-                                                    ng-selected="item.fmst == status">{{status|| resourceBundle['pleaseselect']}}
+                                                    ng-selected="item.fmst == status">{{status|| resourceBundle['select'] + " " + resourceBundle['status.lower']}}
                                             </option>
                                         </select>
                                         <select ng-show="isDef(tempmatstatus) && item.tm" ng-model="item.fmst" class="form-control"
@@ -153,7 +153,7 @@
                                                 id="cmt{{item.mId}}{{$index}}"
                                                 popover-trigger="showpopup">
                                             <option ng-repeat="status in tempmatstatus" value="{{status}}"
-                                                    ng-selected="item.fmst == status">{{status|| resourceBundle['pleaseselect']}}
+                                                    ng-selected="item.fmst == status">{{status|| resourceBundle['select'] + " " + resourceBundle['status.lower']}}
                                             </option>
                                         </select>
                                     </div>
@@ -167,7 +167,7 @@
                                                 ng-blur="validate(item,$index,'r')"
                                                 ng-change="item.mrsn = ''"
                                                 ng-model="item.frsn" ng-show="isDef(fulfilReasons)">
-                                            <option ng-repeat="reason in fulfilReasons" value="{{reason}}" ng-selected="item.frsn == reason">{{reason|| resourceBundle['pleaseselect']}}</option>
+                                            <option ng-repeat="reason in fulfilReasons" value="{{reason}}" ng-selected="item.frsn == reason">{{reason|| resourceBundle['select'] + ' ' + resourceBundle['reason.lowercase']}}</option>
                                         </select>
                                         <textarea type="text" class="form-control mt2" ng-show="isUndef(fulfilReasons) || item.frsn == 'Others'"
                                                   id="fr{{item.mId}}{{$index}}"

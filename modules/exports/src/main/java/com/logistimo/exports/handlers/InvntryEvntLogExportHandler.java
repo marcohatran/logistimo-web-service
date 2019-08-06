@@ -72,15 +72,14 @@ public class InvntryEvntLogExportHandler implements  IExportHandler {
 
   public String getCSVHeader(Locale locale, DomainConfig dc, String type) {
     xLogger.fine("Entering getCSVHeader. locale: {0}", locale);
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-    ResourceBundle jsMessages = Resources.get().getBundle("JSMessages", locale);
+    ResourceBundle messages = Resources.getBundle(locale);
     StringBuilder header = new StringBuilder();
     header.append(messages.getString("material")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("id")).append(CharacterConstants.COMMA)
+        .append(messages.getString("id")).append(CharacterConstants.COMMA)
         .append(messages.getString("customid.material")).append(CharacterConstants.COMMA)
         .append(messages.getString("material.name")).append(CharacterConstants.COMMA)
         .append(messages.getString("kiosk")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("id")).append(CharacterConstants.COMMA)
+        .append(messages.getString("id")).append(CharacterConstants.COMMA)
         .append(messages.getString("customid.entity")).append(CharacterConstants.COMMA)
         .append(messages.getString("kiosk.name")).append(CharacterConstants.COMMA)
         .append(messages.getString("country")).append(CharacterConstants.COMMA)
@@ -99,9 +98,9 @@ public class InvntryEvntLogExportHandler implements  IExportHandler {
         .append(messages.getString("from")).append(CharacterConstants.COMMA)
         .append(messages.getString("until")).append(CharacterConstants.COMMA)
         .append(messages.getString("kiosk")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("tags.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("tags.lower")).append(CharacterConstants.COMMA)
         .append(messages.getString("material")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("tags.lower"));
+        .append(messages.getString("tags.lower"));
 
     xLogger.info("Exiting getCSVHeader. locale: {0}", locale);
     return header.toString();

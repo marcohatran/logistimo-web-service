@@ -52,6 +52,7 @@ import com.logistimo.exception.ValidationException;
 import com.logistimo.logger.XLog;
 import com.logistimo.models.AuthRequest;
 import com.logistimo.models.users.LoginStatus;
+import com.logistimo.models.users.PersonalAccessToken;
 import com.logistimo.models.users.UserDetails;
 import com.logistimo.security.BadCredentialsException;
 import com.logistimo.security.UserDisabledException;
@@ -66,9 +67,11 @@ import com.logistimo.twofactorauthentication.entity.UserDevices;
 import com.logistimo.twofactorauthentication.service.TwoFactorAuthenticationService;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.entity.IUserToken;
+import com.logistimo.users.entity.TokenType;
 import com.logistimo.users.entity.UserAccount;
+import com.logistimo.users.entity.UserToken;
+import com.logistimo.users.repository.UserTokenRepository;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.utils.MsgUtil;
 import com.logistimo.utils.PasswordEncoder;
 import com.logistimo.utils.RandomPasswordGenerator;
 
@@ -80,7 +83,6 @@ import org.jose4j.jwe.KeyManagementAlgorithmIdentifiers;
 import org.jose4j.keys.AesKey;
 import org.jose4j.lang.JoseException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -89,9 +91,7 @@ import java.io.IOException;
 import java.security.Key;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.InputMismatchException;
@@ -103,6 +103,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.ResourceBundle;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
@@ -143,6 +144,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
   private TwoFactorAuthenticationService twoFactorAuthenticationService;
 
   @Autowired
+  private UserTokenRepository userTokenRepository;
+
+  @Autowired
   public void setCacheService(MemcacheService memcacheService) {
     this.memcacheService = memcacheService;
   }
@@ -161,11 +165,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
   }
 
   public IUserToken generateUserToken(String userId, Integer source) throws ServiceException {
-    return generateUserToken(userId, null, null, source);
+    return generateUserToken(userId, null, null, source, TokenType.LOGIN, null);
   }
 
-  public IUserToken generateUserToken(String userId, String accessKey, Long domainId,
-                                      Integer source)
+  private IUserToken generateUserToken(String userId, String accessKey, Long domainId,
+                                       Integer source, TokenType tokenType, String description)
       throws ServiceException {
     xLogger.fine("Entering generateUserToken");
 
@@ -177,14 +181,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     String token;
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
-      if (StringUtils.isEmpty(accessKey)) {
+      if (TokenType.LOGIN.equals(tokenType)) {
         //Clear previous user sessions on mobile and web.
         updateUserSession(userId, null);
       }
       token = generateUuid();
       iUserToken = JDOUtils.createInstance(IUserToken.class);
 
-      int validityInMinutes = getTokenValidityInMinutes(account, accessKey, source);
+      int validityInMinutes = getTokenValidityInMinutes(account, tokenType, source);
       if (validityInMinutes > 0) {
         Calendar c = Calendar.getInstance();
         c.add(Calendar.MINUTE, validityInMinutes);
@@ -197,6 +201,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
       iUserToken.setRawToken(token);
       iUserToken.setDomainId(domainId != null ? domainId : account.getDomainId());
       iUserToken.setAccessKey(accessKey);
+      iUserToken.setDescription(description);
+      iUserToken.setTokenType(tokenType);
+      iUserToken.setCreatedOn(new Date());
       pm.makePersistent(iUserToken);
       xLogger.fine("generateUserToken: userId is {0}, token is {1}, expires is {2}", userId,
           iUserToken.getToken(), iUserToken.getExpires());
@@ -209,10 +216,15 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
   }
 
-  private int getTokenValidityInMinutes(IUserAccount account, String isAccessKey, Integer source) {
+  private int getTokenValidityInMinutes(IUserAccount account, TokenType tokenType, Integer source) {
     int validityTimeInMinutes = ConfigUtil.getInt(PropertyConstants.TOKEN_EXPIRY, 30 * 1440);
 
-    if (StringUtils.isEmpty(isAccessKey)) {
+    if (TokenType.BULLETIN_BOARD.equals(tokenType)) {
+      //Bulletin board, use domain default
+      DomainConfig domainConfig = DomainConfig.getInstance(account.getDomainId());
+      BBoardConfig bBoardConfig = domainConfig.getBBoardConfig();
+      validityTimeInMinutes = bBoardConfig.getExpiry() * 1440;
+    } else {
       // Web app limit token access time
       if (SourceConstants.WEB.equals(source)) {
         validityTimeInMinutes = -1;
@@ -227,11 +239,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
           }
         }
       }
-    } else {
-      //Bulletin board, use domain default
-      DomainConfig domainConfig = DomainConfig.getInstance(account.getDomainId());
-      BBoardConfig bBoardConfig = domainConfig.getBBoardConfig();
-      validityTimeInMinutes = bBoardConfig.getExpiry() * 1440;
     }
 
     return validityTimeInMinutes;
@@ -252,11 +259,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     if (iUserToken != null) {
-      if(SourceConstants.BULLETIN_BOARD != accessInitiator.intValue() && iUserToken.hasAccessKey()) {
+      if(SourceConstants.BULLETIN_BOARD != accessInitiator.intValue() && iUserToken.getTokenType().equals(TokenType.BULLETIN_BOARD)) {
         throw new UnauthorizedException("G002", new Object[]{});
       }
       if (iUserToken.getExpires() == null) {
-        checkWebTokenExpiry(token);
+        //Personal access tokens are permanent, no need to check.
+        if(!TokenType.PERSONAL_ACCESS_TOKEN.equals(iUserToken.getTokenType())) {
+          checkWebTokenExpiry(token);
+        }
         updateWebAccessTime(token);
       } else {
         checkTokenExpiry(iUserToken);
@@ -319,7 +329,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     return null;
   }
 
-  public Boolean clearUserTokens(String userId, boolean removeAccessKeyTokens) {
+  public Boolean clearUserTokens(String userId, boolean includeOtherTokens) {
     PersistenceManager pm = null;
     Query q = null;
     if (StringUtils.isNotEmpty(userId)) {
@@ -327,7 +337,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
           queryStr =
           "SELECT FROM " + JDOUtils.getImplClass(IUserToken.class).getName()
               + " WHERE userId == uIdParam "
-              + (removeAccessKeyTokens ? "" : " && accessKey == null")
+              + (includeOtherTokens ? "" : " && tokenType == 'LOGIN' ")
               + " PARAMETERS String uIdParam";
       try {
         pm = PMF.get().getPersistenceManager();
@@ -420,7 +430,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
       throw new ObjectNotFoundException("USR001", userId);
     }
     Locale locale = account.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     MemcacheService cache = AppFactory.get().getMemcacheService();
     if (mode == 1) {
       String email = account.getEmail();
@@ -479,7 +489,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     IUserAccount userAccount = usersService.getUserAccount(userId);
     ResourceBundle
         backendMessages =
-        Resources.get().getBundle(BACKEND_MESSAGES, userAccount.getLocale());
+        Resources.getBundle(userAccount.getLocale());
 
     String cacheKey = TWO_FACTOR_AUTHENTICATION_OTP.concat(CharacterConstants.UNDERSCORE).concat(userId);
     if(cache != null && cache.get(cacheKey) != null) {
@@ -533,7 +543,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     IUserAccount userAccount = usersService.getUserAccount(userId);
     ResourceBundle
         backendMessages =
-        Resources.get().getBundle(BACKEND_MESSAGES, userAccount.getLocale());
+        Resources.getBundle(userAccount.getLocale());
 
     String otp = generateMobileOTP();
     if (cache != null) {
@@ -577,7 +587,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
       throws ServiceException, MessageHandlingException, IOException{
     IUserAccount account = usersService.getUserAccount(userId);
     Locale locale = account.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     String sendType = null;
     String sendMode = null;
     if (mode == 0) {
@@ -680,9 +690,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     } else if (StringUtils.isNotEmpty(value)) {
       int domainKeySeparatorIndex = value.indexOf(DOMAIN_KEY_SEPARATOR);
       return Optional.of(generateUserToken(
-          value.substring(domainKeySeparatorIndex + 1, value.length()), accessKey,
+          value.substring(domainKeySeparatorIndex + 1), accessKey,
           Long.valueOf(value.substring(0, domainKeySeparatorIndex)),
-          SourceConstants.BULLETIN_BOARD));
+          SourceConstants.BULLETIN_BOARD, TokenType.BULLETIN_BOARD, null));
     } else {
       return Optional.empty();
     }
@@ -779,7 +789,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
       if (newPassword.equals(confirmPassword)) {
         changePassword(userId, null, null, newPassword, isEnhanced);
         clearResetKey(userId);
-        ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES,
+        ResourceBundle backendMessages = Resources.getBundle(BACKEND_MESSAGES,
             Locale.ENGLISH);
         return backendMessages.getString("pwd.forgot.success");
       } else {
@@ -949,6 +959,31 @@ public class AuthenticationServiceImpl implements AuthenticationService {
       validateOtpMMode(userId, otp, isTwoFactorAuthenticationOTP);
     }
     return true;
+  }
+
+  @Override
+  public PersonalAccessToken generatePersonalAccessToken(String tokenDescription) throws ServiceException {
+    IUserToken userToken = generateUserToken(SecurityUtils.getUsername(),null, SecurityUtils.getDomainId(),SourceConstants.WEB, TokenType.PERSONAL_ACCESS_TOKEN,
+        tokenDescription);
+    return new PersonalAccessToken(userToken);
+  }
+
+  @Override
+  public List<PersonalAccessToken> getPersonalAccessTokens(String username, Long domainId) {
+    return userTokenRepository.findAllPersonalAccessTokensByUserIdAndDomainId(username, domainId)
+        .stream()
+        .map(PersonalAccessToken::new)
+        .collect(Collectors.toList());
+  }
+
+  @Override
+  public void deleteToken(String encryptedToken) {
+    UserToken token = userTokenRepository.findOne(encryptedToken);
+    if(SecurityUtils.isAdmin() || SecurityUtils.getUsername().equals(token.getUserId())) {
+      userTokenRepository.delete(encryptedToken);
+    } else {
+      throw new UnauthorizedException("G003", Constants.EMPTY);
+    }
   }
 
 }

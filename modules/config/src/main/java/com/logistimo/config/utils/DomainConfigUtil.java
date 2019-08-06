@@ -45,7 +45,7 @@ public class DomainConfigUtil {
   public static String getMinMaxDuration(DomainConfig dc) {
     String mmd = CharacterConstants.EMPTY;
     if (!dc.getInventoryConfig().isMinMaxAbsolute()) {
-      ResourceBundle jsMessages = Resources.get().getBundle("JSMessages", dc.getLocale());
+      ResourceBundle jsMessages = Resources.getBundle(dc.getLocale());
       mmd = CharacterConstants.O_BRACKET;
       if (InventoryConfig.FREQ_WEEKLY.equals(dc.getInventoryConfig().getMinMaxDur())) {
         mmd += jsMessages.getString("weeksofstock");

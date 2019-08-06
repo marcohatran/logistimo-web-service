@@ -62,6 +62,10 @@ public interface IShipment extends ICrossDomain {
 
   void setTrackingId(String trackingId);
 
+  /**
+   * Get customer entity id
+   * @return
+   */
   Long getKioskId();
 
   void setKioskId(Long kId);
@@ -70,6 +74,10 @@ public interface IShipment extends ICrossDomain {
 
   void setStatus(ShipmentStatus status);
 
+  /**
+   * Get vendor entity id
+   * @return
+   */
   Long getServicingKiosk();
 
   void setServicingKiosk(Long skId);
@@ -136,4 +144,28 @@ public interface IShipment extends ICrossDomain {
   Long getVersion();
 
   void setVersion(Long version);
+
+  Long getConsignmentId();
+
+  void setConsignmentId(Long consignmentId);
+
+  String getTrackingContactNumber();
+
+  void setTrackingContactNumber(String phoneNumber);
+
+  Long getTransporterId();
+
+  void setTransporterId(Long id);
+
+  String getVehicleDetails();
+
+  void setVehicleDetails(String vehicle);
+
+  Boolean getIsCustomerPickup();
+
+  void setIsCustomerPickup(Boolean isCustomerPickup);
+
+  IConsignment getConsignmentDetails();
+
+  void setConsignmentDetails(IConsignment consignment);
 }

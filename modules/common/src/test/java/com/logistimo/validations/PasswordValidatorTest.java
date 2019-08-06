@@ -27,7 +27,6 @@ import com.logistimo.auth.SecurityConstants;
 import com.logistimo.exception.ValidationException;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 /**
  * Created by pratheeka on 14/08/18.

@@ -23,6 +23,8 @@
 
 package com.logistimo.logger;
 
+import com.logistimo.utils.ThreadLocalUtil;
+
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -69,9 +71,10 @@ public class LogiLogger implements ILogger {
   }
 
   private void log(Level level, String msgTemplate, Object... params) {
+    //prefix message with traceId
     if (xLogger.isEnabledFor(level)) {
       Throwable ex = XLog.getCause(params);
-      String msg = XLog.format(msgTemplate, params);
+      String msg =  XLog.format(msgTemplate, params) + " ["+ ThreadLocalUtil.get().getTraceId() + "]";
       if (ex == null) {
         xLogger.log(level, msg);
       } else {

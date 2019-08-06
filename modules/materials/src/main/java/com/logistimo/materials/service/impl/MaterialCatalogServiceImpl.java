@@ -105,7 +105,7 @@ public class MaterialCatalogServiceImpl implements MaterialCatalogService {
     if (materialDao.checkMaterialExists(domainId, material.getUniqueName())) {
       xLogger.warn("addMaterial: Material with name {0} already exists", material.getName());
       final Locale locale = SecurityUtils.getLocale();
-      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+      ResourceBundle backendMessages = Resources.getBundle(locale);
       throw new ServiceException(
           backendMessages.getString("error.cannotadd") + ". '" + material.getName() + "' "
               + backendMessages.getString("error.alreadyexists") + ".");
@@ -126,7 +126,7 @@ public class MaterialCatalogServiceImpl implements MaterialCatalogService {
           // Material with this name already exists in the database!
           xLogger.warn("addMaterial: Material with name {0} already exists", material.getName());
           final Locale locale = SecurityUtils.getLocale();
-          ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+          ResourceBundle backendMessages = Resources.getBundle(locale);
           throw new ServiceException(
               backendMessages.getString("error.cannotadd") + ". '" + material.getName() + "' "
                   + backendMessages.getString("error.alreadyexists") + ".");
@@ -145,11 +145,10 @@ public class MaterialCatalogServiceImpl implements MaterialCatalogService {
         xLogger.warn("addMaterial: FAILED!! Cannot add material {0}. Custom ID {1} already exists.",
             material.getName(), material.getCustomId());
         final Locale locale = SecurityUtils.getLocale();
-        ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-        ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+        ResourceBundle messages = Resources.getBundle(locale);
         throw new ServiceException(
-            backendMessages.getString("error.cannotadd") + ". " + messages.getString("customid")
-                + " " + material.getCustomId() + " " + backendMessages
+            messages.getString("error.cannotadd") + ". " + messages.getString("customid")
+                + " " + material.getCustomId() + " " + messages
                 .getString("error.alreadyexists") + ".");
       }
 
@@ -208,7 +207,7 @@ public class MaterialCatalogServiceImpl implements MaterialCatalogService {
         IMaterial mat = JDOUtils.getObjectById(IMaterial.class, material.getMaterialId(), pm);
         if (!domainId.equals(mat.getDomainId())) {
           final Locale locale = SecurityUtils.getLocale();
-          ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+          ResourceBundle backendMessages = Resources.getBundle(locale);
           throw new ServiceException(
               backendMessages.getString("material.updation.permission.denied") + " : " + material
                   .getName());
@@ -257,12 +256,11 @@ public class MaterialCatalogServiceImpl implements MaterialCatalogService {
               "updateMaterial: FAILED!! Cannot update material {0}. Custom ID {1} already exists.",
               material.getName(), material.getCustomId());
           final Locale locale = SecurityUtils.getLocale();
-          ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-          ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+          ResourceBundle messages = Resources.getBundle(locale);
           throw new ServiceException(
-              backendMessages.getString("error.cannotupdate") + " '" + material.getName() + "'. "
+              messages.getString("error.cannotupdate") + " '" + material.getName() + "'. "
                   + messages.getString("customid") + " " + material.getCustomId() + " "
-                  + backendMessages.getString("error.alreadyexists") + ".");
+                  + messages.getString("error.alreadyexists") + ".");
         }
         mat.setCustomId(material.getCustomId());
         material = pm.makePersistent(mat);
@@ -326,11 +324,9 @@ public class MaterialCatalogServiceImpl implements MaterialCatalogService {
       xLogger.warn("getMaterial: FAILED!!! Material {0} does not exist in the database", materialId,
           e);
       final Locale locale = SecurityUtils.getLocale();
-      ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-
+      ResourceBundle messages = Resources.getBundle(locale);
       throw new ServiceException(
-          messages.getString("material") + " " + materialId + " " + backendMessages
+          messages.getString("material") + " " + materialId + " " + messages
               .getString("error.notfound"));
     } finally {
       pm.close();
@@ -431,7 +427,7 @@ public class MaterialCatalogServiceImpl implements MaterialCatalogService {
       }
       if (!sdFailedMaterials.isEmpty()) {
         final Locale locale = SecurityUtils.getLocale();
-        ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+        ResourceBundle backendMessages = Resources.getBundle(locale);
 
         throw new ServiceException(
             backendMessages.getString("material.deletion.permission.denied") + " : " + StringUtil

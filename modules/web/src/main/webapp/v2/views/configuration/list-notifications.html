@@ -34,11 +34,11 @@
                     <th>{{resourceBundle['notification.whom']}} {{resourceBundle['notification.when']}}</th>
                     <th ng-show="iSU || dp.ce">{{resourceBundle['shortcuts']}}</th>
                 </tr>
-                <tr ng-repeat="item in event">
+                <tr ng-repeat="item in eventDisplay">
                     <td>{{item.name}}</td>
                     <td>{{nfy[$index]}}</td>
-                    <td ng-show="iSU || dp.ce"><span class="glyphicons glyphicons-edit lPad10" ng-click="editNotifications(item.key, item.name)" title="{{resourceBundle['edit']}}"></span>&nbsp;&nbsp;
-                    <span class="glyphicons glyphicons-bin" ng-click="deleteNotification(item.key, item.name)" title="{{resourceBundle['delete']}}"></span></td>
+                    <td ng-show="iSU || dp.ce"><span class="glyphicons glyphicons-edit lPad10" ng-click="editNotifications(event[$index].key, event[$index].name)" title="{{resourceBundle['edit']}}"></span>&nbsp;&nbsp;
+                    <span class="glyphicons glyphicons-bin" ng-click="deleteNotification(event[$index].key, event[$index].name, eventDisplay[$index].name)" title="{{resourceBundle['delete']}}"></span></td>
                 </tr>
                 </tbody>
             </table>

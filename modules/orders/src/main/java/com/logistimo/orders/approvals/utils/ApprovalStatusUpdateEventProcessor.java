@@ -177,7 +177,7 @@ public class ApprovalStatusUpdateEventProcessor {
     DomainConfig domainConfig = DomainConfig.getInstance(requester.getDomainId());
     ResourceBundle
         messages =
-        Resources.get().getBundle("Messages", new Locale(domainConfig.getLangPreference()));
+        Resources.getBundle(new Locale(domainConfig.getLangPreference()));
     switch (status) {
       case APPROVED_STATUS:
         message = messages.getString("approval.approved.message");

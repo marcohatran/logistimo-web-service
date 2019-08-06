@@ -78,7 +78,7 @@
 
                                     </div>
                                     <div class="col-sm-3 dateleft plr0">
-                                        <date-picker date-model="tday" place-holder="Day" max-date="today"></date-picker>
+                                        <date-picker date-model="tday" place-holder="{{resourceBundle['day.upper']}}" max-date="today"></date-picker>
                                     </div>
                                     <div class="col-sm-2 plr0 text-center">
                                         <!-- Simply resetting variable tday, this is watched -->
@@ -143,7 +143,7 @@
                                                     <span class="glyphicons glyphicons-rewind"></span>
                                                 </a>
                                             </li>
-                                            <li><b>{{offset/size + 1}}</b> of <b>{{numFound/size}}</b></li>
+                                            <li><b>{{offset/size + 1}}</b> {{resourceBundle['of']}} <b>{{numFound/size}}</b></li>
                                             <li>
                                                 <a href="" ng-show="(offset + size) < numFound" ng-click="fetchNext();">
                                                     <span class="glyphicons glyphicons-forward"></span>
@@ -164,8 +164,8 @@
                         <div class="col-sm-12">
                             <table class="table table-hover table-bordered table-striped">
                                 <tr>
-                                    <th ng-show="isDef(currentAsset) && currentAsset.at == 2">Monitoring point</th>
-                                    <th ng-show="isDef(currentAsset) && currentAsset.at == 1">Channel</th>
+                                    <th ng-show="isDef(currentAsset) && currentAsset.at == 2">{{resourceBundle['monitoringpoint']}}</th>
+                                    <th ng-show="isDef(currentAsset) && currentAsset.at == 1">{{resourceBundle['channel']}}</th>
                                     <th>{{resourceBundle['alarm']}}</th>
                                     <th><span class="glyphicons glyphicons-clock"></span>&nbsp;{{resourceBundle['time']}}</th>
                                 </tr>
@@ -177,7 +177,7 @@
                                     </td>
                                     <td ng-show="isDef(currentAsset) && currentAsset.at == 1">
                                         <span ng-show="recentAlert.devalm.sId" ng-style="{'color': getSensorColorCode(assetDetails.vId, assetDetails.meta.dev.mdl, recentAlert.devalm.sId)}">{{recentAlert.devalm.sId}}</span>
-                                        <span ng-hide="recentAlert.devalm.sId">Device</span>
+                                        <span ng-hide="recentAlert.devalm.sId">{{resourceBundle['device']}}</span>
                                     </td>
                                     <td ng-class="{'c-green': ((recentAlert.typ == 0 && recentAlert.tmpalm.st <= 1) || (recentAlert.typ == 1 && recentAlert.devalm.stat == 0)),'c-orange': (recentAlert.typ == 0 && recentAlert.tmpalm.st >= 2 && recentAlert.tmpalm.st <= 3),'c-red': (recentAlert.typ == 0 && recentAlert.tmpalm.st == 4 && recentAlert.tmpalm.aSt == 2), 'c-aqua': (recentAlert.typ == 0 && recentAlert.tmpalm.st == 4 && recentAlert.tmpalm.aSt == 1), 'c-yellow': (recentAlert.typ == 1 && recentAlert.devalm.stat > 0)}">
                                         <i class="glyphicons" ng-class="{'glyphicons-ok-circle': ((recentAlert.typ == 0 && recentAlert.tmpalm.st <= 1) || (recentAlert.typ == 1 && recentAlert.devalm.stat == 0)), 'glyphicons-remove-circle': (recentAlert.typ == 0 && recentAlert.tmpalm.st >= 2), 'glyphicons-warning-sign': (recentAlert.typ == 1 && recentAlert.devalm.stat > 0)}"></i>

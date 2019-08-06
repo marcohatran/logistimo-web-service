@@ -83,7 +83,7 @@ public class EntityGroupsController {
   Results getEntityGroups() {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     Long domainId = sUser.getCurrentDomainId();
     try {
       List<IPoolGroup> poolGroups = entitiesService.findAllPoolGroups(domainId, 1, 0);
@@ -121,7 +121,7 @@ public class EntityGroupsController {
   String create(@RequestBody EntityGroupModel entityGroupModel, @PathVariable String action) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     if (entityGroupModel == null) {
       throw new BadRequestException(backendMessages.getString("poolgroup.create.error"));
     }
@@ -184,7 +184,7 @@ public class EntityGroupsController {
   EntityGroupModel getPoolGroup(@PathVariable Long groupId) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     Long domainId = sUser.getCurrentDomainId();
     if (domainId == null) {
       xLogger.severe("Error in fetching entity groups");
@@ -210,7 +210,7 @@ public class EntityGroupsController {
   String deletePoolGroups(@RequestBody String groupIds) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     if (groupIds == null) {
       throw new BadRequestException(backendMessages.getString("poolgroup.delete.error"));
     }

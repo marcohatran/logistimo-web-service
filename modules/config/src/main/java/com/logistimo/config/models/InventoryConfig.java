@@ -397,7 +397,7 @@ public class InventoryConfig implements Serializable {
   }
 
   public static String getFrequencyDisplay(String freq, boolean isRate, Locale locale) {
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+    ResourceBundle messages = Resources.getBundle(locale);
     if (Constants.FREQ_DAILY.equals(freq)) {
       return messages.getString(isRate ? "daily" : "days");
     } else if (Constants.FREQ_WEEKLY.equals(freq)) {

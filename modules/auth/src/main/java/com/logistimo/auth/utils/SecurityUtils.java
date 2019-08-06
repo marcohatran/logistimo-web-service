@@ -228,4 +228,14 @@ public class SecurityUtils {
       //ignore
     }
   }
+
+  public static void setSystemUser() {
+    try {
+      getUserDetails();
+    } catch (UnauthorizedException e) {
+      SecureUserDetails userDetails = new SecureUserDetails();
+      userDetails.setUsername(Constants.SYSTEM_USER_ID);
+      setUserDetails(userDetails);
+    }
+  }
 }

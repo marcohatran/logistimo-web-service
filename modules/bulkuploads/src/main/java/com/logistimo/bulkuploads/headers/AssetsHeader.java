@@ -36,7 +36,7 @@ public class AssetsHeader implements IHeader {
 
   @Override
   public String getUploadableCSVHeader(Locale locale, String type) {
-    ResourceBundle bundle = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle bundle = Resources.getBundle(locale);
     StringBuilder builder = new StringBuilder();
     builder.append(bundle.getString("kiosk")).append(CharacterConstants.COMMA)
         .append(bundle.getString("custom.entity")).append(CharacterConstants.COMMA)
@@ -57,7 +57,7 @@ public class AssetsHeader implements IHeader {
         .append(bundle.getString("sim2")).append(CharacterConstants.COMMA)
         .append(bundle.getString("sim2.id")).append(CharacterConstants.COMMA)
         .append(bundle.getString("sim2.ntw.provider")).append(CharacterConstants.COMMA)
-        .append(bundle.getString("imei")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("imei.of.monitoring.asset")).append(CharacterConstants.COMMA)
         .append(bundle.getString("manufacturer.name")).append(CharacterConstants.COMMA)
         .append(bundle.getString("asset.model")).append(CharacterConstants.COMMA)
         .append(bundle.getString("monitoring.asset.manufacture.year")).append(CharacterConstants.COMMA)

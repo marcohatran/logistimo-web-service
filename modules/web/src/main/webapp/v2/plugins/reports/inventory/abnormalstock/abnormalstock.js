@@ -51,19 +51,19 @@ registerWidget('ias', 'rpt-abnormal-stock', 'Inventory', 'Abnormal stock','inven
 
         $scope.cOptions.exportFileName = "Stocks" + "_" + FormatDate_DD_MM_YYYY($scope.today);
 
-        $scope.primaryMetric.push({name: "Zero stock", value: "1"});
+        $scope.primaryMetric.push({name: $scope.resourceBundle['report.zerostock'], value: "1"});
         $scope.primaryMetric.push({name: "< Min", value: "2"});
         $scope.primaryMetric.push({name: "> Max", value: "3"});
 
-        $scope.secondaryMetric.push({name: "Number of events", value: "0"});
+        $scope.secondaryMetric.push({name: $scope.resourceBundle['reports.abnormal.stock.number.of.events'], value: "0"});
 
         if (typeof addSecondaryMetricOptions === "function") {
             addSecondaryMetricOptions($scope.secondaryMetric, reportType, $scope.resourceBundle);
         }
-        $scope.tertiaryMetric.push({name: "100% of the time", value: "0"});
-        $scope.tertiaryMetric.push({name: ">= 90% of the time", value: "1"});
-        $scope.tertiaryMetric.push({name: ">= 80% of the time", value: "2"});
-        $scope.tertiaryMetric.push({name: ">= 70% of the time", value: "3"});
+        $scope.tertiaryMetric.push({name: $scope.resourceBundle['reports.abnormal.stock.100.percent.of.the.time'], value: "0"});
+        $scope.tertiaryMetric.push({name: $scope.resourceBundle['reports.abnormal.stock.greater.than.90.percent.of.the.time'], value: "1"});
+        $scope.tertiaryMetric.push({name: $scope.resourceBundle['reports.abnormal.stock.greater.than.80.percent.of.the.time'], value: "2"});
+        $scope.tertiaryMetric.push({name: $scope.resourceBundle['reports.abnormal.stock.greater.than.70.percent.of.the.time'], value: "3"});
 
         $scope.downloadAsCSV = function (daily) {
             if(daily) {
@@ -245,7 +245,7 @@ registerWidget('ias', 'rpt-abnormal-stock', 'Inventory', 'Abnormal stock','inven
                 $scope.dchartData = chartData;
                 $scope.dtableCaption = undefined;
                 $scope.dtableHeading = [];
-                $scope.dtableHeading.push("Date");
+                $scope.dtableHeading.push($scope.resourceBundle['date']);
                 if(checkNotNullEmpty(compareFields[0])) {
                     angular.forEach(compareFields, function (d) {
                         $scope.dtableHeading.push(d);
@@ -272,7 +272,7 @@ registerWidget('ias', 'rpt-abnormal-stock', 'Inventory', 'Abnormal stock','inven
 
                 $scope.tableCaption = $scope.cOptions.subcaption;
                 $scope.tableHeading = [];
-                $scope.tableHeading.push("Date");
+                $scope.tableHeading.push($scope.resourceBundle['date']);
                 if(checkNotNullEmpty(compareFields[0])) {
                     $scope.tableMetric = $scope.cOptions.caption;
                     angular.forEach(compareFields, function (d) {

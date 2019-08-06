@@ -43,6 +43,7 @@
                         <select class="form-control" ng-model="status">
                             <option value="">{{resourceBundle.all}}</option>
                             <option value="op">{{resourceBundle['order.pending']}}</option>
+                            <option value="rp">{{resourceBundle['order.readyfordispatch']}}</option>
                             <option value="sp">{{resourceBundle['order.shipped']}}</option>
                             <option value="fl">{{resourceBundle['order.fulfilled']}}</option>
                             <option value="cn">{{resourceBundle['order.cancelled']}}</option>
@@ -59,28 +60,28 @@
                 <div class="row" ng-show="showMore">
                     <div class="col-sm-3">
                         <span class="filter-label">{{resourceBundle.from}}</span>
-                        <date-picker date-model="from" place-holder="From" max-date="today"></date-picker>
+                        <date-picker date-model="from" place-holder="{{resourceBundle['from']}}" max-date="today"></date-picker>
                     </div>
                     <div class="col-sm-3">
                         <span class="filter-label">{{resourceBundle.to}}</span>
-                        <date-picker date-model="to" place-holder="To" min-date="from" max-date="today"></date-picker>
+                        <date-picker date-model="to" place-holder="{{resourceBundle['to']}}" min-date="from" max-date="today"></date-picker>
                     </div>
                     <div class="col-sm-3">
-                        <span class="filter-label">From expected fulfilment</span>
-                        <date-picker date-model="eftFrom" place-holder="Fulfilment date"></date-picker>
+                        <span class="filter-label">{{resourceBundle['shipment.list.from.expected.fulfilment']}}</span>
+                        <date-picker date-model="eftFrom" place-holder="{{resourceBundle['shipment.list.from.expected.fulfilment']}}"></date-picker>
                     </div>
                     <div class="col-sm-3">
-                        <span class="filter-label">To expected fulfilment</span>
-                        <date-picker date-model="eftTo" place-holder="Fulfilment date"></date-picker>
+                        <span class="filter-label">{{resourceBundle['shipment.list.to.expected.fulfilment']}}</span>
+                        <date-picker date-model="eftTo" place-holder="{{resourceBundle['shipment.list.to.expected.fulfilment']}}"></date-picker>
                     </div>
                 </div>
                 <div class="row" ng-show="showMore">
                     <div class="col-sm-3">
-                        <span class="filter-label">Transporter</span>
+                        <span class="filter-label">{{resourceBundle['transporter']}}</span>
                         <div class="has-feedback">
                             <input type="text" class="form-control" ng-model="sTrans" autocomplete="off"
                                    typeahead-wait-ms="300"
-                                   placeholder="Transporter"
+                                   placeholder="{{resourceBundle['transporter']}}"
                                    uib-typeahead="val for val in getSuggestions($viewValue,'trans')"
                                    typeahead-loading="loadingTransporter" typeahead-on-select="fetchData()">
                             <span ng-show="loadingTransporter" class="form-control-feedback typehead-loading"
@@ -119,10 +120,10 @@
                     <thead>
                     <tr>
                         <th></th>
-                        <th class="text-center">Sl.No.</th>
-                        <th>Shipment Id</th>
-                        <th>Order Id</th>
-                        <th class="text-center">No. of items</th>
+                        <th class="text-center">{{resourceBundle['serialnum']}}</th>
+                        <th>{{resourceBundle['shipment.id']}}</th>
+                        <th>{{resourceBundle['order.id']}}</th>
+                        <th class="text-center">{{resourceBundle['orders.number.of.shipments']}}</th>
                         <th>{{resourceBundle['customer']}}</th>
                         <th>{{resourceBundle['vendor']}}</th>
                         <th>{{resourceBundle['status']}}</th>
@@ -145,7 +146,7 @@
                             <a href="#/setup/entities/detail/{{item.vendorId}}" ng-click="$event.stopPropagation();" target="_blank">{{item.vendorName}}</a>
                             <span class="litetext">{{item.vendorAdd}}</span>
                         </td>
-                        <td>{{item.status}}</td>
+                        <td>{{getLabelFromResourceBundle(item.status)}}</td>
                         <td>
                             <a ng-href="#/setup/users/all/details?userId={{item.userID}}" ng-click="$event.stopPropagation();" target="_blank">{{item.createdBy}}</a>
                             <span class="litetext">{{item.cOn}}</span>
@@ -164,7 +165,7 @@
         <div class="row mt5">
             <div class="col-sm-12">
                 <p class=" alert alert-warning" ng-show="(!loading && filtered.length == 0) && !(iMan && (custId == null && vendId == null))">
-                    No shipments available</p>
+                    {{resourceBundle['orders.no.shipments']}}</p>
                 <p class=" alert alert-warning" ng-show="iMan && (custId == null && vendId == null)">
                     {{resourceBundle['either.custvend']}}.</p>
             </div>

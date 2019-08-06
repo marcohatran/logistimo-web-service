@@ -228,7 +228,7 @@ public class AssetStatusTemplate implements ITemplate {
   }
 
   public String getTemperatureStatusDisplay(Locale locale) {
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+    ResourceBundle messages = Resources.getBundle(locale);
     switch (status.getAbnStatus()) {
       case IAsset.ABNORMAL_TYPE_HIGH:
         return messages.getString("high");

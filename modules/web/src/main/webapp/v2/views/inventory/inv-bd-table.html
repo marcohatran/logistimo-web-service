@@ -25,9 +25,9 @@
     <div class="panel panel-default">
         <div class="panel-heading">
             <b>
-                <span ng-show="bdType == 'allocation'">Allocation</span>
-                <span ng-show="bdType == 'transit'">In transit</span>
-                 details for {{mnm}}
+                <span ng-show="bdType == 'allocation'">{{resourceBundle['allocation']}}</span>
+                <span ng-show="bdType == 'transit'">{{resourceBundle['in.transit']}}</span>
+                 {{resourceBundle['details.for']}} {{mnm}}
             </b>
         </div>
         <div class="panel-body">
@@ -41,15 +41,15 @@
                                 <span ng-show="bdType == 'allocation'">{{resourceBundle['customer']}}</span>
                                 <span ng-show="bdType == 'transit'">{{resourceBundle['vendor']}}</span>
                             </th>
-                            <th class="text-center">Order</th>
-                            <th class="text-center">Ordered</th>
+                            <th class="text-center">{{resourceBundle['order']}}</th>
+                            <th class="text-center">{{resourceBundle['ordered']}}</th>
                             <th class="text-center" ng-show="bdType == 'allocation'">
-                                Allocated
+                                {{resourceBundle['allocated']}}
                             </th>
-                            <th class="text-center">Shipped</th>
-                            <th class="text-center">Yet to ship</th>
+                            <th class="text-center">{{resourceBundle['shipped']}}</th>
+                            <th class="text-center">{{resourceBundle['yet.to.ship']}}</th>
                             <th class="text-center" ng-show="bdType == 'transit'">
-                                Fulfilled
+                                {{resourceBundle['fulfilled']}}
                             </th>
                         </tr>
                         <tr ng-repeat="item in bdData">

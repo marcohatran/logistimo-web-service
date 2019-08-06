@@ -49,7 +49,7 @@ public class OrderServletTest {
     assertTrue(message.isPresent());
     ResourceBundle
         messages =
-        Resources.get().getBundle("errors", Locale.getDefault());
+        Resources.getBundle("errors", Locale.getDefault());
     assertEquals("message should have been converted to O010", message.get(),
         messages.getString("O010"));
   }
@@ -62,7 +62,7 @@ public class OrderServletTest {
     assertTrue(message.isPresent());
     ResourceBundle
         messages =
-        Resources.get().getBundle("errors", Locale.getDefault());
+        Resources.getBundle("errors", Locale.getDefault());
     assertEquals("message should not have been converted", message.get(),
         messages.getString("M003"));
   }
@@ -76,7 +76,7 @@ public class OrderServletTest {
     assertTrue(message.isPresent());
     ResourceBundle
         messages =
-        Resources.get().getBundle("errors", Locale.getDefault());
+        Resources.getBundle("errors", Locale.getDefault());
     assertEquals("message should have been converted to O010", message.get(),
         messages.getString("O010"));
   }
@@ -90,7 +90,7 @@ public class OrderServletTest {
     assertTrue(message.isPresent());
     ResourceBundle
         messages =
-        Resources.get().getBundle("errors", Locale.getDefault());
+        Resources.getBundle("errors", Locale.getDefault());
     assertEquals("message should not have been converted", message.get(),
         messages.getString("M003"));
   }

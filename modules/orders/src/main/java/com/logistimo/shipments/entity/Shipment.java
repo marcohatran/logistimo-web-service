@@ -102,6 +102,20 @@ public class Shipment implements IShipment {
 
   @Persistent
   private Integer src;
+  @Persistent
+  @Column(name = "TRANSPORTER_PHONE")
+  private String trackingPhoneNumber;
+
+  @Persistent
+  @Column(name = "TRANSPORTER_ID")
+  private Long transporterId;
+
+  @Persistent
+  private String vehicle;
+
+  @Persistent
+  @Column(name = "CUST_PICKUP")
+  private Boolean isCustomerPickup;
 
   @Override
   public Integer getSrc() {
@@ -158,6 +172,13 @@ public class Shipment implements IShipment {
   @Persistent
   @Column(name = "SALES_REF_ID")
   private String salesRefId;
+
+  @Persistent
+  @Column(name = "CONSIGNMENT_ID")
+  private Long consignmentId;
+
+  @NotPersistent
+  private IConsignment consignment;
 
   protected Long version;
 
@@ -474,5 +495,61 @@ public class Shipment implements IShipment {
   @Override
   public void setVersion(Long version) {
     this.version = version;
+  }
+
+  public Long getConsignmentId() {
+    return consignmentId;
+  }
+
+  public void setConsignmentId(Long consignmentId) {
+    this.consignmentId = consignmentId;
+  }
+
+  @Override
+  public String getTrackingContactNumber() {
+    return trackingPhoneNumber;
+  }
+
+  @Override
+  public void setTrackingContactNumber(String phoneNumber) {
+    this.trackingPhoneNumber = phoneNumber;
+  }
+
+  @Override
+  public Long getTransporterId() {
+    return this.transporterId;
+  }
+
+  @Override
+  public void setTransporterId(Long id) {
+    this.transporterId = id;
+  }
+
+  @Override
+  public String getVehicleDetails() {
+    return this.vehicle;
+  }
+
+  @Override
+  public void setVehicleDetails(String vehicle) {
+    this.vehicle = vehicle;
+  }
+
+  @Override
+  public IConsignment getConsignmentDetails() {
+    return this.consignment;
+  }
+
+  @Override
+  public void setConsignmentDetails(IConsignment consignment) {
+    this.consignment = consignment;
+  }
+
+  public Boolean getIsCustomerPickup() {
+    return isCustomerPickup;
+  }
+
+  public void setIsCustomerPickup(Boolean isCustomerPickup) {
+    this.isCustomerPickup = isCustomerPickup;
   }
 }

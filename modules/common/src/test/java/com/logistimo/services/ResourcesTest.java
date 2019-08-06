@@ -38,12 +38,18 @@ public class ResourcesTest {
   @Test
   public void testGetBundle() throws Exception {
 
-    ResourceBundle bundle = Resources.get().getBundle("Messages", new Locale("hi"));
+    ResourceBundle bundle = Resources.getBundle("Messages", new Locale("hi"));
 
     assertEquals(bundle.getString("approval.cancelled.message"),
         "${eName}, ${eCity} से ${requestorName} (${requestorPhone}) द्वारा मांग #${orderId} के "
             + "लिए निवेदित ${approvalType} अनुमोदन को ${updatedBy} (${updatedByPhone}) "
             + "द्वारा ${statusChangedTime} पर रद्द कर दिया गया।");
 
+  }
+
+  @Test
+  public void testGetBundleWithLocale() throws Exception {
+    ResourceBundle bundle = Resources.getBundle(Locale.ENGLISH);
+    assertEquals(bundle.getString("id"),"ID");
   }
 }

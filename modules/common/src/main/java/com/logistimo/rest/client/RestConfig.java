@@ -31,16 +31,20 @@ import com.google.gson.JsonSerializer;
 
 import com.logistimo.services.utils.ConfigUtil;
 
+import org.apache.http.Header;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.message.BasicHeader;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.json.GsonHttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by charan on 22/06/17.
@@ -51,7 +55,12 @@ public class RestConfig {
   }
 
   public static RestTemplate restTemplate() {
-    RestTemplate restTemplate = new RestTemplate(getClientHttpRequestFactory());
+    int timeout = ConfigUtil.getInt("api.client.timeout", 5000);
+    return restTemplate(timeout);
+  }
+
+  public static RestTemplate restTemplate(int timeout) {
+    RestTemplate restTemplate = new RestTemplate(getClientHttpRequestFactory(timeout));
     restTemplate.setMessageConverters(Collections.singletonList(createGsonHttpMessageConverter()));
     restTemplate.setInterceptors(Collections.singletonList(new LocaleRequestInterceptor()));
     return restTemplate;
@@ -72,8 +81,7 @@ public class RestConfig {
   }
 
 
-  private static ClientHttpRequestFactory getClientHttpRequestFactory() {
-    int timeout = ConfigUtil.getInt("api.client.timeout", 5000);
+  private static ClientHttpRequestFactory getClientHttpRequestFactory(int timeout) {
     RequestConfig config = RequestConfig.custom()
         .setConnectTimeout(timeout)
         .setConnectionRequestTimeout(timeout)
@@ -82,7 +90,15 @@ public class RestConfig {
     CloseableHttpClient client = HttpClientBuilder
         .create()
         .setDefaultRequestConfig(config)
+        .setDefaultHeaders(Arrays.asList(headers()))
+        .setConnectionTimeToLive(60, TimeUnit.SECONDS)
         .build();
     return new HttpComponentsClientHttpRequestFactory(client);
+  }
+
+  private static Header[] headers() {
+    Header[] headers = {new BasicHeader("Access-Control-Request-Method","POST"),
+        new BasicHeader("Access-Control-Request-Method","GET")};
+    return headers;
   }
 }

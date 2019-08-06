@@ -101,29 +101,20 @@ public abstract class SgServlet extends HttpServlet {
       locale = sUser.getLocale();
     }
     // Get the resource bundles
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-    xLogger.fine("BackendMessages: {0}, Messages: {1}, Locale: {2}, sUser: {3}", backendMessages,
-        messages, locale, sUser);
+    ResourceBundle messages = Resources.getBundle(locale);
     try {
       // Process GET/POST
       if (GET.equals(method)) {
-        processGet(request, response, backendMessages, messages);
+        processGet(request, response, messages);
       } else {
-        processPost(request, response, backendMessages, messages);
+        processPost(request, response, messages);
       }
     } catch (MissingResourceException e) {
       xLogger.severe("Missing resources: {0}", e.getMessage());
       msg = "Unable to load the required resources";
-//		} catch ( DeadlineExceededException e ) {
-//			msg = backendMessages.getString("error.deadlineexceeded");
-//    		xLogger.severe(  "DeadlineExceeded: " + e.getMessage() );
-//    	} catch ( CapabilityDisabledException e ) {
-//    		msg = backendMessages.getString("error.capabilitydisabled");
-//    		xLogger.severe( "CapabilityDisabled: " + e.getMessage() );
     } catch (Exception e) {
       xLogger.severe("Exception: {0} : {1}", e.getClass().getName(), e.getMessage(), e);
-      msg = backendMessages.getString("error") + ": " + e.getMessage();
+      msg = messages.getString("error") + ": " + e.getMessage();
     }
     // Send response (typically, error messages) - error response in this case
     if (msg != null) {
@@ -177,10 +168,10 @@ public abstract class SgServlet extends HttpServlet {
 
   // GET/POST Methods to be implmented by children
   protected abstract void processGet(HttpServletRequest request, HttpServletResponse response,
-                                     ResourceBundle backendMessages, ResourceBundle messages)
+                                     ResourceBundle messages)
       throws ServletException, IOException, ServiceException, ValidationException;
 
   protected abstract void processPost(HttpServletRequest request, HttpServletResponse response,
-                                      ResourceBundle backendMessages, ResourceBundle messages)
+                                      ResourceBundle messages)
       throws ServletException, IOException, ServiceException, ValidationException;
 }

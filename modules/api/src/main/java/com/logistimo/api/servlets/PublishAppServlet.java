@@ -55,14 +55,14 @@ public class PublishAppServlet extends SgServlet {
 
   @Override
   public void processGet(HttpServletRequest req, HttpServletResponse resp,
-                         ResourceBundle backendMessages, ResourceBundle messages)
+                         ResourceBundle messages)
       throws ServletException, IOException, ServiceException {
-    processPost(req, resp, backendMessages, messages);
+    processPost(req, resp, messages);
   }
 
   @Override
   public void processPost(HttpServletRequest req, HttpServletResponse resp,
-                          ResourceBundle backendMessages, ResourceBundle messages)
+                          ResourceBundle messages)
       throws ServletException, IOException, ServiceException {
     xLogger.fine("Entered processPost");
     String version = req.getParameter("version");

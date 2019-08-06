@@ -23,7 +23,7 @@
 
 <div ng-show="!statusLoading">
     <div class="modal-header ws">
-        <h3 class="modal-title">{{ORDERSTATUSTEXT.statusTxt[nStatus]}}</h3>
+        <h3 class="modal-title">{{getLabelFromResourceBundle(ORDERSTATUSTEXT.statusTxt[nStatus])}}</h3>
     </div>
     <div class="modal-body bg-white">
         <form class="form-horizontal" role="form" name="addEntityForm">
@@ -31,7 +31,7 @@
                 <label class="col-sm-4 control-label">{{resourceBundle['order.new.status']}}</label>
 
                 <div class="col-sm-8 cbx">
-                    {{ORDER.statusTxt[nStatus]}}
+                    {{getLabelFromResourceBundle(ORDER.statusTxt[nStatus])}}
                 </div>
             </div>
             <div class="row mb10" ng-show="nStatus == 'cm'">
@@ -60,27 +60,6 @@
             </div>
 
             <div class="row mb10" ng-show="nStatus == 'cm'">
-                <label class="col-sm-4 control-label" ng-class="{'required':oCfg.tm}"> Transporter </label>
-
-                <div class="col-sm-7" >
-                    <input class="form-control" ng-model="newStatus.t">
-                </div>
-            </div>
-            <div class="row mb10" ng-show="nStatus == 'cm'">
-                <label class="col-sm-4 control-label"> {{resourceBundle['trackingid']}}</label>
-
-                <div class="col-sm-7">
-                    <input class="form-control" ng-model="newStatus.tid">
-                </div>
-            </div>
-            <div class="row" ng-show="nStatus == 'cm'">
-                <label class="col-sm-4 control-label" ng-class="{'required':oCfg.eadm}"> {{resourceBundle['eda']}}</label>
-
-                <div class="col-sm-7">
-                    <date-picker date-model="newStatus.efd" ng-init="newStatus.efd = order.isEfdValid ? dates.efd : ''" min-date="today"></date-picker>
-                </div>
-            </div>
-            <div class="row mb10" ng-show="nStatus == 'cm'">
                 <div ng-show="isDef(order.efd) && order.isEfdValid && isDef(newStatus.efd)">
                     <label class="col-sm-4 control-label cbx"></label>
                     <div class="col-sm-7">
@@ -89,33 +68,91 @@
                     </div>
                 </div>
             </div>
-            <div class="row mb10" ng-show="nStatus == 'cm'">
-                <label class="col-sm-4 control-label">{{resourceBundle['packagesize']}}</label>
-                <div class="col-sm-7">
-                    <select class="form-control" ng-model="newStatus.ps" ng-show="isDef(packageSize)">
-                        <option ng-repeat="psize in packageSize" value="{{psize}}"
-                                ng-selected="ps == psize">
-                            {{psize || resourceBundle['select'] + ' ' + resourceBundle['packagesize']}}
-                        </option>
-                    </select>
-                    <input type="text" class="form-control" ng-show="isUndef(packageSize)" ng-model="newStatus.ps">
+            <div class="row mt10" ng-show="nStatus == 'cm'">
+                <label class="col-sm-4 control-label cbx">Customer pick up?</label>
+                <div class="col-sm-7 cbx">
+                    <input type="radio" class="mr10" ng-model="newStatus.customerPickup" ng-value="true">
+                    {{resourceBundle['yes']}}
+                    <input type="radio" ng-model="newStatus.customerPickup" ng-value="false">
+                    {{resourceBundle['no']}}
                 </div>
             </div>
             <div class="row mt10">
-                <label class="col-sm-4 control-label cbx"> Comment </label>
-
+                <label class="col-sm-4 control-label cbx">{{resourceBundle['comment']}}</label>
                 <div class="col-sm-7">
-                    <textarea class="form-control" maxlength="2048" rows="4" ng-model="newStatus.msg"></textarea>
+                    <textarea class="form-control" maxlength="2048" rows="2" ng-model="newStatus.msg"></textarea>
+                </div>
+            </div>
+
+            <div ng-show="nStatus == 'cm'">
+                <div class="pt10">
+
+                    <hr/>
+
+                    <div class="pb20">
+                        <h4>{{resourceBundle['consignment']}}</h4>
+                        <div ng-include="'views/orders/add-consignment.html'"
+                             ng-init="model = newStatus.consignment; disableCategory = true; disableDeclaration = true"></div>
+                    </div>
+
+                    <hr/>
+
+                    <div class="pb20">
+                        <h4>{{resourceBundle['tracking.details']}}</h4>
+
+                        <div class="row mb10" ng-show="nStatus == 'cm'">
+                            <label class="col-sm-4 control-label"> {{resourceBundle['trackingid']}}</label>
+                            <div class="col-sm-7">
+                                <input class="form-control" ng-model="newStatus.tid">
+                            </div>
+                        </div>
+
+                        <div class="row mb10" ng-show="nStatus == 'cm'">
+                            <label class="col-sm-4 control-label" ng-class="{'required':oCfg.eadm}">{{resourceBundle['eda']}}</label>
+                            <div class="col-sm-7">
+                                <date-picker date-model="newStatus.efd" ng-init="newStatus.efd = order.isEfdValid ? dates.efd : ''"
+                                             min-date="today"></date-picker>
+                            </div>
+                        </div>
+
+                        <div class="row mb10" ng-show="nStatus == 'cm'">
+                            <label class="col-sm-4 control-label" ng-class="{'required':oCfg.tm}">
+                                {{resourceBundle['transporter']}} {{resourceBundle['name']}}</label>
+                            <div class="col-sm-7" >
+                                <transporter-select transporter-model="newStatus.tempTransporter"
+                                    place-holder="Search/Enter transporter" show-confirm="false">
+                                </transporter-select>
+                            </div>
+                        </div>
+
+                        <div class="row mb10" ng-show="nStatus == 'cm'">
+                            <label class="col-sm-4 control-label" ng-class="{'required':oCfg.tm}">
+                                {{resourceBundle['phone.number']}}</label>
+                            <div class="col-sm-7" >
+                                <input class="form-control" ng-model="newStatus.phone">
+                            </div>
+                        </div>
+
+                        <div class="row mb10" ng-show="nStatus == 'cm'">
+                            <label class="col-sm-4 control-label" ng-class="{'required':oCfg.tm}">
+                                {{resourceBundle['vehicle']}} {{resourceBundle['details'] | lowercase}}</label>
+                            <div class="col-sm-7" >
+                                <input class="form-control" ng-model="newStatus.vehicle">
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </form>
     </div>
+
     <div class="modal-footer ws">
         <div class="col-sm-12">
             <div class="pull-right">
                 <button class="btn btn-sm btn-primary"
-                        ng-click="saveStatus()" ng-disabled="statusLoading || (nStatus == 'cm' && isDef(order.efd) && order.isEfdValid && !isEadValid && isDef(newStatus.efd))">
-                    {{resourceBundle['save']}}
+                        ng-click="saveStatus()"
+                        ng-disabled="statusLoading || (nStatus == 'cm' && isDef(order.efd) && order.isEfdValid && !isEadValid && isDef(newStatus.efd))">
+                    {{resourceBundle['submit']}}
                 </button>
                 <button class="btn btn-sm btn-default"
                         ng-click="cancel()">

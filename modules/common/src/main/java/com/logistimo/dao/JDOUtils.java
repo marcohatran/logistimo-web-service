@@ -287,7 +287,7 @@ public class JDOUtils {
     return result;
   }
 
-  private static Query getQuery(QueryParams qp, PersistenceManager pm,
+  public static Query getQuery(QueryParams qp, PersistenceManager pm,
                                 PageParams pageParams) {
     Query q;
     if (QueryParams.QTYPE.SQL.equals(qp.qType)) {

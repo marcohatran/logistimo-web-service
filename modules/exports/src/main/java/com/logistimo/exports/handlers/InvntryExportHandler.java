@@ -220,17 +220,16 @@ public class InvntryExportHandler implements IExportHandler {
 
     public String getCSVHeader(Locale locale, DomainConfig dc, String type) {
         xLogger.fine("Entering getCSVHeader. locale: {0}", locale);
-        ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-        ResourceBundle jsMessages = Resources.get().getBundle("JSMessages", locale);
+        ResourceBundle messages = Resources.getBundle(locale);
         StringBuilder header = new StringBuilder();
         String mcrUnits = invntry.getMCRUnits(locale);
         String mmd = DomainConfigUtil.getMinMaxDuration(dc);
         header.append(messages.getString("kiosk")).append(CharacterConstants.SPACE)
-            .append(jsMessages.getString("id")).append(CharacterConstants.COMMA)
+            .append(messages.getString("id")).append(CharacterConstants.COMMA)
             .append(messages.getString("customid.entity")).append(CharacterConstants.COMMA)
             .append(messages.getString("kiosk.name")).append(CharacterConstants.COMMA)
             .append(messages.getString("material")).append(CharacterConstants.SPACE)
-            .append(jsMessages.getString("id")).append(CharacterConstants.COMMA)
+            .append(messages.getString("id")).append(CharacterConstants.COMMA)
             .append(messages.getString("customid.material")).append(CharacterConstants.COMMA)
             .append(messages.getString("material.name")).append(CharacterConstants.COMMA)
             .append(messages.getString("country")).append(CharacterConstants.COMMA)
@@ -245,17 +244,17 @@ public class InvntryExportHandler implements IExportHandler {
             .append(messages.getString("accuracy")).append(CharacterConstants.SPACE)
             .append(CharacterConstants.O_BRACKET).append(messages.getString("meters"))
             .append(CharacterConstants.C_BRACKET).append(CharacterConstants.COMMA)
-            .append(jsMessages.getString("gps")).append(CharacterConstants.SPACE)
+            .append(messages.getString("gps")).append(CharacterConstants.SPACE)
             .append(messages.getString("errors.small")).append(CharacterConstants.COMMA)
             .append(messages.getString("kiosk")).append(CharacterConstants.SPACE)
-            .append(jsMessages.getString("tags.lower")).append(CharacterConstants.COMMA)
+            .append(messages.getString("tags.lower")).append(CharacterConstants.COMMA)
             .append(messages.getString("material")).append(CharacterConstants.SPACE)
-            .append(jsMessages.getString("tags.lower")).append(CharacterConstants.COMMA)
+            .append(messages.getString("tags.lower")).append(CharacterConstants.COMMA)
             .append(messages.getString("material.stockonhand")).append(CharacterConstants.COMMA)
             .append(messages.getString("inventory.reorderlevel")).append(CharacterConstants.COMMA)
             .append(messages.getString("max")).append(CharacterConstants.COMMA)
-            .append(jsMessages.getString("abnormality.type")).append(CharacterConstants.COMMA)
-            .append(jsMessages.getString("abnormality.duration")).append("-")
+            .append(messages.getString("abnormality.type")).append(CharacterConstants.COMMA)
+            .append(messages.getString("abnormality.duration")).append("-")
             .append(messages.getString("days")).append(CharacterConstants.COMMA);
 
         if (!mmd.isEmpty()) {
@@ -276,7 +275,7 @@ public class InvntryExportHandler implements IExportHandler {
                 .append(messages.getString("month")).append(CharacterConstants.COMMA)
                 .append(messages.getString("demandforecast")).append(CharacterConstants.COMMA)
                 .append(messages.getString("inventory.safetystock")).append(CharacterConstants.SPACE)
-                .append(CharacterConstants.O_BRACKET).append(jsMessages.getString("computed.lower"))
+                .append(CharacterConstants.O_BRACKET).append(messages.getString("computed.lower"))
                 .append(CharacterConstants.C_BRACKET).append(CharacterConstants.COMMA)
                 .append(messages.getString("order.optimalorderquantity")).append(CharacterConstants.COMMA)
                 .append(messages.getString("order.leadtimedemand")).append(CharacterConstants.COMMA)
@@ -287,22 +286,22 @@ public class InvntryExportHandler implements IExportHandler {
                 .append(messages.getString("order.stddevleadtime")).append(CharacterConstants.COMMA)
                 .append(messages.getString("createdon")).append(CharacterConstants.COMMA)
                 .append(messages.getString("updatedby")).append(CharacterConstants.SPACE)
-                .append(jsMessages.getString("id")).append(CharacterConstants.COMMA)
+                .append(messages.getString("id")).append(CharacterConstants.COMMA)
                 .append(messages.getString("updatedby")).append(CharacterConstants.SPACE)
-                .append(jsMessages.getString("customid.lower")).append(CharacterConstants.COMMA)
+                .append(messages.getString("customid.lower")).append(CharacterConstants.COMMA)
                 .append(messages.getString("updatedby")).append(CharacterConstants.SPACE)
-                .append(jsMessages.getString("fullname.lower")).append(CharacterConstants.COMMA)
+                .append(messages.getString("fullname.lower")).append(CharacterConstants.COMMA)
                 .append(messages.getString("updatedon")).append(CharacterConstants.COMMA)
                 .append(messages.getString("min")).append(CharacterConstants.SPACE)
-                .append(jsMessages.getString("updatedon.lower")).append(CharacterConstants.COMMA)
+                .append(messages.getString("updatedon.lower")).append(CharacterConstants.COMMA)
                 .append(messages.getString("max")).append(CharacterConstants.SPACE)
-                .append(jsMessages.getString("updatedon.lower")).append(CharacterConstants.COMMA)
+                .append(messages.getString("updatedon.lower")).append(CharacterConstants.COMMA)
                 .append(messages.getString("material.retailerprice")).append(CharacterConstants.SPACE)
-                .append(jsMessages.getString("updatedon.lower")).append(CharacterConstants.COMMA)
-                .append(jsMessages.getString("pands")).append(CharacterConstants.SPACE)
-                .append(jsMessages.getString("updatedon.lower")).append(CharacterConstants.COMMA)
-                .append(jsMessages.getString("dandq")).append(CharacterConstants.SPACE)
-                .append(jsMessages.getString("updatedon.lower")).append(CharacterConstants.COMMA);
+                .append(messages.getString("updatedon.lower")).append(CharacterConstants.COMMA)
+                .append(messages.getString("pands")).append(CharacterConstants.SPACE)
+                .append(messages.getString("updatedon.lower")).append(CharacterConstants.COMMA)
+                .append(messages.getString("dandq")).append(CharacterConstants.SPACE)
+                .append(messages.getString("updatedon.lower")).append(CharacterConstants.COMMA);
         if (dc.autoGI()) {
             header.append("Allocated stock").append(CharacterConstants.COMMA)
                     .append("In transit stock");

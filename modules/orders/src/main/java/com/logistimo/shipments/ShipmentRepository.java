@@ -26,7 +26,9 @@ package com.logistimo.shipments;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.logger.XLog;
 import com.logistimo.services.impl.PMF;
+import com.logistimo.shipments.entity.IConsignment;
 import com.logistimo.shipments.entity.IShipment;
+import com.logistimo.shipments.entity.IShipmentItem;
 
 import org.springframework.stereotype.Component;
 
@@ -46,7 +48,9 @@ public class ShipmentRepository {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
       IShipment shipment = getById(shipmentId, false, pm);
-      return pm.detachCopy(shipment);
+      shipment = pm.detachCopy(shipment);
+      includeConsignmentDetails(pm, shipment);
+      return shipment;
     } finally {
       pm.close();
     }
@@ -58,7 +62,16 @@ public class ShipmentRepository {
     if (includeShipmentItems) {
       ShipmentUtils.includeShipmentItems(shipment, pm);
     }
+    includeConsignmentDetails(pm, shipment);
     return shipment;
+  }
+
+  private void includeConsignmentDetails(PersistenceManager pm, IShipment shipment) {
+    if(shipment.getConsignmentId() != null) {
+      IConsignment consignment = JDOUtils.getObjectById(IConsignment.class, shipment
+          .getConsignmentId(), pm);
+      shipment.setConsignmentDetails(consignment);
+    }
   }
 
   public List<IShipment> getByOrderId(Long orderId, PersistenceManager pm) {
@@ -69,6 +82,7 @@ public class ShipmentRepository {
       List list = (List) query.executeWithArray(orderId);
       List<IShipment> shipments = new ArrayList<>(list.size());
       for (Object shipment : list) {
+        includeConsignmentDetails(pm, (IShipment) shipment);
         shipments.add((IShipment) shipment);
       }
       return shipments;
@@ -80,5 +94,24 @@ public class ShipmentRepository {
       }
     }
     return Collections.emptyList();
+  }
+
+  /**
+   * @param shipmentId
+   * @param includeShipmentItems
+   * @return detached copy of the shipment entity
+   */
+  public IShipment getById(String shipmentId, boolean includeShipmentItems) {
+    PersistenceManager pm = PMF.get().getPersistenceManager();
+    try {
+      IShipment shipment = JDOUtils.getObjectById(IShipment.class, shipmentId, pm);
+      shipment = pm.detachCopy(shipment);
+      if(includeShipmentItems) {
+        ShipmentUtils.includeShipmentItems(shipment, pm);
+      }
+      return shipment;
+    } finally {
+      pm.close();
+    }
   }
 }

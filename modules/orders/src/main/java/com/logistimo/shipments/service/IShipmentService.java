@@ -23,10 +23,13 @@
 
 package com.logistimo.shipments.service;
 
+import com.logistimo.api.patch.Patch;
 import com.logistimo.conversations.entity.IMessage;
+import com.logistimo.deliveryrequest.models.DeliveryRequestUpdateWrapper;
 import com.logistimo.exception.LogiException;
 import com.logistimo.exception.ValidationException;
 import com.logistimo.models.ResponseModel;
+import com.logistimo.models.shipments.ConsignmentModel;
 import com.logistimo.models.shipments.ShipmentMaterialsModel;
 import com.logistimo.models.shipments.ShipmentModel;
 import com.logistimo.orders.models.PDFResponseModel;
@@ -35,10 +38,12 @@ import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
 import com.logistimo.shipments.FulfilledQuantityModel;
 import com.logistimo.shipments.ShipmentStatus;
+import com.logistimo.shipments.entity.IConsignment;
 import com.logistimo.shipments.entity.IShipment;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +55,22 @@ import javax.jdo.PersistenceManager;
  */
 public interface IShipmentService {
 
-  String createShipment(ShipmentModel model, int source, Boolean updateOrderFields) throws ServiceException, ValidationException;
+  String CNSGNMNT_PACKAGE_CNT = "cn_package_cnt";
+  String CNSGNMNT_WEIGHT = "cn_wt";
+  String CNSGNMNT_DIMENSIONS = "cn_dimensions";
+  String CNSGNMNT_DECLARATION = "cn_declaration";
+  String CNSGNMNT_VALUE = "cn_value";
+  String TRACKING_ID = "tId";
+  String DATE = "date";
+  String PACKAGE_SIZE = "ps";
+  String SHIPMENT_TRANSPORTER_ID = "tpId";
+  String SHIPMENT_TRANSPORTER_NAME = "tpName";
+  String SHIPMENT_CONTACT_PHONE_NUM = "phnm";
+  String SHIPMENT_VEHICLE_DTLS = "vhcl";
+
+
+  String createShipment(ShipmentModel model, int source, Boolean updateOrderFields,
+                        PersistenceManager pm) throws ServiceException, ValidationException;
 
   ResponseModel updateShipmentStatus(String shipmentId, ShipmentStatus status, String message,
                                      String userId, String reason, int source) throws LogiException;
@@ -70,7 +90,7 @@ public interface IShipmentService {
   ResponseModel updateShipmentStatus(String shipmentId, ShipmentStatus status, String message,
                                String userId,
                                      String reason, boolean updateOrderStatus,
-                                     PersistenceManager pm, int source)
+                                     PersistenceManager pm, int source, boolean transferAllocations)
       throws LogiException;
 
   boolean updateShipment(ShipmentMaterialsModel model) throws LogiException;
@@ -79,7 +99,7 @@ public interface IShipmentService {
                                String sId,
                                String userId) throws LogiException;
 
-  ResponseModel fulfillShipment(String shipmentId, String userId, int source)
+  ResponseModel fulfillShipment(String shipmentId, String userId, String message, int source)
       throws ServiceException;
 
   /**
@@ -131,7 +151,17 @@ public interface IShipmentService {
   PDFResponseModel generateShipmentVoucher(String shipmentId)
       throws ServiceException, ObjectNotFoundException, IOException, ValidationException;
 
-  public List<FulfilledQuantityModel> getFulfilledQuantityByOrderId(Long orderId,
+  List<FulfilledQuantityModel> getFulfilledQuantityByOrderId(Long orderId,
                                                                     List<Long> materialIdList)
       throws ServiceException;
+
+  IShipment patchShipmentDetails(String userId, String sId, Collection<Patch> patchRequests,
+                                 String orderUpdatedAt) throws LogiException;
+
+  IConsignment updateConsignmentDetails(Long consignmentId, ConsignmentModel consignmentModel,
+                                        PersistenceManager pm)
+      throws ServiceException;
+
+  void updateShipmentDetails(String shipmentId, String username,
+                             DeliveryRequestUpdateWrapper updateModel) throws LogiException;
 }

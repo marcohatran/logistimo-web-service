@@ -27,6 +27,8 @@ import com.logistimo.activity.entity.IActivity;
 import com.logistimo.activity.models.ActivityModel;
 import com.logistimo.activity.service.ActivityService;
 import com.logistimo.constants.Constants;
+import com.logistimo.deliveryrequest.actions.GetDeliveryRequestsAction;
+import com.logistimo.deliveryrequest.models.DeliveryRequestModel;
 import com.logistimo.inventory.entity.IInvAllocation;
 import com.logistimo.inventory.entity.IInvntryBatch;
 import com.logistimo.inventory.service.InventoryManagementService;
@@ -34,11 +36,15 @@ import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.pagination.Results;
+import com.logistimo.proto.MobileConsignmentModel;
 import com.logistimo.proto.MobileConversationModel;
+import com.logistimo.proto.MobileDeliveryRequestModel;
 import com.logistimo.proto.MobileShipmentItemBatchModel;
 import com.logistimo.proto.MobileShipmentItemModel;
 import com.logistimo.proto.MobileShipmentModel;
+import com.logistimo.proto.MobileTransporterModel;
 import com.logistimo.shipments.ShipmentStatus;
+import com.logistimo.shipments.entity.IConsignment;
 import com.logistimo.shipments.entity.IShipment;
 import com.logistimo.shipments.entity.IShipmentItem;
 import com.logistimo.shipments.entity.IShipmentItemBatch;
@@ -47,15 +53,19 @@ import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.utils.LocalDateUtil;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Created by vani on 04/11/16.
@@ -70,6 +80,7 @@ public class MobileShipmentBuilder {
   private ActivityService activityService;
   private UsersService usersService;
   private MobileConversationBuilder mobileConversationBuilder;
+  private GetDeliveryRequestsAction getDeliveryRequestsAction;
 
   @Autowired
   public void setInventoryManagementService(InventoryManagementService inventoryManagementService) {
@@ -99,6 +110,11 @@ public class MobileShipmentBuilder {
   @Autowired
   public void setMobileConversationBuilder(MobileConversationBuilder mobileConversationBuilder) {
     this.mobileConversationBuilder = mobileConversationBuilder;
+  }
+
+  @Autowired
+  public void setGetDeliveryRequestsAction(GetDeliveryRequestsAction getDeliveryRequestsAction) {
+    this.getDeliveryRequestsAction = getDeliveryRequestsAction;
   }
 
   List<MobileShipmentModel> buildMobileShipmentModels(Long orderId, Locale locale, String timezone,
@@ -146,8 +162,10 @@ public class MobileShipmentBuilder {
       }
       try {
         Results res =
-            activityService.getActivity(s.getShipmentId(), IActivity.TYPE.SHIPMENT.toString(), null, null, null,
-                null, null);
+            activityService
+                .getActivity(s.getShipmentId(), IActivity.TYPE.SHIPMENT.toString(), null, null,
+                    null,
+                    null, null);
         if (res != null) {
           List<ActivityModel> amList = res.getResults();
           if (amList != null && !amList.isEmpty()) {
@@ -196,19 +214,26 @@ public class MobileShipmentBuilder {
                 .format(s.getActualFulfilmentDate(), locale, timezone);
       }
       if (includeShipmentItems) {
-        List<MobileShipmentItemModel>
-            msimList =
+        List<MobileShipmentItemModel> msimList =
             buildMobileShipmentItemModelList((List<IShipmentItem>) s.getShipmentItems(),
                 s.getServicingKiosk(), locale, timezone, includeBatchDetails);
         if (msimList != null && !msimList.isEmpty()) {
           msm.mt = msimList;
         }
+        List<MobileDeliveryRequestModel> mdrmList = buildMobileDeliveryRequests(s.getShipmentId());
+        if (CollectionUtils.isNotEmpty(mdrmList)) {
+          msm.deliveryRequests = mdrmList;
+        }
+        msm.mobileConsignmentModel = buildMobileConsignment(s.getConsignmentDetails())
+            .orElse(new MobileConsignmentModel());
+        msm.mobileTransporterModel = buildTransporterModel(s);
       }
       // Conversations
       MobileConversationModel
           mcm =
-          mobileConversationBuilder.build(MobileConversationBuilder.CONVERSATION_OBJECT_TYPE_SHIPMENT, s.getShipmentId(),
-              locale, timezone);
+          mobileConversationBuilder
+              .build(MobileConversationBuilder.CONVERSATION_OBJECT_TYPE_SHIPMENT, s.getShipmentId(),
+                  locale, timezone);
       if (mcm != null && mcm.cnt > 0) {
         msm.cmnts = mcm;
       }
@@ -217,6 +242,62 @@ public class MobileShipmentBuilder {
       xLogger.warn("Exception while getting shipment for shipment id {0}", s.getShipmentId(), e);
     }
     return msm;
+  }
+
+  private MobileTransporterModel buildTransporterModel(IShipment shipment) {
+    MobileTransporterModel mtm = new MobileTransporterModel();
+    mtm.setTransporterId(shipment.getTransporterId());
+    mtm.setTransporterName(shipment.getTransporter());
+    mtm.setPhoneNumber(shipment.getTrackingContactNumber());
+    mtm.setVehicleDetails(shipment.getVehicleDetails());
+    return mtm;
+  }
+
+  private Optional<MobileConsignmentModel> buildMobileConsignment(IConsignment consignment) {
+    if (consignment == null) {
+      return Optional.empty();
+    }
+    MobileConsignmentModel mcm = new MobileConsignmentModel();
+    mcm.setId(consignment.getId());
+    mcm.setPackageCount(consignment.getNumberOfPackages());
+    if(consignment.getWeightInKg() != null) {
+      mcm.setWeightInKg(consignment.getWeightInKg().doubleValue());
+    }
+    mcm.setValue(consignment.getValue());
+    mcm.setContentDeclaration(consignment.getDeclaration());
+    mcm.setLength(consignment.getLength());
+    mcm.setWidth(consignment.getBreadth());
+    mcm.setHeight(consignment.getHeight());
+    return Optional.of(mcm);
+  }
+
+  private List<MobileDeliveryRequestModel> buildMobileDeliveryRequests(String shipmentId) {
+    Results<DeliveryRequestModel> deliveryRequests =
+        getDeliveryRequestsAction.getByShipmentId(shipmentId, false);
+    return deliveryRequests.getResults()
+        .stream()
+        .map(this::buildMobileDeliveryRequestModel)
+        .collect(Collectors.toList());
+  }
+
+  private MobileDeliveryRequestModel buildMobileDeliveryRequestModel(DeliveryRequestModel deliveryRequestModel) {
+    MobileDeliveryRequestModel model = new MobileDeliveryRequestModel();
+    model.setId(deliveryRequestModel.getId());
+    if(deliveryRequestModel.getTrackingDetails() != null) {
+      model.setTrackingId(deliveryRequestModel.getTrackingDetails().getTrackingId());
+    }
+    if (deliveryRequestModel.getStatusUpdatedOn() != null) {
+      model.setTimestamp(deliveryRequestModel.getStatusUpdatedOn().getTime());
+    } else if (deliveryRequestModel.getCreatedOn() != null) {
+      model.setTimestamp(deliveryRequestModel.getCreatedOn().getTime());
+    }
+    model.setTrackingURL(deliveryRequestModel.getTrackingURL());
+    model.setCreatedOn(deliveryRequestModel.getCreatedOn().getTime());
+    model.setStatusCode(deliveryRequestModel.getStatus());
+    if(deliveryRequestModel.getTrackingDetails() != null) {
+      model.setDeliveryType(deliveryRequestModel.getTrackingDetails().getDeliveryType());
+    }
+    return model;
   }
 
   List<MobileShipmentItemModel> buildMobileShipmentItemModelList(List<IShipmentItem> shipmentItems,
@@ -228,8 +309,7 @@ public class MobileShipmentBuilder {
     }
     List<MobileShipmentItemModel> msimList = new ArrayList<>(1);
     for (IShipmentItem si : shipmentItems) {
-      MobileShipmentItemModel
-          msim =
+      MobileShipmentItemModel msim =
           buildMobileShipmentItemModel(si, skid, locale, timezone, includeBatchDetails);
       if (msim != null) {
         msimList.add(msim);
@@ -248,7 +328,8 @@ public class MobileShipmentBuilder {
     msim.mid = si.getMaterialId();
     try {
       BigDecimal alq =
-          shipmentService.getAllocatedQuantityForShipmentItem(si.getShipmentId(), skid, si.getMaterialId());
+          shipmentService
+              .getAllocatedQuantityForShipmentItem(si.getShipmentId(), skid, si.getMaterialId());
       if (alq != null) {
         msim.alq = alq;
       }
@@ -319,7 +400,8 @@ public class MobileShipmentBuilder {
       // Get batch details from InvntryBatch since they will not be present in ShipmentItemBatch until the shipment is fulfilled.
       IInvntryBatch
           batch =
-          inventoryManagementService.getInventoryBatch(skid, sib.getMaterialId(), sib.getBatchId(), null);
+          inventoryManagementService
+              .getInventoryBatch(skid, sib.getMaterialId(), sib.getBatchId(), null);
       if (batch != null) {
         if (batch.getBatchExpiry() != null) {
           msibm.bexp =
@@ -361,7 +443,8 @@ public class MobileShipmentBuilder {
     try {
       List<IInvAllocation>
           iAllocs =
-          inventoryManagementService.getAllocationsByTypeId(skid, sib.getMaterialId(), IInvAllocation.Type.SHIPMENT, sid);
+          inventoryManagementService
+              .getAllocationsByTypeId(skid, sib.getMaterialId(), IInvAllocation.Type.SHIPMENT, sid);
 
       if (iAllocs != null && !iAllocs.isEmpty()) {
         for (IInvAllocation iAlloc : iAllocs) {

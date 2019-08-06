@@ -65,7 +65,8 @@ logistimoApp.constant('ORDER', {
 		'pn' : 'Pending',
 		'bo': 'Backordered',
 		'op': 'Pending',
-		'sp': 'Shipped'
+		'sp': 'Shipped',
+		'rp': 'Ready for dispatch'
 	},
     statusLabel : {
         'cn' : 'Cancelled',
@@ -75,7 +76,8 @@ logistimoApp.constant('ORDER', {
         'pn' : 'Pending',
         'bo': 'Backordered',
         'op': 'Open',
-        'sp': 'Shipped'
+        'sp': 'Shipped',
+		'rp': 'Ready for dispatch'
     },
 	notifStatusLabel : {
         'cn' : 'Cancelled',
@@ -83,16 +85,20 @@ logistimoApp.constant('ORDER', {
         'fl':'Fulfilled',
         'pn' : 'Pending',
         'bo': 'Backordered',
-        'cm': 'Shipped'
+        'cm': 'Shipped',
+		'rp': 'Ready for dispatch'
     },
 	notifShipmentStatusLabel : {
 		'pn' : 'Pending',
 		'cn' : 'Cancelled',
+		'rp': 'Ready for dispatch',
 		'sp': 'Shipped' ,
 		'fl':'Fulfilled'
 	},
 	'CANCELLED' : 'cn',
 	'CONFIRMED' : 'cf',
+	'READY_FOR_DISPATCH' : 'rp',
+	'REQUEST_DELIVERY' : 'rd',
 	'COMPLETED' : 'cm',
 	'FULFILLED' : 'fl',
 	'PENDING' : 'pn',
@@ -116,7 +122,9 @@ logistimoApp.constant('ORDERSTATUSTEXT', {
 		'fl':'Fulfill',
 		'pn' : 'Reopen',
 		'op': 'Pending',
-		'sp': 'Ship'
+		'sp': 'Ship',
+		'rp': 'Ready.for.dispatch',
+		'rd': 'Request.for.delivery'
 	}
 });
 logistimoApp.run(function ($rootScope,INVENTORY,APPTYPE) {
@@ -267,19 +275,17 @@ logistimoApp.constant('NOTIFICATIONS', {
 		'events' : [{"id" : "com.logistimo.orders.entity.Order:100", "name" : "Fulfilment due",
 					"params" : [{"id" : "reminddaysbefore", "name" : "Remind days before",
 					"type" : "text", "size" : "3", "placeholder" : "days", "prefix" : " before ",
-					"value" : "30", "alert" : "Please enter a valid number of days for fulfillment due reminder"}]},
+					"value" : "30", "alert" : "enter.valid.fulfillment.due.days"}]},
 					{"id" : "com.logistimo.orders.entity.Order:6", "name" : "No order activity",
 					"params" : [{"id" : "inactiveduration", "name" : "Days since no activity",
-					"type" : "text", "size" : "3", "placeholder" : "days", "prefix" : " since ", "value" : "10",
-					"alert" : "Please enter a valid number of days for orders inactivity duration"}]},
+					"type" : "text", "size" : "3", "placeholder" : "days", "prefix" : " since ", "value" : "10", "alert": "enter.valid.orders.inactivity.duration"}]},
 					{"id" : "com.logistimo.orders.entity.Order:1", "name" : "Order created"},
 					{"id" : "com.logistimo.orders.entity.Order:5", "name" : "Order expired/untouched",
 					"params" : [{"id" : "inactiveduration", "name" : "Days inactive", "type" : "text",
-					"size" : "3", "placeholder" : "days", "prefix" : " for ", "value" : "10",
-					"alert" : "Please enter a valid number of days for order inactivity duration"}]},
+					"size" : "3", "placeholder" : "days", "prefix" : " for ", "value" : "10", "alert": "enter.valid.orders.inactivity.duration"}]},
 					{"id" : "com.logistimo.orders.entity.Order:2", "name" : "Order modified"},
 					{"id" : "com.logistimo.orders.entity.Order:101", "name" : "Order status changed",
-					"params" : [{"id" : "status", "name" : "Status", "type" : "list", "placeholder" : "-- Select status --", "prefix" : "status", "alert": "Please select status"}]},
+					"params" : [{"id" : "status", "name" : "Status", "type" : "list", "placeholder" : "Select status", "prefix" : "status", "alert": "please.select.status"}]},
 					{ "id" : "com.logistimo.orders.entity.Order:302", "name" : "Payment made on order" },
 					{ "id" : "com.logistimo.orders.entity.Order:150", "name" : "Comment added on order" }
 		]
@@ -288,7 +294,7 @@ logistimoApp.constant('NOTIFICATIONS', {
 		'events' : [{"id" : "com.logistimo.shipments.entity.Shipment:1", "name" : "Shipment created"},
 			{"id" : "com.logistimo.shipments.entity.Shipment:2", "name" : "Shipment modified"},
 			{"id" : "com.logistimo.shipments.entity.Shipment:101", "name" : "Shipment status changed",
-				"params" : [{"id" : "status", "name" : "Status", "type" : "list", "placeholder" : "-- Select status --", "prefix" : "status", "alert": "Please select status"}]},
+				"params" : [{"id" : "status", "name" : "Status", "type" : "list", "placeholder" : "Select status", "prefix" : "status", "alert": "please.select.status"}]},
 			{ "id" : "com.logistimo.shipments.entity.Shipment:150", "name" : "Comment added on shipment" }]
 	},
 	inventoryLabel : {
@@ -296,32 +302,31 @@ logistimoApp.constant('NOTIFICATIONS', {
 			{"id" : "com.logistimo.inventory.entity.InvntryBatch:5", "name" : "Batch expiry",
 			"params" : [{"id" : "expiresindays", "name" : "Expires in [days]", "type" : "text", "size" : "3",
 			"placeholder" : "days", "prefix" : "expires in ", "value" : "90",
-			"alert" : "Please enter a valid number of days, in which the batch expires"}]},
+			"alert": "enter.valid.batch.expiry.duration"}]},
 			{"id" : "com.logistimo.inventory.entity.Transaction:6", "name" : "No inventory activity",
 			"params" : [{"id" : "inactiveduration", "name" : "Days since no activity", "type" : "text",
-			"size" : "3", "placeholder" : "days", "prefix" : " since ", "value" : "10",
-			"alert" : "Please enter a valid number of days for inventory transaction inactivity duration"}]},
+			"size" : "3", "placeholder" : "days", "prefix" : " since ", "value" : "10", "alert":"enter.valid.inventory.transaction.inactivity.duration"}]},
 			{"id" : "com.logistimo.inventory.entity.Invntry:200", "name" : "Out of stock"},
 			{ "id" : "com.logistimo.inventory.entity.Transaction:203", "name" : "Stock count differs from current stock",
 			"params" : [{"id" : "stockcountthreshold", "name" : "Stock count threshold [%]", "type" : "text",
-			"size" : "3", "placeholder" : "%", "prefix" : " > ", "value" : "10",
-			"alert" : "Please enter a valid number (%) for threshold"}]},
+			"size" : "3", "placeholder" : "%", "prefix" : ">", "value" : "10",
+			"alert" : "enter.valid.threshold"}]},
 			{ "id" : "com.logistimo.inventory.entity.Transaction:204", "name" : "Stock counted",
-			"params" : [ { "id" : "reason", "type" : "list", "prefix" : "stockCounted", "placeholder" : "-- Select Reason --", "values" : "", "name" : "Reason"}],
-			"extraParams": { "id" : "status","type" : "list", prefix : "stockCounted", "placeholder": "-- Select Status --", name: "Status"}},
+			"params" : [ { "id" : "reason", "type" : "list", "prefix" : "stockCounted", "placeholder" : "Select reason", "values" : "", "name" : "Reason"}],
+			"extraParams": { "id" : "status","type" : "list", prefix : "stockCounted", "placeholder": "Select status", name: "Status"}},
 			{ "id" : "com.logistimo.inventory.entity.Transaction:205", "name" : "Stock issued",
-			"params" : [ { "id" : "reason", "type" : "list", "prefix" : "stockIssued", "placeholder" : "-- Select Reason --", "name" : "Reason"}],
-			"extraParams": { "id" : "status","type" : "list", prefix : "stockIssued", "placeholder": "-- Select Status --", name: "Status"}},
+			"params" : [ { "id" : "reason", "type" : "list", "prefix" : "stockIssued", "placeholder" : "Select reason", "name" : "Reason"}],
+			"extraParams": { "id" : "status","type" : "list", prefix : "stockIssued", "placeholder": "Select status", name: "Status"}},
 			{ "id" : "com.logistimo.inventory.entity.Transaction:209", "name" : "Stock transferred",
-			"params" : [ { "id" : "reason", "type" : "list", "prefix" : "stockTransferred", "placeholder" : "-- Select Reason --", "name" : "Reason"}],
-			"extraParams": { "id" : "status","type" : "list", prefix : "stockTransferred", "placeholder": "-- Select Status --", name: "Status"}},
+			"params" : [ { "id" : "reason", "type" : "list", "prefix" : "stockTransferred", "placeholder" : "Select reason", "name" : "Reason"}],
+			"extraParams": { "id" : "status","type" : "list", prefix : "stockTransferred", "placeholder": "Select status", name: "Status"}},
 			{ "id" : "com.logistimo.inventory.entity.Transaction:206", "name" : "Stock received",
-			"params" : [ { "id" : "reason", "type" : "list", "prefix" : "stockReceived", "placeholder" : "-- Select Reason --", "name" : "Reason"}],
-			"extraParams": { "id" : "status","type" : "list", prefix : "stockReceived", "placeholder": "-- Select Status --", name: "Status"}},
+			"params" : [ { "id" : "reason", "type" : "list", "prefix" : "stockReceived", "placeholder" : "Select reason", "name" : "Reason"}],
+			"extraParams": { "id" : "status","type" : "list", prefix : "stockReceived", "placeholder": "Select status", name: "Status"}},
 			{ "id" : "com.logistimo.inventory.entity.Invntry:208", "name" : "Stock back to normal level" },
 			{ "id" : "com.logistimo.inventory.entity.Transaction:207", "name" : "Stock discarded",
-			"params" : [ { "id" : "reason", "type" : "list", "prefix" : "stockDiscarded", "placeholder" : "-- Select Reason --", "name" : "Reason"}],
-			"extraParams": { "id" : "status","type" : "list", prefix : "stockDiscarded", "placeholder": "-- Select Status --", name: "Status"}},
+			"params" : [ { "id" : "reason", "type" : "list", "prefix" : "stockDiscarded", "placeholder" : "Select reason", "name" : "Reason"}],
+			"extraParams": { "id" : "status","type" : "list", prefix : "stockDiscarded", "placeholder": "Select status", name: "Status"}},
 			{ "id" : "com.logistimo.inventory.entity.Invntry:201", "name" : "< Min." },
 			{ "id" : "com.logistimo.inventory.entity.Invntry:202", "name" : "> Max." },
             {
@@ -330,14 +335,14 @@ logistimoApp.constant('NOTIFICATIONS', {
                     "id": "reason",
                     "type": "list",
                     "prefix": "incomingReturnReceived",
-                    "placeholder": "-- Select Reason --",
+                    "placeholder": "Select reason",
                     "name": "Reason"
                 }],
                 "extraParams": {
                     "id": "status",
                     "type": "list",
                     prefix: "incomingReturnReceived",
-                    "placeholder": "-- Select Status --",
+                    "placeholder": "Select status",
                     name: "Status"
                 }
             },
@@ -347,14 +352,14 @@ logistimoApp.constant('NOTIFICATIONS', {
                     "id": "reason",
                     "type": "list",
                     "prefix": "outgoingReturnSent",
-                    "placeholder": "-- Select Reason --",
+                    "placeholder": "Select reason",
                     "name": "Reason"
                 }],
                 "extraParams": {
                     "id": "status",
                     "type": "list",
                     prefix: "outgoingReturnSent",
-                    "placeholder": "-- Select Status --",
+                    "placeholder": "Select status",
                     name: "Status"
                 }
             }]
@@ -375,16 +380,16 @@ logistimoApp.constant('NOTIFICATIONS', {
 			{ "id" : "com.logistimo.materials.entity.Material:3", "name" : "Material deleted" },
 			{ "id" : "com.logistimo.users.entity.UserAccount:6", "name" : "No user logins",
 			"params" : [{"id" : "inactiveduration", "name" : "Days since no activity", "type" : "text", "size" : "3",
-			"placeholder" : "days", "prefix" : " since ", "value" : "10","alert" : "Please enter a valid number of days for user inactivity duration"}]},
+			"placeholder" : "days", "prefix" : "since", "value" : "10","alert" : "enter.valid.user.inactivity.duration"}]},
 			{ "id" : "com.logistimo.users.entity.UserAccount:1", "name" : "User created" },
 			{ "id" : "com.logistimo.users.entity.UserAccount:2", "name" : "User modified" },
 			{ "id" : "com.logistimo.users.entity.UserAccount:3", "name" : "User deleted" },
 			{ "id" : "com.logistimo.users.entity.UserAccount:5", "name" : "User dormant/inactive",
 			"params" : [{"id" : "inactiveduration", "name" : "Days since no activity", "type" : "text", "size" : "3",
-			"placeholder" : "days", "prefix" : " since ", "value" : "10", "alert" : "Please enter a valid number of days for user inactivity duration"}] },
+			"placeholder" : "days", "prefix" : " since ", "value" : "10", "alert" : "enter.valid.user.inactivity.duration"}] },
 			{ "id" : "com.logistimo.users.entity.UserAccount:400", "name" : "User login IP Address Matched",
-			"params" : [ { "id" : "ipaddress", "name" : "IP Address starts with", "type" : "text", "size" : "20", "placeholder" : "IP patterns (CSV)", "prefix" : " IP starts with ",
-			"alert" : "Please enter a valid string pattern" }]},
+			"params" : [ { "id" : "ipaddress", "name" : "IP Address starts with", "type" : "text", "size" : "20", "placeholder" : "IP patterns (CSV)", "prefix" : "IP starts with",
+			"alert" : "enter.valid.string.pattern" }]},
 			{ "id" : "com.logistimo.assets.entity.Asset:1", "name" : "Asset created" },
 			{ "id" : "com.logistimo.assets.entity.Asset:2", "name":"Asset modified" },
 			{ "id" : "com.logistimo.assets.entity.Asset:3", "name":"Asset deleted" },
@@ -403,9 +408,9 @@ logistimoApp.constant('NOTIFICATIONS', {
                     "type": "text",
                     "size": "4",
                     "placeholder": "minutes",
-                    "prefix": " after ",
+                    "prefix": "after",
                     "value": "30",
-                    "alert": "Please enter valid minutes for 'High excursion'"
+                    "alert": "enter.valid.high.excursion.minutes"
                 }]
             },
             {
@@ -417,9 +422,9 @@ logistimoApp.constant('NOTIFICATIONS', {
                     "type": "text",
                     "size": "4",
                     "placeholder": "minutes",
-                    "prefix": " after ",
+                    "prefix": "after",
                     "value": "30",
-                    "alert": "Please enter valid minutes for 'Low excursion'"
+                    "alert": "enter.valid.low.excursion.minutes"
                 }]
             },
             {
@@ -435,9 +440,9 @@ logistimoApp.constant('NOTIFICATIONS', {
                     "type": "text",
                     "size": "3",
                     "placeholder": "days",
-                    "prefix": " since ",
+                    "prefix": "since",
                     "value": "10",
-                    "alert": "Please enter valid number of days for 'No data from device'"
+                    "alert": "enter.valid.number.of.no.data.from.device.days"
                 }]
             },
             {
@@ -449,9 +454,9 @@ logistimoApp.constant('NOTIFICATIONS', {
                     "type": "text",
                     "size": "4",
                     "placeholder": "minutes",
-                    "prefix": " after ",
+                    "prefix": "after",
                     "value": "30",
-                    "alert": "Please enter valid minutes for 'High warning'"
+                    "alert": "enter.valid.high.warning.minutes"
                 }]
             },
             {
@@ -463,9 +468,9 @@ logistimoApp.constant('NOTIFICATIONS', {
                     "type": "text",
                     "size": "4",
                     "placeholder": "minutes",
-                    "prefix": " after ",
+                    "prefix": "after",
                     "value": "30",
-                    "alert": "Please enter valid minutes for 'Low warning'"
+                    "alert": "enter.valid.low.warning.minutes"
                 }]
             },
             {
@@ -477,9 +482,9 @@ logistimoApp.constant('NOTIFICATIONS', {
                     "type": "text",
                     "size": "4",
                     "placeholder": "minutes",
-                    "prefix": " after ",
+                    "prefix": "after",
                     "value": "30",
-                    "alert": "Please enter valid minutes for 'High alarm'"
+                    "alert": "enter.valid.high.alarm.minutes"
                 }]
             },
             {
@@ -491,15 +496,15 @@ logistimoApp.constant('NOTIFICATIONS', {
                     "type": "text",
                     "size": "4",
                     "placeholder": "minutes",
-                    "prefix": " after ",
+                    "prefix": "after",
                     "value": "30",
-                    "alert": "Please enter valid minutes for 'Low alarm'"
+                    "alert": "enter.valid.low.alarm.minutes"
                 }]
             },
 			{
 				"id": "com.logistimo.assets.entity.AssetStatus:101",
 				"name": "Status changed",
-				"params" : [{"id" : "status", "name" : "Status", "type" : "list", "placeholder" : "-- Select status --", "alert": "Please select status"}]
+				"params" : [{"id" : "status", "name" : "Status", "type" : "list", "placeholder" : "Select status", "alert": "please.select.status"}]
 			}
         ]
     },
@@ -514,9 +519,9 @@ logistimoApp.constant('NOTIFICATIONS', {
 					"type": "text",
 					"size": "4",
 					"placeholder": "minutes",
-					"prefix": " after ",
+					"prefix": "after",
 					"value": "30",
-					"alert": "Please enter valid minutes for 'Sensor disconnected'"
+					"alert": "enter.valid.sensor.disconnected.minutes"
 				}]
 			},
 			{
@@ -532,9 +537,9 @@ logistimoApp.constant('NOTIFICATIONS', {
 					"type": "text",
 					"size": "4",
 					"placeholder": "minutes",
-					"prefix": " after ",
+					"prefix": "after",
 					"value": "30",
-					"alert": "Please enter valid minutes for 'Battery low - warning'"
+					"alert": "enter.valid.battery.low.warning.minutes"
 				}]
 			},
 			{
@@ -546,9 +551,9 @@ logistimoApp.constant('NOTIFICATIONS', {
 					"type": "text",
 					"size": "4",
 					"placeholder": "minutes",
-					"prefix": " after ",
+					"prefix": "after",
 					"value": "30",
-					"alert": "Please enter valid minutes for 'Battery low - alarm'"
+					"alert": "enter.valid.battery.low.alarm.minutes"
 				}]
 			},
 			{
@@ -564,9 +569,9 @@ logistimoApp.constant('NOTIFICATIONS', {
 					"type": "text",
 					"size": "4",
 					"placeholder": "minutes",
-					"prefix": " after ",
+					"prefix": "after",
 					"value": "30",
-					"alert": "Please enter valid minutes for 'Device inactive'"
+					"alert": "enter.valid.device.inactive.minutes"
 				}]
 			},
 			{
@@ -582,9 +587,9 @@ logistimoApp.constant('NOTIFICATIONS', {
 					"type": "text",
 					"size": "4",
 					"placeholder": "minutes",
-					"prefix": " after ",
+					"prefix": "after",
 					"value": "30",
-					"alert": "Please enter valid minutes for 'Power outage'"
+					"alert": "enter.valid.power.outage.minutes"
 				}]
 			},
 			{
@@ -600,9 +605,9 @@ logistimoApp.constant('NOTIFICATIONS', {
 					"type": "text",
 					"size": "4",
 					"placeholder": "minutes",
-					"prefix": " after ",
+					"prefix": "after",
 					"value": "30",
-					"alert": "Please enter valid minutes for 'Device disconnected'"
+					"alert": "enter.valid.device.disconnected.minutes"
 				}]
 			},
 			{
@@ -612,7 +617,7 @@ logistimoApp.constant('NOTIFICATIONS', {
 			{
 				"id": "com.logistimo.assets.entity.AssetStatus:102",
 				"name": "Status changed",
-				"params" : [{"id" : "status", "name" : "Status", "type" : "list", "placeholder" : "-- Select status --", "alert": "Please select status"}]
+				"params" : [{"id" : "status", "name" : "Status", "type" : "list", "placeholder" : "Select status", "alert": "please.select.status"}]
 			}
 		]
 	}
@@ -666,4 +671,51 @@ logistimoApp.constant('TRANSACTION_TYPES', ['i','r','p','w','t','ri','ro']);
 
 logistimoApp.constant('DATEFORMAT',{
 	'DATE_FORMAT': 'dd/mm/yyyy'
+});
+
+logistimoApp.constant('TRANSPORTER_TYPES', {
+	'owned': {
+		name : 'owned'
+	},
+	'third_party': {
+		name : 'third.party'
+	},
+	'other': {
+		name : 'other'
+	}
+});
+logistimoApp.constant('PATCH_OPERATION_TYPES', {
+	TEST : "TEST",
+	REMOVE : "REMOVE",
+	ADD : "ADD",
+	REPLACE : "REPLACE",
+	MOVE : "MOVE",
+	COPY : "COPY"
+});
+logistimoApp.constant('PATCH_PATHS', {
+	orders: {
+		CONSIGNMENT_PACKAGE_CNT : 'consignment/package_count',
+		CONSIGNMENT_WEIGHT : 'consignment/weight',
+		CONSIGNMENT_DIMENSIONS : 'consignment/dimensions',
+		CONSIGNMENT_CATEGORY : 'consignment/category',
+		CONSIGNMENT_DECLARATION : 'consignment/declaration',
+		CONSIGNMENT_VALUE : 'consignment/value',
+		SHIPMENT_TRANSPORTER_ID : 'shipment/transporterId',
+		SHIPMENT_TRANSPORTER_NAME : 'shipment/transporter',
+		SHIPMENT_PHONE_NUM : 'shipment/phonenum',
+		SHIPMENT_VEHICLE : 'shipment/vehicle'
+	}
+});
+logistimoApp.constant('DELIVERY_REQUEST_STATUSES', {
+	'dr_df': 'dr.status.draft',
+	'dr_op': 'dr.status.pending',
+	'dr_cf': 'dr.status.confirmed',
+	'dr_pc': 'dr.status.picked',
+	'dr_od': 'dr.status.outfordel',
+	'dr_dl': 'dr.status.delivered',
+	'dr_cn': 'dr.status.cancelled',
+	'codes': {
+		CANCELLED: 'dr_cn',
+		DELIVERED: 'dr_dl'
+	}
 });

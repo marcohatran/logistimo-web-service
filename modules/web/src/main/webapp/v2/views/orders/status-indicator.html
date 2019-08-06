@@ -30,7 +30,7 @@
         <div ng-class="{true:'text-center status-indicator-stepnum litetext fc-color-green',
         false:'text-center status-indicator-stepnum litetext',
         end:'text-center status-indicator-stepnum litetext fc-color-green',
-        cancel:'text-center status-indicator-stepnum litetext fc-color-red'}[i.completed]">{{i.status}}
+        cancel:'text-center status-indicator-stepnum litetext fc-color-red'}[i.completed]">{{getLabelFromResourceBundle(i.status)}}
             <span ng-if="isDef(sicrsn) && i.status == 'Cancelled'" uib-tooltip="{{sicrsn}}" tooltip-placement="top" class="litetext glyphicons glyphicons-info-sign lnk" tooltip-append-to-body="true"> </span>
         </div>
         <div class="progress"><div class="progress-bar"></div></div>

@@ -36,22 +36,21 @@ import java.util.MissingResourceException;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
 /**
  * Loads resources once and stored as a singleton
  *
  * @author Arun
  */
-public class Resources {
-  // Logger
-  private static final XLog xLogger = XLog.getLog(Resources.class);
-  // Singleton
-  private static final Resources SINGLETON = new Resources();
-  // Resource bundles
-  private final Map<String, ResourceBundle> rmap = new HashMap<String, ResourceBundle>();
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public final class Resources {
 
-  public static Resources get() {
-    return SINGLETON;
-  }
+  private static final XLog xLogger = XLog.getLog(Resources.class);
+
+  private static final Map<String, ResourceBundle> rmap = new HashMap<>();
+  private static final String LOGISTIMO_MESSAGES = "LogistimoMessages";
 
   // Get a resource bundle read in UTF-8 format (by default, ResourceBundle would read it in ISO-8859-1 format)
   private static ResourceBundle getUTF8Bundle(String baseName, Locale locale) {
@@ -64,19 +63,11 @@ public class Resources {
 
   }
 
-  public ResourceBundle getBundle(String baseName) throws MissingResourceException {
+  public static ResourceBundle getBundle(String baseName) throws MissingResourceException {
     return getBundle(baseName, Locale.ENGLISH);
   }
 
-  public ResourceBundle getMessageBundle(Locale locale) throws MissingResourceException {
-    return getBundle("Messages", locale);
-  }
-
-  public ResourceBundle getBackendMessageBundle(Locale locale) throws MissingResourceException {
-    return getBundle("BackendMessages", locale);
-  }
-
-  public ResourceBundle getBundle(String baseName, Locale locale) throws MissingResourceException {
+  public static ResourceBundle getBundle(String baseName, Locale locale) throws MissingResourceException {
     if (baseName == null || locale == null) {
       return null;
     }
@@ -100,6 +91,15 @@ public class Resources {
       }
     }
     return bundle;
+  }
+
+  /**
+   * Returns the ResourceBundle based on locale.
+   * @param locale
+   * @return
+   */
+  public static ResourceBundle getBundle(Locale locale) {
+    return getBundle(LOGISTIMO_MESSAGES, locale);
   }
 
   public void destroy() {

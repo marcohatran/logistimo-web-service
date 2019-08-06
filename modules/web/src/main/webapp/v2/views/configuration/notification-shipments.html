@@ -33,19 +33,19 @@
 
             <div class="col-sm-4 mb10">
                 <select ng-model="nof.ship" ng-change="fetchEvent('shipments')" class="form-control" id="nofMsg">
-                    <option value="">-- {{resourceBundle['select']}} {{'event'}} --</option>
-                    <option ng-repeat="shipment in shipmentsLabel" value="{{shipment.name}}">{{shipment.name}}</option>
+                    <option value="">-- {{resourceBundle['select']}} {{resourceBundle['event']}} --</option>
+                    <option ng-repeat="shipment in shipmentsLabel" value="{{shipment.name}}">{{getLabelFromResourceBundle(shipment.name)}}</option>
                 </select>
             </div>
             <div class="lnk" ng-show="prShow || prSelect">
                 <span class="col-sm-4" ng-show="prShow">
-                    {{prefixName}}<input only-digits type="text" class="form-control w70 stat-bottom" ng-model="nof.pr" id="prefix"
-                                         placeholder="{{placeHolder}}" ng-change="resetStatus('prefix')">
+                    {{getLabelFromResourceBundle(prefixName)}}<input only-digits type="text" class="form-control w70 stat-bottom" ng-model="nof.pr" id="prefix"
+                                         placeholder="{{getLabelFromResourceBundle(placeHolder)}}" ng-change="resetStatus('prefix')">
                 </span>
                 <span class="col-sm-4" ng-show="prSelect == 'status' ">
                     <select ng-model="nof.os" class="form-control" ng-change="resetStatus('status')">
-                        <option value="">{{placeHolder}}</option>
-                        <option ng-repeat="(key, value) in shipmentStatusLabel" value="{{key}}">{{value}}</option>
+                        <option value="">{{getLabelFromResourceBundle(placeHolder)}}</option>
+                        <option ng-repeat="(key, value) in shipmentStatusLabel" value="{{key}}">{{getLabelFromResourceBundle(value)}}</option>
                     </select>
                 </span>
             </div>

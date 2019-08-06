@@ -257,6 +257,12 @@ domainCfgServices.factory('domainCfgService', ['APIService','$http', function (a
         },
         setFormsConfig: function (data) {
             return apiService.post(data, '/s2/api/config/domain/forms')
+        },
+        getTransportersConfig: function () {
+            return apiService.get('/s2/api/config/domain/transporters');
+        },
+        setTransportersConfig: function (data) {
+            return apiService.post(data, '/s2/api/config/domain/transporters')
         }
     }
 }]);

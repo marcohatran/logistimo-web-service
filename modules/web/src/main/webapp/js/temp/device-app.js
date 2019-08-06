@@ -25,7 +25,7 @@ lgDeviceApp.controller('DeviceController', ['$scope', '$location', 'DeviceServic
         $scope.showDeviceForm = true;
         $scope.showTable = true;
         $scope.selAll = false;
-        $scope.configCommunicationChannel = [{id: 0, value: "SMS"}, {id: 1, value: "Internet"}];
+        $scope.configCommunicationChannel = [{id: 0, value: $scope.resourceBundle['communication.channel.sms']}, {id: 1, value: $scope.resourceBundle['communication.channel.internet']}];
         $scope.cfgURLEdited = false;
 
         /*

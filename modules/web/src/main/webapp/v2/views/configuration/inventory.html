@@ -64,7 +64,7 @@
                                     <div class="col-sm-12">
                                         <div class="bgr" style="margin: 0px;min-height:280px;">
                                             <div class="title-heading">
-                                                Reasons
+                                                {{resourceBundle['reasons']}}
                                             </div>
                                             <p class="litetext">
                                                 {{resourceBundle['config.reason.length']}}
@@ -131,7 +131,7 @@
                                                                            autocomplete="off"
                                                                            typeahead-on-select="setMtg($item)"
                                                                            class="form-control" id="mtg"
-                                                                           placeholder="Enter the material tag"
+                                                                           placeholder="{{resourceBundle['configuration.inventory.enter.material.tag']}}"
                                                                            typeahead-editable="false"
                                                                            uib-typeahead="item for item in iMatTags| filter:$viewValue |limitTo:8"
                                                                            class="form-control"  typeahead-min-length=1 maxlength="50"
@@ -217,7 +217,7 @@
                                                                            autocomplete="off"
                                                                            typeahead-on-select="setRMtg($item)"
                                                                            class="form-control" id="rmtg"
-                                                                           placeholder="Enter the material tag"
+                                                                           placeholder="{{resourceBundle['configuration.inventory.enter.material.tag']}}"
                                                                            typeahead-editable="false"
                                                                            uib-typeahead="item for item in rMatTags| filter:$viewValue |limitTo:8"
                                                                            class="form-control"  typeahead-min-length=1 maxlength="50"
@@ -303,7 +303,7 @@
                                                                            autocomplete="off"
                                                                            typeahead-on-select="setSMtg($item)"
                                                                            class="form-control" id="smtg"
-                                                                           placeholder="Enter the material tag"
+                                                                           placeholder="{{resourceBundle['configuration.inventory.enter.material.tag']}}"
                                                                            typeahead-editable="false"
                                                                            uib-typeahead="item for item in sMatTags| filter:$viewValue |limitTo:8"
                                                                            class="form-control"  typeahead-min-length=1 maxlength="50"
@@ -389,7 +389,7 @@
                                                                            autocomplete="off"
                                                                            typeahead-on-select="setDMtg($item)"
                                                                            class="form-control" id="dmtg"
-                                                                           placeholder="Enter the material tag"
+                                                                           placeholder="{{resourceBundle['configuration.inventory.enter.material.tag']}}"
                                                                            typeahead-editable="false"
                                                                            uib-typeahead="item for item in dMatTags| filter:$viewValue |limitTo:8"
                                                                            class="form-control"  typeahead-min-length=1 maxlength="50"
@@ -475,7 +475,7 @@
                                                                            autocomplete="off"
                                                                            typeahead-on-select="setTMtg($item)"
                                                                            class="form-control" id="tmtg"
-                                                                           placeholder="Enter the material tag"
+                                                                           placeholder="{{resourceBundle['configuration.inventory.enter.material.tag']}}"
                                                                            typeahead-editable="false"
                                                                            uib-typeahead="item for item in tMatTags| filter:$viewValue |limitTo:8"
                                                                            class="form-control"  typeahead-min-length=1 maxlength="50"
@@ -561,7 +561,7 @@
                                                                            autocomplete="off"
                                                                            typeahead-on-select="setRIMtg($item)"
                                                                            class="form-control" id="rimtg"
-                                                                           placeholder="Enter the material tag"
+                                                                           placeholder="{{resourceBundle['configuration.inventory.enter.material.tag']}}"
                                                                            typeahead-editable="false"
                                                                            uib-typeahead="item for item in riMatTags| filter:$viewValue |limitTo:8"
                                                                            class="form-control"  typeahead-min-length=1 maxlength="50"
@@ -647,7 +647,7 @@
                                                                            autocomplete="off"
                                                                            typeahead-on-select="setROMtg($item)"
                                                                            class="form-control" id="romtg"
-                                                                           placeholder="Enter the material tag"
+                                                                           placeholder="{{resourceBundle['configuration.inventory.enter.material.tag']}}"
                                                                            typeahead-editable="false"
                                                                            uib-typeahead="item for item in roMatTags| filter:$viewValue |limitTo:8"
                                                                            class="form-control"  typeahead-min-length=1 maxlength="50"
@@ -978,7 +978,7 @@
                                             <tbody>
                                             <tr><th class="col-sm-1 text-center">{{resourceBundle['serialnum']}}</th>
                                                 <th class="col-sm-3 text-center">{{resourceBundle['kiosk.tags']}}</th>
-                                                <th class="col-sm-4 text-center">Return policy</th>
+                                                <th class="col-sm-4 text-center">{{resourceBundle['configuration.inventory.return.policy']}}</th>
                                                 <th class="col-sm-0-2 text-center"></th>
                                             </tr>
                                             </tbody>
@@ -1196,7 +1196,7 @@
                                                     <div class="row" ng-show="inv.irc">
                                                         <div class="col-sm-12">
                                                             <div class="row col-sm-12 noMargin">
-                                                                <lg-uib-select multiple="multiple" ng-disabled="disabled" query="query(q)" ui-model="inv.ersnsObj" refresh-list = "refreshCRIssueList" place-holder="Enter the reason codes"> </lg-uib-select>
+                                                                <lg-uib-select multiple="multiple" ng-disabled="disabled" query="query(q)" ui-model="inv.ersnsObj" refresh-list = "refreshCRIssueList" place-holder="{{resourceBundle['configuration.inventory.enter.reason.codes']}}"> </lg-uib-select>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1214,7 +1214,7 @@
                                                                                query="query(q,'ri')"
                                                                                refresh-list="refreshCRReturnsIncomingList"
                                                                                ui-model="inv.erirsnsObj"
-                                                                               place-holder="Enter the reason codes"></lg-uib-select>
+                                                                               place-holder="{{resourceBundle['configuration.inventory.enter.reason.codes']}}"></lg-uib-select>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1451,14 +1451,14 @@
                     <div class="row" ng-show="inv.crc == 1 && inv.mmType == 1">
                         <div class="col-sm-11">
                             <div class="form-group">
-                                <label class="col-sm-3 control-label">Min/max update frequency</label>
+                                <label class="col-sm-3 control-label">{{resourceBundle['configuration.inventory.min.max.update.frequency']}}</label>
                                 <div class="col-sm-8 cbx">
                                     <select ng-model="inv.mmFreq" class="form-control wd30">
-                                        <option ng-show="inv.crfreq == 'daily'" value="daily">Daily</option>
-                                        <option ng-show="inv.crfreq == 'daily' || inv.crfreq == 'weekly'" value="weekly">Weekly</option>
-                                        <option ng-show="inv.crfreq == 'daily' || inv.crfreq == 'weekly' || inv.crfreq == 'monthly'" value="monthly">Monthly</option>
-                                        <option ng-show="inv.crfreq == 'daily' || inv.crfreq == 'weekly' || inv.crfreq == 'monthly'" value="quarterly">Quarterly</option>
-                                        <option ng-show="inv.crfreq == 'daily' || inv.crfreq == 'weekly' || inv.crfreq == 'monthly'" value="halfyearly">Half-yearly</option>
+                                        <option ng-show="inv.crfreq == 'daily'" value="daily">{{resourceBundle['daily']}}</option>
+                                        <option ng-show="inv.crfreq == 'daily' || inv.crfreq == 'weekly'" value="weekly">{{resourceBundle['weekly']}}</option>
+                                        <option ng-show="inv.crfreq == 'daily' || inv.crfreq == 'weekly' || inv.crfreq == 'monthly'" value="monthly">{{resourceBundle['monthly']}}</option>
+                                        <option ng-show="inv.crfreq == 'daily' || inv.crfreq == 'weekly' || inv.crfreq == 'monthly'" value="quarterly">{{resourceBundle['quarterly']}}</option>
+                                        <option ng-show="inv.crfreq == 'daily' || inv.crfreq == 'weekly' || inv.crfreq == 'monthly'" value="halfyearly">{{resourceBundle['half.yearly']}}</option>
                                     </select>
                                 </div>
                             </div>
@@ -1486,12 +1486,12 @@
                                     <input type="checkbox" ng-model="inv.eidb" ng-change="updateEtags()"> {{resourceBundle['config.inventorydashboard.enabletext']}}<br/>
                                     <div class="bgr" ng-show="inv.eidb">
                                         <div class="form-group">
-                                            <label class="control-label col-sm-3 mt5">Default entity tag</label>
+                                            <label class="control-label col-sm-3 mt5">{{resourceBundle['configuration.inventory.default.entity.tag']}}</label>
                                             <div class="col-sm-6 mt5">
                                                 <tag-select  tags-model="inv.eTgs" type="'entity'" force-no-udf="'true'"></tag-select>
                                                 <div class="col-sm-12 noleftpad">
                                                     <p class="litetext">
-                                                        ( Filter this view using the above entity tags )
+                                                        ( {{resourceBundle['configuration.inventory.filter.using.entity.tags']}} )
                                                     </p>
                                                 </div>
                                             </div>

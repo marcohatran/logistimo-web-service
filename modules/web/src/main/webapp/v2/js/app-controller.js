@@ -50,7 +50,7 @@
 
             $rootScope.isBulletinBoard = isBulletinBoard;
             $scope.loadMessage = "";
-
+            $scope.tspsConfigured = false; // if TSPs are configured in the system
 
             var resourceBundleName = 'resourceBundle';
             /*  @if NODE_ENV == 'PRODUCTION' || NODE_ENV == 'DEVELOPMENT' || NODE_ENV == 'TEST' */
@@ -375,6 +375,19 @@
                 });
             };
 
+            $scope.getTransporterConfig = function() {
+                $scope.showLoading();
+                configService.getTransporterConfig(false).then(function (data) {
+                    const tspConfigs = data.data['transporters'];
+                    $scope.tspsConfigured = tspConfigs && tspConfigs.length > 0;
+                }).catch(function error(msg) {
+                    $scope.showErrorMsg(msg);
+                }).finally(function () {
+                    $scope.hideLoading();
+                });
+            };
+            $scope.getTransporterConfig();
+
             $scope.generateAssetFilters = function () {
                 $scope.assetFilters = [{"value": "0", "dV": "All"}];
                 for (var i in $scope.assetConfig.assets) {
@@ -636,7 +649,7 @@
 
             $scope.initAnalytics = function (user,domain,userTags) {
                 AnalyticsService.logAnalytics(window.location.pathname,user,domain,userTags);
-            }
+            };
 
             function pathString(current) {
                 var path = current.$$route.originalPath;
@@ -855,7 +868,15 @@
 
             $scope.downloadDataFile = function(fileUrl,defaultFileName){
                 APIService.serveFile(fileUrl, defaultFileName);
-            }
+            };
+
+            $scope.getLabelFromResourceBundle = function(key) {
+                if(checkNotNullEmpty(key)) {
+                    var label = key.trim().replace(/ /g, ".").toLowerCase().replace(/</g,'less.than').replace(/>/g,'greater.than').replace(/%/g, 'percentage')
+                        .replace(/\(/g,'').replace(/\)/g,'').replace(/\//g,'.').replace(/'/g,'').replace(/\[/g,'').replace(/]/g,'').replace(/-/g,'hyphen');
+                    return $scope.resourceBundle[label];
+                }
+            };
         }
     );
 })(angular, logistimoApp);

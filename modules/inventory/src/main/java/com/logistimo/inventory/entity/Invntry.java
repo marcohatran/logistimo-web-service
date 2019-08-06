@@ -842,8 +842,7 @@ public class Invntry implements IInvntry {
 
   @Override
   public String getMCRUnits(Locale locale) {
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-    ResourceBundle jsMessages = Resources.get().getBundle("JSMessages", locale);
+    ResourceBundle messages = Resources.getBundle(locale);
     Long domainId = this.getDomainId();
     DomainConfig dc = DomainConfig.getInstance(domainId);
     InventoryConfig ic = dc.getInventoryConfig();
@@ -856,11 +855,11 @@ public class Invntry implements IInvntry {
     if (manualCrUnits == null || manualCrUnits.isEmpty() || manualCrUnits
         .equalsIgnoreCase(messages.getString("days"))) {
       manualCrUnits =
-          jsMessages.getString("daysofstock"); // Default the manual consumption rate units to Days.
+          messages.getString("daysofstock"); // Default the manual consumption rate units to Days.
     } else if (manualCrUnits.equalsIgnoreCase(messages.getString("weeks"))) {
-      manualCrUnits = jsMessages.getString("weeksofstock");
+      manualCrUnits = messages.getString("weeksofstock");
     } else if (manualCrUnits.equalsIgnoreCase(messages.getString("months"))) {
-      manualCrUnits = jsMessages.getString("monthsofstock");
+      manualCrUnits = messages.getString("monthsofstock");
     }
     return manualCrUnits;
   }

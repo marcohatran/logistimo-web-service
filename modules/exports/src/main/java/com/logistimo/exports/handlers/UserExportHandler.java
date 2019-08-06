@@ -102,7 +102,7 @@ public class UserExportHandler implements IExportHandler {
       pkName = Constants.UNKNOWN;
     }
     List<String> tgs = user.getTags();
-    ResourceBundle messagesBundle = Resources.get().getBundle("Messages",locale);
+    ResourceBundle messagesBundle = Resources.getBundle(locale);
 
     csv.append(user.getUserId()).append(CharacterConstants.COMMA)
         .append(user.getCustomId() != null ? StringEscapeUtils.escapeCsv(user.getCustomId())
@@ -199,8 +199,7 @@ public class UserExportHandler implements IExportHandler {
 
   // Header for CSV of a user (either import or export)
   public String getCSVHeader(Locale locale, DomainConfig dc, String type) {
-    ResourceBundle bundle = Resources.get().getBundle("Messages", locale);
-    ResourceBundle jsBundle = Resources.get().getBundle("JSMessages", locale);
+    ResourceBundle bundle = Resources.getBundle(locale);
     StringBuilder header = new StringBuilder();
     header.append(bundle.getString("user.id")).append(CharacterConstants.COMMA)
           .append(bundle.getString("customid.user")).append(CharacterConstants.COMMA)
@@ -266,33 +265,33 @@ public class UserExportHandler implements IExportHandler {
         .append(bundle.getString("user.mobileoperator")).append(CharacterConstants.COMMA)
         .append(bundle.getString("user.simId")).append(CharacterConstants.COMMA)
         .append(bundle.getString("primaryentity")).append(CharacterConstants.SPACE)
-        .append(jsBundle.getString("id")).append(CharacterConstants.COMMA)
-        .append(jsBundle.getString("customid.primaryentity")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("id")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("customid.primaryentity")).append(CharacterConstants.COMMA)
         .append(bundle.getString("primaryentity")).append(CharacterConstants.COMMA)
         .append(bundle.getString("user.mobileappversion")).append(CharacterConstants.COMMA)
         .append(bundle.getString("lastlogin")).append(CharacterConstants.COMMA)
         .append(bundle.getString("lastmobileaccess")).append(CharacterConstants.COMMA)
         .append(bundle.getString("mob")).append(CharacterConstants.SPACE).append(bundle.getString("gui.theme")).append(CharacterConstants.COMMA)
-        .append(jsBundle.getString("createdby")).append(CharacterConstants.SPACE)
-        .append(jsBundle.getString("id")).append(CharacterConstants.COMMA)
-        .append(jsBundle.getString("createdby")).append(CharacterConstants.SPACE)
-        .append(jsBundle.getString("customid.lower")).append(CharacterConstants.COMMA)
-        .append(jsBundle.getString("createdby")).append(CharacterConstants.SPACE)
-        .append(jsBundle.getString("fullname.lower")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("createdby")).append(CharacterConstants.SPACE)
+        .append(bundle.getString("id")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("createdby")).append(CharacterConstants.SPACE)
+        .append(bundle.getString("customid.lower")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("createdby")).append(CharacterConstants.SPACE)
+        .append(bundle.getString("fullname.lower")).append(CharacterConstants.COMMA)
         .append(bundle.getString("createdon")).append(CharacterConstants.COMMA)
         .append(bundle.getString("updatedby")).append(CharacterConstants.SPACE)
-        .append(jsBundle.getString("id")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("id")).append(CharacterConstants.COMMA)
         .append(bundle.getString("updatedby")).append(CharacterConstants.SPACE)
-        .append(jsBundle.getString("customid.lower")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("customid.lower")).append(CharacterConstants.COMMA)
         .append(bundle.getString("updatedby")).append(CharacterConstants.SPACE)
-        .append(jsBundle.getString("fullname.lower")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("fullname.lower")).append(CharacterConstants.COMMA)
         .append(bundle.getString("updatedon"));
     return header.toString();
   }
 
 
   private String getAppVersion (Integer lgsrc, String appver, Locale locale) {
-    ResourceBundle bundle = Resources.get().getBundle("Messages", locale);
+    ResourceBundle bundle = Resources.getBundle(locale);
     String res = CharacterConstants.EMPTY;
     if (lgsrc != null) {
       if (lgsrc == 2) {

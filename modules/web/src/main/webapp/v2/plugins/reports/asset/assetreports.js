@@ -75,7 +75,7 @@ function AssetReportController(s, timeout, getData, reportsServiceCore) {
     };
 
     if(s.reportStartDate) {
-        s.fromTooltip = "This report has been enabled from June 2017";
+        s.fromTooltip = s.resourceBundle['reports.assets.tooltip'];
     }
 
     s.updateTableHeading = function(tableHeading, dateFormat) {
@@ -335,9 +335,9 @@ function AssetReportController(s, timeout, getData, reportsServiceCore) {
 
     s.getBreakDownCaption = function() {
         if(s.filter.periodicity == "m") {
-            return 'Daily trends in ' + FormatDate_MMM_YYYY(s.qFilter.from)
+            return s.resourceBundle['reports.daily.trends.monthly.caption'] + ' ' + FormatDate_MMM_YYYY(s.qFilter.from)
         } else {
-            return 'Daily trends in the week of ' + FormatDate_MMM_DD_YYYY(s.qFilter.from)
+            return s.resourceBundle['reports.daily.trends.weekly.caption'] + ' ' + FormatDate_MMM_DD_YYYY(s.qFilter.from)
         }
     };
 
@@ -351,9 +351,9 @@ function AssetReportController(s, timeout, getData, reportsServiceCore) {
             } else {
                 fromDate.setDate(fromDate.getDate() - 6);
             }
-            return "From: " + s.formatReportDate(fromDate) + "   To: " + s.formatReportDate(s.filter.to) + "   " + s.getFilterLabel()
+            return s.resourceBundle['from.upper'] + ": " + s.formatReportDate(fromDate) + "   " + s.resourceBundle['to.upper'] + ": " + s.formatReportDate(s.filter.to) + "   " + s.getFilterLabel()
         } else {
-            return "From: " + s.formatReportDate(s.filter.from) + "   To: " + s.formatReportDate(s.filter.to) + "   " + s.getFilterLabel()
+            return s.resourceBundle['from.upper'] + ": " + s.formatReportDate(s.filter.from) + "   " + s.resourceBundle['to.upper'] + ": " + s.formatReportDate(s.filter.to) + "   " + s.getFilterLabel()
         }
     };
 
@@ -589,7 +589,7 @@ function AssetReportController(s, timeout, getData, reportsServiceCore) {
                         period = ' weeks';
                         maxPeriod = s.MAX_WEEKS;
                     }
-                    toastr.warning('<b>From</b> and <b>To</b> periods should be in a range of ' + maxPeriod + period + '. <b>To</b> date has been adjusted to fit within the range.');
+                    toastr.warning(messageFormat(s.resourceBundle['reports.filters.from.to.range'], maxPeriod, period));
                 }
             }
         }
@@ -600,14 +600,14 @@ function AssetReportController(s, timeout, getData, reportsServiceCore) {
         s.filterLabels[s.resourceBundle['periodicity']] =
             labels[s.filter.periodicity] ? s.resourceBundle[labels[s.filter.periodicity]] : undefined;
         if(s.filter.mt) {
-            s.filterLabels['Monitoring type'] = s.filter.mt == 1 ? 'Monitoring' : 'Monitored';
+            s.filterLabels[s.resourceBundle['monitoring.type']] = s.filter.mt == 1 ? s.resourceBundle['reports.assets.monitoring'] : s.resourceBundle['reports.assets.monitored'];
         } else {
-            s.filterLabels['Monitoring type'] = undefined;
+            s.filterLabels[s.resourceBundle['monitoring.type']] = undefined;
         }
-        s.filterLabels['Asset type'] = s.filter.at ? s.filter.at.text : undefined;
-        s.filterLabels['Manufacturer'] = s.filter.mf ? s.filter.mf.text : undefined;
-        s.filterLabels['Model'] = s.filter.mm;
-        s.filterLabels['Manufacturing year'] = s.filter.myear;
+        s.filterLabels[s.resourceBundle['asset.type']] = s.filter.at ? s.filter.at.text : undefined;
+        s.filterLabels[s.resourceBundle['manufacturer']] = s.filter.mf ? s.filter.mf.text : undefined;
+        s.filterLabels[s.resourceBundle['reports.asset.model']] = s.filter.mm;
+        s.filterLabels[s.resourceBundle['asset.manufacturing.year']] = s.filter.myear;
         s.filterLabels[s.resourceBundle['kiosk']] = s.filter.entity ? s.filter.entity.nm : undefined;
         s.filterLabels[s.resourceBundle['tagentity']] = s.filter.etag?s.filter.etag.text:undefined;
         s.filterLabels[s.resourceBundle['state']] = s.filter.st?s.filter.st.label:undefined;

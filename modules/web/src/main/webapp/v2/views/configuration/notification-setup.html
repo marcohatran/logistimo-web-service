@@ -32,13 +32,13 @@
 
                     <div class="col-sm-4 mb10">
                         <select ng-model="nof.st" ng-change="fetchEvent('setup')" class="form-control" id="nofMsg">
-                            <option value="">-- {{resourceBundle['select']}} {{'event'}} --</option>
-                            <option ng-repeat="setup in setupLabel" value="{{setup.name}}">{{setup.name}}</option>
+                            <option value="">-- {{resourceBundle['select']}} {{resourceBundle['event']}} --</option>
+                            <option ng-repeat="setup in setupLabel" value="{{setup.name}}">{{getLabelFromResourceBundle(setup.name)}}</option>
                         </select>
                     </div>
                     <div class="lnk" ng-show="prShow || prSelect">
                 <span class="col-sm-4" ng-show="prShow">
-                    {{prefixName}}<input type="text" class="form-control w53 stat-bottom" ng-model="nof.pr" id="prefix" placeholder="{{placeHolder}}" ng-change = "resetStatus('prefix')">
+                    {{getLabelFromResourceBundle(prefixName)}} <input type="text" class="form-control w53 stat-bottom" ng-model="nof.pr" id="prefix" placeholder="{{getLabelFromResourceBundle(placeHolder)}}" ng-change = "resetStatus('prefix')">
                 </span>
             </div>
             <div class="col-sm-3 lPadN25 pull-right" ng-if="iSU || dp.ce">

@@ -60,7 +60,7 @@ public class TransCommitServlet extends SgServlet {
   private static final String ACTION_TRANSCOMMIT = "transcommit";
 
   public void processPost(HttpServletRequest request, HttpServletResponse response,
-                          ResourceBundle backendMessages, ResourceBundle messages)
+                          ResourceBundle messages)
       throws ServletException, IOException {
     xLogger.fine("Entered doPost");
     // Get parameters
@@ -74,9 +74,9 @@ public class TransCommitServlet extends SgServlet {
   }
 
   public void processGet(HttpServletRequest request, HttpServletResponse response,
-                         ResourceBundle backendMessages, ResourceBundle messages)
+                         ResourceBundle messages)
       throws ServletException, IOException {
-    processPost(request, response, backendMessages, messages);
+    processPost(request, response, messages);
   }
 
   // Process actions required to be done after a transaction commit

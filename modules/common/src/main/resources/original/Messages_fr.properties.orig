@@ -1234,7 +1234,7 @@ sales.approval.expiry.time=Heure d'expiration pour les demandes d'approbation de
 transfer.approval.expiry.time=Heure d'expiration pour les demandes d'approbation de commande de transfert / libération
 purchases.sales.approvals=Achats et ventes
 transfer.approvals=Transferts / Sorties
-order.shipmentCommande d'expédition
+order.shipment=Commande d'expédition
 transfer.shipment=Transfert d'expédition
 order.returns=Retours de commande
 transfer.returns=Retours de transfert
@@ -1280,3 +1280,4 @@ message.status.violation=Remise du message - Violation du transporteur
 message.status.unknown=Message Delivery - Erreur inconnue
 message.status.missing=Message entrant - Segment manquant
 message.status.price.exceeded=Le prix du message dépasse le prix maximum
+order.readyfordispatch=Ready for dispatch

@@ -52,10 +52,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -67,6 +64,7 @@ public class RESTUtilTest {
 
   private static final String CONFIG_KEY = "config.2";
   ConfigurationMgmtService configurationMgmtService;
+
   @Before
   public void setup() throws ServiceException {
     ApplicationContext mockApplicationContext = mock(ApplicationContext.class);
@@ -166,7 +164,7 @@ public class RESTUtilTest {
         (HashMap<String, Object>) data.get(JsonTagsZ.SALES_ORDERS);
     HashMap<String, Object> shippingConfig =
         (HashMap<String, Object>) salesOrderConfig.get(JsonTagsZ.SHIPPING);
-    assertEquals(data.entrySet().size(), 1);
+    assertEquals(data.entrySet().size(), 2);
     assertEquals(salesOrderConfig.entrySet().size(), 1);
     assertEquals(shippingConfig.entrySet().size(), 2);
     assertEquals(shippingConfig.get(JsonTagsZ.REFERENCE_ID), true);
@@ -210,16 +208,17 @@ public class RESTUtilTest {
     assertEquals(getMaterialTagsReasonsMap(), matTagRsnsMap.get(JsonTagsZ.RETURNS_OUTGOING));
   }*/
 
-  private Map<String,String> getMaterialTagsReasonsMap() {
-    Map<String,String> matTagReasonsMap = new HashMap<>(3,1);
+  private Map<String, String> getMaterialTagsReasonsMap() {
+    Map<String, String> matTagReasonsMap = new HashMap<>(3, 1);
     matTagReasonsMap.put("mtag1", "reason1");
-    matTagReasonsMap.put("mtag2","reason2,reason3,reason4");
-    matTagReasonsMap.put("mtag3","reason5");
+    matTagReasonsMap.put("mtag2", "reason2,reason3,reason4");
+    matTagReasonsMap.put("mtag3", "reason5");
     return matTagReasonsMap;
   }
 
   @Test
-  public void testGetReasonsByTagWithNullValues() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+  public void testGetReasonsByTagWithNullValues()
+      throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
     InventoryConfig inventoryConfig = new InventoryConfig();
     inventoryConfig.setImtransreasons(null);
     inventoryConfig.setRmtransreasons(null);
@@ -229,7 +228,7 @@ public class RESTUtilTest {
     inventoryConfig.setMtagRetIncRsns(null);
     inventoryConfig.setMtagRetOutRsns(null);
 
-    Map<String,Map<String,String>> matTagRsnsMap = RESTUtil.getReasonsByTag(inventoryConfig);
+    Map<String, Map<String, String>> matTagRsnsMap = RESTUtil.getReasonsByTag(inventoryConfig);
     assertNotNull(matTagRsnsMap);
     assertTrue(matTagRsnsMap.isEmpty());
   }
@@ -239,13 +238,16 @@ public class RESTUtilTest {
     InventoryConfig inventoryConfig = new InventoryConfig();
     inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_ISSUE, getMaterialStatusConfig());
     inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_RECEIPT, getMaterialStatusConfig());
-    inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_PHYSICALCOUNT, getMaterialStatusConfig());
+    inventoryConfig
+        .setMatStatusConfigByType(ITransaction.TYPE_PHYSICALCOUNT, getMaterialStatusConfig());
     inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_TRANSFER, getMaterialStatusConfig());
     inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_WASTAGE, getMaterialStatusConfig());
-    inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_RETURNS_INCOMING, getMaterialStatusConfig());
-    inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_RETURNS_OUTGOING, getMaterialStatusConfig());
+    inventoryConfig
+        .setMatStatusConfigByType(ITransaction.TYPE_RETURNS_INCOMING, getMaterialStatusConfig());
+    inventoryConfig
+        .setMatStatusConfigByType(ITransaction.TYPE_RETURNS_OUTGOING, getMaterialStatusConfig());
 
-    Map<String,Map<String,String>> matStatusByType = RESTUtil.getMaterialStatusByType(
+    Map<String, Map<String, String>> matStatusByType = RESTUtil.getMaterialStatusByType(
         inventoryConfig);
     assertNotNull(matStatusByType);
     assertTrue(!matStatusByType.isEmpty());
@@ -267,8 +269,8 @@ public class RESTUtilTest {
     return matStatusConfig;
   }
 
-  private Map<String,String> getExpectedMatStatusMap() {
-    Map<String,String> expectedMatStatusMap = new HashMap<>(3,1);
+  private Map<String, String> getExpectedMatStatusMap() {
+    Map<String, String> expectedMatStatusMap = new HashMap<>(3, 1);
     expectedMatStatusMap.put(JsonTagsZ.ALL, "status1,status2");
     expectedMatStatusMap.put(JsonTagsZ.TEMP_SENSITVE_MATERIALS, "tempstatus1,tempstatus2");
     expectedMatStatusMap.put(JsonTagsZ.MANDATORY, String.valueOf(true));
@@ -286,7 +288,7 @@ public class RESTUtilTest {
     inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_RETURNS_INCOMING, null);
     inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_RETURNS_OUTGOING, null);
 
-    Map<String,Map<String,String>> matStatusByType = RESTUtil.getMaterialStatusByType(
+    Map<String, Map<String, String>> matStatusByType = RESTUtil.getMaterialStatusByType(
         inventoryConfig);
     assertNotNull(matStatusByType);
     assertTrue(matStatusByType.isEmpty());
@@ -309,8 +311,10 @@ public class RESTUtilTest {
     inventoryConfig.setActualTransDateByType(ITransaction.TYPE_RETURNS_OUTGOING,
         getActualTransactionConfig());
 
-    Map<String,Map<String,String>> actualTransDateByType = RESTUtil.getActualTransDateConfigByType(
-        inventoryConfig);
+    Map<String, Map<String, String>>
+        actualTransDateByType =
+        RESTUtil.getActualTransDateConfigByType(
+            inventoryConfig);
     assertNotNull(actualTransDateByType);
     assertTrue(!actualTransDateByType.isEmpty());
     assertTrue(actualTransDateByType.size() == 7);
@@ -319,8 +323,10 @@ public class RESTUtilTest {
     assertEquals(getExpectedActualTransMap(), actualTransDateByType.get(JsonTagsZ.PHYSICAL_STOCK));
     assertEquals(getExpectedActualTransMap(), actualTransDateByType.get(JsonTagsZ.TRANSFER));
     assertEquals(getExpectedActualTransMap(), actualTransDateByType.get(JsonTagsZ.DISCARDS));
-    assertEquals(getExpectedActualTransMap(), actualTransDateByType.get(JsonTagsZ.RETURNS_INCOMING));
-    assertEquals(getExpectedActualTransMap(), actualTransDateByType.get(JsonTagsZ.RETURNS_OUTGOING));
+    assertEquals(getExpectedActualTransMap(),
+        actualTransDateByType.get(JsonTagsZ.RETURNS_INCOMING));
+    assertEquals(getExpectedActualTransMap(),
+        actualTransDateByType.get(JsonTagsZ.RETURNS_OUTGOING));
   }
 
   private ActualTransConfig getActualTransactionConfig() {
@@ -329,9 +335,9 @@ public class RESTUtilTest {
     return actualTransConfig;
   }
 
-  private Map<String,String> getExpectedActualTransMap() {
-    Map<String,String> expectedActualTransDateMap = new HashMap<>(1,1);
-    expectedActualTransDateMap.put(JsonTagsZ.TYPE,"1");
+  private Map<String, String> getExpectedActualTransMap() {
+    Map<String, String> expectedActualTransDateMap = new HashMap<>(1, 1);
+    expectedActualTransDateMap.put(JsonTagsZ.TYPE, "1");
     return expectedActualTransDateMap;
   }
 
@@ -352,9 +358,12 @@ public class RESTUtilTest {
     inventoryConfig.setActualTransDateByType(ITransaction.TYPE_RETURNS_OUTGOING,
         null);
 
-    Map<String,Map<String,String>> actualTransDateByType = RESTUtil.getActualTransDateConfigByType(
-        inventoryConfig);
+    Map<String, Map<String, String>>
+        actualTransDateByType =
+        RESTUtil.getActualTransDateConfigByType(
+            inventoryConfig);
     assertNotNull(actualTransDateByType);
     assertTrue(actualTransDateByType.isEmpty());
   }
+
 }

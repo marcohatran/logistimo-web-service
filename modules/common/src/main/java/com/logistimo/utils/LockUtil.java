@@ -42,6 +42,7 @@ public class LockUtil {
 
   private static final int DEFAULT_RETRY_COUNT = 50;
   private static final int DEFAULT_WAIT_TIME_IN_MILLIS = 500;
+  private static final int HOLD_LOCK_DURATION = 120;
   private static MemcacheService cache;
 
   private static MemcacheService getMemcacheService() {
@@ -72,7 +73,7 @@ public class LockUtil {
       if (ThreadLocalUtil.get().locks.contains(key)) {
         return LockStatus.ALREADY_LOCKED;
       }
-      if (getMemcacheService().putIfNotExist(key, Constants.EMPTY)) {
+      if (getMemcacheService().putIfNotExist(key, Constants.EMPTY, HOLD_LOCK_DURATION)) {
         ThreadLocalUtil.get().locks.add(key);
         return LockStatus.NEW_LOCK;
       }

@@ -57,7 +57,7 @@ registerWidget('itc', 'rpt-transaction-counts', 'Activity', 'Transaction counts'
             "theme": "fint"
         };
 
-        $scope.primaryMetric.push({name: "Number of transactions", value: "1"});
+        $scope.primaryMetric.push({name: $scope.resourceBundle['reports.user.activity.number.of.transactions'], value: "1"});
 
         function addExtraMetric() {
             if (typeof addSecondaryMetricOptions === "function") {
@@ -66,17 +66,17 @@ registerWidget('itc', 'rpt-transaction-counts', 'Activity', 'Transaction counts'
         }
         addExtraMetric();
 
-        $scope.secondaryMetric.push({name: "All transaction types", value: "0"});
-        $scope.secondaryMetric.push({name: "Issues", value: "1"});
-        $scope.secondaryMetric.push({name: "Receipts", value: "2"});
-        $scope.secondaryMetric.push({name: "Stock counts", value: "3"});
-        $scope.secondaryMetric.push({name: "Discards", value: "4"});
-        $scope.secondaryMetric.push({name: "Transfers", value: "5"});
-        $scope.secondaryMetric.push({name: "Incoming returns", value: "6"});
-        $scope.secondaryMetric.push({name: "Outgoing returns", value: "7"});
+        $scope.secondaryMetric.push({name: $scope.resourceBundle['reports.all.transaction.types'], value: "0"});
+        $scope.secondaryMetric.push({name: $scope.resourceBundle['issues'], value: "1"});
+        $scope.secondaryMetric.push({name: $scope.resourceBundle['receipts'], value: "2"});
+        $scope.secondaryMetric.push({name: $scope.resourceBundle['transactions.stockcounts.upper'], value: "3"});
+        $scope.secondaryMetric.push({name: $scope.resourceBundle['transactions.wastage.upper'], value: "4"});
+        $scope.secondaryMetric.push({name: $scope.resourceBundle['transfers'], value: "5"});
+        $scope.secondaryMetric.push({name: $scope.resourceBundle['transactions.returns.incoming.upper'], value: "6"});
+        $scope.secondaryMetric.push({name: $scope.resourceBundle['transactions.returns.outgoing.upper'], value: "7"});
 
 
-        var seriesNames = ['Issues', 'Receipts', 'Stock counts', 'Discards', 'Transfers', 'Incoming returns', 'Outgoing returns'];
+        var seriesNames = [$scope.resourceBundle['issues'], $scope.resourceBundle['receipts'], $scope.resourceBundle['transactions.stockcounts.upper'], $scope.resourceBundle['transactions.wastage.upper'], $scope.resourceBundle['transfers'], $scope.resourceBundle['transactions.returns.incoming.upper'], $scope.resourceBundle['transactions.returns.outgoing.upper']];
 
         $scope.downloadAsCSV = function (daily) {
             if(daily) {
@@ -206,7 +206,7 @@ registerWidget('itc', 'rpt-transaction-counts', 'Activity', 'Transaction counts'
                 $scope.loading = true;
                 chartData = angular.copy($scope.allChartData);
             } else if(level != "d") {
-                $scope.sum_t_head = ["Type", "Count"];
+                $scope.sum_t_head = [$scope.resourceBundle['type'], $scope.resourceBundle['count']];
                 $scope.sum_t = reportCoreFunction().getReportSummaryTable(chartData, seriesNames, 4, 3);
                 $scope.sum_cd = getSummaryFCData($scope.sum_t);
                 $scope.sum_cd_tot = getSummaryFCDataTotal($scope.sum_t);
@@ -273,7 +273,7 @@ registerWidget('itc', 'rpt-transaction-counts', 'Activity', 'Transaction counts'
 
                 $scope.dtableCaption = undefined;
                 $scope.dtableHeading = [];
-                $scope.dtableHeading.push("Date");
+                $scope.dtableHeading.push($scope.resourceBundle['date']);
                 if(checkNotNullEmpty(compareFields[0])) {
                     angular.forEach(compareFields, function (d) {
                         $scope.dtableHeading.push(d);
@@ -303,7 +303,7 @@ registerWidget('itc', 'rpt-transaction-counts', 'Activity', 'Transaction counts'
 
                 $scope.tableCaption = $scope.cOptions.subcaption;
                 $scope.tableHeading = [];
-                $scope.tableHeading.push("Date");
+                $scope.tableHeading.push($scope.resourceBundle['date']);
                 if(checkNotNullEmpty(compareFields[0])) {
                     $scope.tableMetric = $scope.cOptions.caption;
                     angular.forEach(compareFields, function (d) {

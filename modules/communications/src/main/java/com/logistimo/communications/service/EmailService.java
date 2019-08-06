@@ -88,7 +88,7 @@ public class EmailService extends MessageService {
     return new EmailService(mimeType);
   }
 
-  public String getStatusMessage(String statusCode, Locale locale) {
+  public String getStatusMessage(String statusCode, Locale locale, String providerId) {
     return null; // nothing to return here
   }
 

@@ -21,24 +21,24 @@ logistimoApp.controller('templateController', ['$scope', '$timeout', 'domainCfgS
     };
 
     $scope.primaryMetric = [];
-    $scope.primaryMetric.push({name: "Zero stock", value: "0"});
-    $scope.primaryMetric.push({name: "< Min", value: "1"});
-    $scope.primaryMetric.push({name: "> Max", value: "2"});
+    $scope.primaryMetric.push({name: $scope.resourceBundle['inventory.dashboard.status.zerostock'], value: "0"});
+    $scope.primaryMetric.push({name: "< " + $scope.resourceBundle['inventory.dashboard.status.min'], value: "1"});
+    $scope.primaryMetric.push({name: "> " + $scope.resourceBundle['inventory.dashboard.status.max'], value: "2"});
 
     $scope.secondaryMetric = [];
-    $scope.secondaryMetric.push({name: "100% of the time", value: "0"});
-    $scope.secondaryMetric.push({name: ">= 90% of the time", value: "1"});
-    $scope.secondaryMetric.push({name: ">= 80% of the time", value: "2"});
-    $scope.secondaryMetric.push({name: ">= 70% of the time", value: "3"});
+    $scope.secondaryMetric.push({name: $scope.resourceBundle['reports.abnormal.stock.100.percent.of.the.time'], value: "0"});
+    $scope.secondaryMetric.push({name: $scope.resourceBundle['reports.abnormal.stock.greater.than.90.percent.of.the.time'], value: "1"});
+    $scope.secondaryMetric.push({name: $scope.resourceBundle['reports.abnormal.stock.greater.than.80.percent.of.the.time'], value: "2"});
+    $scope.secondaryMetric.push({name: $scope.resourceBundle['reports.abnormal.stock.greater.than.70.percent.of.the.time'], value: "3"});
 
     $scope.filterStatus = function (query) {
 
         var sData = {results: []};
 
-        sData.results[0] = {id: 'tn', text: "Normal"};
-        sData.results[1] = {id: 'tl', text: "Low"};
-        sData.results[2] = {id: 'th', text: "High"};
-        sData.results[3] = {id: 'tu', text: "Unknown"};
+        sData.results[0] = {id: 'tn', text: $scope.resourceBundle['overview.temperature.dashboard.status.normal']};
+        sData.results[1] = {id: 'tl', text: $scope.resourceBundle['overview.temperature.dashboard.status.low']};
+        sData.results[2] = {id: 'th', text: $scope.resourceBundle['overview.temperature.dashboard.status.high']};
+        sData.results[3] = {id: 'tu', text: $scope.resourceBundle['overview.temperature.dashboard.status.unknown']};
 
         query.callback(sData);
     };

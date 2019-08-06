@@ -176,9 +176,9 @@ homeControllers.controller('homePageReportsCtrl', ['$scope', 'homePageService','
                 var subCaption='';
                 if (checkNotNullEmpty($scope.exFilter)) {
                     if ($scope.exType == "mTag") {
-                        subCaption = "<b>Material tag: </b>" + $scope.exFilterText;
+                        subCaption = "<b>" + $scope.resourceBundle['filter.material.tag'] + ": </b>" + $scope.exFilterText;
                     } else if ($scope.exType == "mId") {
-                        subCaption = "<b>Material name: </b>" + $scope.exFilterText;
+                        subCaption = "<b>" + $scope.resourceBundle['filter.material.name'] + ": </b>" + $scope.exFilterText;
                     }
                 }
                 $scope.filterCaption = $sce.trustAsHtml(subCaption);

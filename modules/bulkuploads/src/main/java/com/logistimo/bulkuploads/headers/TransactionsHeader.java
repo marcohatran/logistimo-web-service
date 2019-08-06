@@ -23,10 +23,12 @@
 
 package com.logistimo.bulkuploads.headers;
 
+import com.logistimo.constants.CharacterConstants;
 import com.logistimo.services.Resources;
 
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.StringJoiner;
 
 /**
  * Created by charan on 06/03/17.
@@ -35,29 +37,26 @@ public class TransactionsHeader implements IHeader {
 
   // Method that returns the CSV header for the csv file used during bulk upload of transactions.
   public String getUploadableCSVHeader(Locale locale, String type) {
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-    String
-        header =
-        messages.getString("kiosk") + "* (" + messages.getString("kiosk") + " name)" + "," +
-            messages.getString("material") + "* (Material name)" + "," +
-            messages.getString("openingstock") + "* (Opening stock)" + "," +
-            messages.getString("type")
-            + "* (i=issue / r=receipt / p=stock count / w=discards / t=transfer)" + "," +
-            messages.getString("quantity") + "*" + "," +
-            messages.getString("reason") + "," +
-            messages.getString("material") + " " + messages.getString("status") + "," +
-            messages.getString("relationship.relatedkiosk") + " (Either " + messages
-            .getString("customer.lower") + " or " + messages.getString("vendor.lower") + " name)"
-            + "," +
-            messages.getString("batch") + "," +
-            messages.getString("expiry") + " (dd/MM/yyyy format)" + "," +
-            messages.getString("manufacturer") + "," +
-            messages.getString("manufactured") + " (dd/MM/yyyy format)" + "," +
-            messages.getString("latitude") + "," +
-            messages.getString("longitude") + "," +
-            messages.getString("accuracy") + " (meters)" + "," +
-            messages.getString("date.actual.transaction") + " (dd/MM/yyyy format)";
+    ResourceBundle messages = Resources.getBundle(locale);
+    StringJoiner
+        header = new StringJoiner(CharacterConstants.COMMA);
+    header.add(messages.getString("bulkupload.mnltransaction.entity.name.header"))
+        .add(messages.getString("bulkupload.mnltransaction.material.name.header"))
+        .add(messages.getString("bulkupload.mnltransaction.opening.stock.header"))
+        .add(messages.getString("bulkupload.transaction.type.header"))
+        .add(messages.getString("bulkupload.transaction.quantity.header"))
+        .add(messages.getString("reason"))
+        .add(messages.getString("inventory.material.status"))
+        .add(messages.getString("bulkupload.transaction.related.entity.header"))
+        .add(messages.getString("batch"))
+        .add(messages.getString("bulkupload.transaction.batch.expiry.header"))
+        .add(messages.getString("manufacturer"))
+        .add(messages.getString("bulkupload.transaction.batch.manufactured.date.header"))
+        .add(messages.getString("latitude"))
+        .add(messages.getString("longitude"))
+        .add(messages.getString("bulkupload.transaction.accuracy.header"))
+        .add(messages.getString("bulkupload.transaction.date.pf.actual.transaction.header"));
 
-    return header;
+    return header.toString();
   }
 }

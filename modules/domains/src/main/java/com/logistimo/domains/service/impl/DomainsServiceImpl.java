@@ -975,7 +975,7 @@ public class DomainsServiceImpl implements DomainsService {
     } catch (Exception e) {
       xLogger.severe("Error in fetching list of domains", e);
       final Locale locale = ThreadLocalUtil.get().getSecureUserDetails().getLocale();
-      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+      ResourceBundle backendMessages = Resources.getBundle(locale);
       throw new InvalidServiceException(backendMessages.getString("domains.fetch.error"));
     } finally {
       try {
@@ -1000,7 +1000,7 @@ public class DomainsServiceImpl implements DomainsService {
       domains = (List<IDomain>) pm.detachCopyAll(domains);
     } catch (Exception e) {
       final Locale locale = ThreadLocalUtil.get().getSecureUserDetails().getLocale();
-      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+      ResourceBundle backendMessages = Resources.getBundle(locale);
       xLogger.severe("Error while fetching root domains", e);
       throw new InvalidServiceException(backendMessages.getString("domains.fetch.error"));
     } finally {

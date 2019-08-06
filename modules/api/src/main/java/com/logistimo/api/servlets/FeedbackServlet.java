@@ -49,7 +49,7 @@ public class FeedbackServlet extends HttpServlet {
   @Override
   public void doPost(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, java.io.IOException {
-    ResourceBundle bundle = Resources.get().getBundle("Messages", Locale.ENGLISH);
+    ResourceBundle bundle = Resources.getBundle(Locale.ENGLISH);
     String strUserId = request.getParameter(RestConstantsZ.USER_ID);
     String data = request.getParameter("text");
     String title = request.getParameter("title");

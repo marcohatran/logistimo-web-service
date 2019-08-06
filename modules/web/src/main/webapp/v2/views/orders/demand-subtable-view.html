@@ -77,7 +77,7 @@
             <td ng-show="allocate && oty=='sle'" class="text-center">{{dItem.yta}}</td>
             <td class="text-center">{{dItem.sq}}</td>
             <td class="text-center">{{dItem.yts}}</td>
-            <td class="text-center">{{ORDER.statusTxt[dItem.st]}}</td>
+            <td class="text-center">{{getLabelFromResourceBundle(ORDER.statusTxt[dItem.st])}}</td>
             <td class="text-center" ng-class=" {'alert-danger' : dItem.event == 200,
 												 'alert-info alert-info-dark' : dItem.event == 202,
 												 'alert-warning alert-warning-dark' : dItem.event == 201} ">{{dItem.stk}}

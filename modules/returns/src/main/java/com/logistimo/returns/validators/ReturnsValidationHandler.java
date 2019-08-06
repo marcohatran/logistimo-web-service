@@ -23,7 +23,9 @@
 
 package com.logistimo.returns.validators;
 
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.ReturnsConfig;
+import com.logistimo.constants.Constants;
 import com.logistimo.exception.SystemException;
 import com.logistimo.exception.ValidationException;
 import com.logistimo.inventory.entity.jpa.Inventory;
@@ -44,6 +46,7 @@ import com.logistimo.returns.vo.ReturnsVO;
 import com.logistimo.services.ServiceException;
 import com.logistimo.shipments.FulfilledQuantityModel;
 import com.logistimo.shipments.service.impl.ShipmentService;
+import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.MsgUtil;
 import com.logistimo.utils.Stream;
 
@@ -154,5 +157,15 @@ public class ReturnsValidationHandler {
   public boolean checkAccessForStatusChange(Status newStatus, ReturnsVO returnsVO)
       throws ServiceException {
     return returnsValidator.checkAccessForStatusChange(newStatus, returnsVO);
+  }
+
+  public void checkIfLatest(ReturnsVO updatedReturnVO, ReturnsVO returnsVO) {
+    if(updatedReturnVO.getUpdatedTime()<returnsVO.getUpdatedTime()){
+      LocalDateUtil
+          .format(returnsVO.getUpdatedAt(), SecurityUtils.getLocale(),SecurityUtils.getTimezone());
+      throw new ValidationException("RT010",returnsVO.getUpdatedBy(),LocalDateUtil
+          .formatCustom(returnsVO.getUpdatedAt(),
+              Constants.DATE_FORMAT, SecurityUtils.getTimezone()));
+    }
   }
 }

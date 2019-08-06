@@ -77,6 +77,8 @@ import java.util.ResourceBundle;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import static com.logistimo.constants.Constants.EMPTY;
+
 
 @Controller
 @RequestMapping("/mauth")
@@ -182,7 +184,7 @@ public class AuthControllerMV1 {
       user = AuthenticationUtil.authenticateToken(authToken, actionInitiator);
     } else {
       if (StringUtils.isEmpty(loginModel.getUserId()) && StringUtils.isEmpty(loginModel.getPassword())) {
-        throw new BadRequestException("G011", null);
+        throw new BadRequestException("G011", EMPTY);
       }
       AuthRequest authRequest = buildAuthRequest(loginModel,req);
       verifyCaptcha(loginModel.getOtp(), loginModel.getCaptcha(), authRequest);
@@ -226,7 +228,7 @@ public class AuthControllerMV1 {
       boolean isCaptchaVerified = authenticationService.verifyCaptcha(captchaResponse);
       if (!isCaptchaVerified) {
         xLogger.warn("Captcha verification failed for user {0}", authRequest.getUserId());
-        throw new BadRequestException("G010", null);
+        throw new BadRequestException("G010", EMPTY);
       }
     }
   }
@@ -286,8 +288,7 @@ public class AuthControllerMV1 {
                                       AuthRequest authRequest) {
     if ((SourceConstants.WEB.equals(actionInitiator) || SourceConstants.BULLETIN_BOARD
         .equals(actionInitiator)) && SecurityConstants.ROLE_KIOSKOWNER.equals(user.getRole())) {
-      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages",
-          Locale.getDefault());
+      ResourceBundle backendMessages = Resources.getBundle(Locale.getDefault());
       authenticationService.logForbiddenAccess(authRequest);
       throw new ForbiddenAccessException(backendMessages.getString("user.access.denied"));
     }
@@ -326,7 +327,7 @@ public class AuthControllerMV1 {
   public
   @ResponseBody
   String validateToken(@RequestBody String token, HttpServletRequest req)
-      throws ServiceException, ObjectNotFoundException {
+      throws ObjectNotFoundException {
     String initiatorStr = req.getHeader(Constants.ACCESS_INITIATOR);
     int
         accessInitiator =
@@ -394,7 +395,7 @@ public class AuthControllerMV1 {
     return new SaltModel(authenticationService.generateRandomSalt());
   }
 
-  protected void createUserDeviceInformation(HttpServletResponse response, Integer src, String userId)
+  void createUserDeviceInformation(HttpServletResponse response, Integer src, String userId)
       throws Exception {
     Date twoFactorTokenGenerationTime = new Date();
     String cookieValue = TwoFactorAuthenticationUtil.generateUserDeviceCacheKey(userId, twoFactorTokenGenerationTime.getTime());
@@ -405,7 +406,7 @@ public class AuthControllerMV1 {
     updateHeaderForUserDevice(response, cookieValue, userDevicesVO.getUserId());
   }
 
-  protected void updateHeaderForUserDevice(HttpServletResponse response, String cookieValue, String userId)
+  void updateHeaderForUserDevice(HttpServletResponse response, String cookieValue, String userId)
       throws UnsupportedEncodingException, NoSuchAlgorithmException {
     response.addHeader("Set-Cookie",
         TwoFactorAuthenticationUtil.generateAuthKey(userId) + "=" + cookieValue + ";Path=/; HttpOnly");

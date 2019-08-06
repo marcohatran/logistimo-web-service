@@ -227,7 +227,7 @@ public class TransactionsController {
     Locale locale = sUser.getLocale();
     Long domainId = sUser.getCurrentDomainId();
     DomainConfig dc = DomainConfig.getInstance(domainId);
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     try {
       Date startDate = null, endDate = null;
       if (from != null && !from.isEmpty()) {
@@ -296,7 +296,7 @@ public class TransactionsController {
       }
       locale = new Locale(language, country);
     }
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     if (tids == null || tids.length == 0) {
       throw new BadRequestException(backendMessages.getString("transactions.undo.error"));
     }
@@ -528,7 +528,7 @@ public class TransactionsController {
     } else {
       locale = new Locale(Constants.LANG_DEFAULT, Constants.COUNTRY_DEFAULT);
     }
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     String userId = sUser.getUsername();
     Long domainId = sUser.getCurrentDomainId();
 
@@ -634,9 +634,9 @@ public class TransactionsController {
             .append(" ")
             .append(berrorMaterials.size())
             .append(" ")
-            .append(backendMessages.getString("materials"))
+            .append(backendMessages.getString("materials.lowercase"))
             .append(" ")
-            .append(backendMessages.getString("from"))
+            .append(backendMessages.getString("from.lower"))
             .append(" ")
             .append(kiosk.getName())
             .append(" ")

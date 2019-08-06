@@ -30,12 +30,12 @@
                 <th class="text-center">{{resourceBundle['no']}} {{resourceBundle['of']}} {{resourceBundle['items.lowercase']}}</th>
                 <th class="text-center">{{resourceBundle['transporter']}}</th>
                 <th class="text-center">{{resourceBundle['trackingid']}}</th>
-                <th class="text-center">EDA</th>
+                <th class="text-center">{{resourceBundle['orders.eda.acronym']}}</th>
                 <th class="text-center">{{resourceBundle['created']}}</th>
             </tr>
             <tr ng-repeat="si in shipmentList" class="clickable" ng-click="openShipment(si.sId)">
                 <td class="text-left vmiddle">{{si.sId}}</td>
-                <td class="text-center vmiddle">{{si.status}}</td>
+                <td class="text-center vmiddle">{{getLabelFromResourceBundle(si.status)}}</td>
                 <td class="text-center vmiddle">{{si.noi}}</td>
                 <td class="text-center vmiddle">{{si.transporter}}</td>
                 <td class="text-center vmiddle">{{si.trackingId}}</td>
@@ -48,7 +48,7 @@
             </tr>
         </table>
         <span ng-if="shipmentList.length <= 0" class="col-sm-12 lPad5">
-            <p class="alert alert-warning">No shipments have been created.</p>
+            <p class="alert alert-warning">{{resourceBundle['orders.no.shipments.created']}}</p>
         </span>
     </div>
 </div>

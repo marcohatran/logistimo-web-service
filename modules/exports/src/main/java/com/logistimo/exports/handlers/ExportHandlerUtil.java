@@ -99,7 +99,7 @@ public class ExportHandlerUtil {
   }
 
   public static String getExportTypeDisplay(String type, Locale locale) {
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+    ResourceBundle messages = Resources.getBundle(locale);
     if (type.equals(BulkExportMgr.TYPE_USERS)) {
       return messages.getString("users");
     } else if (type.equals(BulkExportMgr.TYPE_KIOSKS)) {

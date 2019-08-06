@@ -23,9 +23,16 @@
 
 package com.logistimo.models;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 /**
  * Created by vani on 18/03/17.
  */
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class ResponseModel {
   public boolean status = true;
   public String message;

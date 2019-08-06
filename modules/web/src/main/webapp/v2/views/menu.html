@@ -225,6 +225,9 @@
                         <li ng-show="iAdm"><a
                                 href="#/configuration/rebalancing/">{{resourceBundle['stock.rebalancing']}}</a>
                         </li>
+                        <li ng-if="iAdm && tspsConfigured"><a
+                                href="#/configuration/transporters/">{{resourceBundle['transporters']}}</a>
+                        </li>
                         <li ng-if="iSU"><a
                                 href="#/configuration/forms/">{{resourceBundle['forms']}}</a>
                         </li>
@@ -239,8 +242,8 @@
                         <li ng-show="iSU || dp.uv"><a href="#/setup/users/">{{resourceBundle.users}}</a></li>
                         <li ng-show="iSU || (iAdm && dp.mv)"><a
                                 href="#/setup/materials/">{{resourceBundle.materials}}</a></li>
-                        <li ng-show="iSU || (iAdm && dp.mv)"><a href="#/setup/handlingunits/">Handling units</a></li>
-                        <li ng-show="iSU || dp.ev"><a href="#/setup/entities/">{{resourceBundle.kiosks}}</a></li>
+                        <li ng-show="iSU || (iAdm && dp.mv)"><a href="#/setup/handlingunits/">{{resourceBundle['handling.units']}}</a></li>
+                        <li ng-show="iSU || dp.ev"><a href="#/setup/entities/">{{resourceBundle['kiosks']}}</a></li>
                         <li ng-show="iSU || dp.egv"><a href="#/setup/ent-grps/">{{resourceBundle['linked.domains.allow.entity.groups.management']}}</a>
                         </li>
                         <li ng-show="!iMan && (iSU || dp.ia || dp.ie || dp.ir)"><a href="#/setup/inventory/">{{resourceBundle.inventory}}</a>
@@ -248,8 +251,11 @@
                         <li ng-show="iAdm"><a href="#/setup/domains/">{{resourceBundle.domains}}</a></li>
                         <li ng-show="tempEnabled && (iSU || (iAdm && dp.av))"><a href="#/setup/assets/">{{resourceBundle.assets}}</a>
                         </li>
-                        <li ng-show="iAdm || iSU">
+                        <li ng-show="iAdm">
                             <a href="#/setup/auth">{{resourceBundle['bulletin.board']}}</a>
+                        </li>
+                        <li ng-show="iAdm">
+                            <a href="#/setup/transporters">{{resourceBundle['transporters']}}</a>
                         </li>
                     </ul>
                 </li>

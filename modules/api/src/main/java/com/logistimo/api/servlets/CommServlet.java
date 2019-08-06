@@ -80,14 +80,14 @@ public class CommServlet extends SgServlet {
 
   // GET method
   public void processGet(HttpServletRequest request, HttpServletResponse response,
-                         ResourceBundle backendMessages, ResourceBundle messages)
+                         ResourceBundle messages)
       throws ServletException, IOException, ServiceException {
     // Do nothing
   }
 
   // Get the details from the form, and then send messages
   public void processPost(HttpServletRequest request, HttpServletResponse response,
-                          ResourceBundle backendMessages, ResourceBundle messages)
+                          ResourceBundle messages)
       throws ServletException, IOException, ServiceException {
     xLogger.fine("Entered processPost");
     // Get the request parameters
@@ -151,12 +151,12 @@ public class CommServlet extends SgServlet {
       if (!isBatch) {
         msg =
             "Scheduled task for sending message to all users"
-                + " &nbsp;[<a href=\"/s/setup/setup.jsp?subview=users\">" + backendMessages
+                + " &nbsp;[<a href=\"/s/setup/setup.jsp?subview=users\">" + messages
                 .getString("users.view") + "</a>]";
         writeToScreen(request, response, msg, Constants.VIEW_USERS);
       }
     } else {
-      sendToSelectedUsers(request, response, backendMessages, customApp);
+      sendToSelectedUsers(request, response, messages, customApp);
     }
     xLogger.fine("Exiting processPost");
   }

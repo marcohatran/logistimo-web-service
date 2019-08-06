@@ -1,0 +1,167 @@
+<!--
+  ~ Copyright © 2019 Logistimo.
+  ~
+  ~ This file is part of Logistimo.
+  ~
+  ~ Logistimo software is a mobile & web platform for supply chain management and remote temperature monitoring in
+  ~ low-resource settings, made available under the terms of the GNU Affero General Public License (AGPL).
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+  ~ Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+  ~ later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+  ~ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License along with this program.  If not, see
+  ~ <http://www.gnu.org/licenses/>.
+  ~
+  ~ You can be released from the requirements of the license by purchasing a commercial license. To know more about
+  ~ the commercial license, please contact us at opensource@logistimo.com
+  -->
+<div class="box topbox" ng-controller="DeliveryRequestController">
+    <h3 ng-if="delReq.type == 'order'">Delivery request for order
+        <a ng-href="#/orders/detail/{{drOrderId}}/" target="_blank">{{drOrderId}}</a></h3>
+    <h3 ng-if="delReq.type == 'shipment'">Delivery request for shipment
+        <a ng-href="#/orders/shipment/detail/{{drShipmentId}}/" target="_blank">{{drShipmentId}}</a></h3>
+    <hr/>
+    <div class="row mt10">
+        <div class="col-sm-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    {{resourceBundle['shipper']}}
+                </div>
+                <div class="panel-body">
+                    <div class="row lPad5 mb5">
+                        <div class="col-sm-12">
+                            <p><a class="capitalize"
+                                  ng-href="#/setup/entities/detail/{{vendor.id}}" target="_blank">{{vendor.name}}</a></p>
+                            <p class="capitalize">{{vendor.addr}}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div class="col-sm-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    {{resourceBundle['receiver']}}
+                </div>
+                <div class="panel-body">
+                    <div class="row lPad5 mb5">
+                        <div class="col-sm-12">
+                            <p><a class="capitalize"
+                                  ng-href="#/setup/entities/detail/{{cust.id}}" target="_blank">{{cust.name}}</a></p>
+                            <p class="capitalize">{{cust.addr}}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    {{resourceBundle['consignment']}}
+                </div>
+                <div class="panel-body">
+                    <div ng-include="'views/orders/add-consignment.html'"
+                         ng-init="model = dr.consignment; enableGrid = true;
+                         wtReq=true; pckgReq=true; valueReq=true; contentReq=true;
+                         disableCategory = true"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    {{resourceBundle['transporter']}}
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="litetext ml25 mb10">{{resourceBundle['dr.instruction.lite']}}</div>
+                        <div class="col-sm-6">
+                            <div class="row mb10">
+                                <label class="col-sm-4 cbx control-label ml10 required">
+                                    {{resourceBundle['transporter']}}</label>
+                                <div class="col-sm-7">
+                                    <select ng-model="transporterId"
+                                            ng-change="onTransporterChange(transporterId)"
+                                            class="form-control">
+                                        <option value="">&#45;&#45; {{resourceBundle['select']}}
+                                            {{resourceBundle['transporter'] | lowercase}} &#45;&#45;</option>
+                                        <option ng-repeat="item in transporters" name="{{item.name}}"
+                                                value="{{item.id}}" ng-selected="item.id == transporterId">{{item.name}}</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row mb10">
+                                <label class="col-sm-4 cbx control-label ml10 required">{{resourceBundle['category']}}</label>
+                                <div class="col-sm-7">
+                                    <select ng-model="goodsCtgId"
+                                            ng-change="onCategoryChange()"
+                                            class="form-control">
+                                        <option value="">&#45;&#45; {{resourceBundle['select']}}
+                                            {{resourceBundle['category'] | lowercase}} &#45;&#45;</option>
+                                        <option ng-repeat="item in transporterGoodsCategories" name="{{item.name}}"
+                                                value="{{item.id}}">{{item.name}}</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row mb10">
+                                <label class="col-sm-4 cbx control-label ml10 required">{{resourceBundle['pickup.rdy.by']}}</label>
+                                <div class="col-sm-7">
+                                    <date-time-picker date-time-model="dr.pickupTime" min-date="today"
+                                                      hour-step="1" minute-step="60">
+                                    </date-time-picker>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="row mb10">
+                                <label class="col-sm-4 cbx control-label ml10">{{resourceBundle['pickup.inst']}}</label>
+                                <div class="col-sm-7">
+                                    <textarea class="form-control" rows="3" ng-model="dr.instructions"
+                                              type="text"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-12 mt10 mb10">
+                            <button ng-show="pricingEnabled" type="button" class="btn btn-primary pull-right"
+                                    ng-click="fetchShippingOptions()">{{resourceBundle['get.sp.options']}}
+                            </button>
+                        </div>
+                        <div class="col-sm-10" ng-show="shippingOptions">
+                            <div class="panel panel-success">
+                                <div class="panel-heading">
+                                    {{shippingOptions.tsp_name}}
+                                </div>
+                                <div class="panel-body">
+                                    <div ng-include="'views/delivery-requests/shipping-options-listing.html'"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+         </div>
+    </div>
+    <div class="row">
+        <div class="form-group">
+            <div class="col-sm-12">
+                <div class="pull-right">
+                    <button type="button" class="btn btn-sm btn-primary"
+                    ng-disabled="pricingEnabled && !dr.trckdtls.type"
+                    ng-click="newDeliveryRequest()">{{resourceBundle['submit']}}</button>
+                    <button type="button" class="btn btn-sm btn-default" ng-click="cancelNewDeliveryRequest()">{{resourceBundle['cancel']}}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

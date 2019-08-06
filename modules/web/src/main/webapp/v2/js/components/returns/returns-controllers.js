@@ -971,7 +971,8 @@ function DetailReturnsController($scope, $uibModal, $timeout, $q, requestContext
         $scope.showLoading();
         let request = {
             comment: $scope.newStatus.comment,
-            tracking_details: $scope.newStatus.trackingDetails
+            tracking_details: $scope.newStatus.trackingDetails,
+            updated_time: $scope.returns.updated_time
         };
         returnsService.ship(RETURN_ID, request).then(() => {
             closeStatusModal();
@@ -984,7 +985,7 @@ function DetailReturnsController($scope, $uibModal, $timeout, $q, requestContext
 
     $scope.doCancel = () => {
         $scope.showLoading();
-        returnsService.cancel(RETURN_ID, {comment: $scope.newStatus.comment}).then(() => {
+        returnsService.cancel(RETURN_ID, {comment: $scope.newStatus.comment, updated_time: $scope.returns.updated_time}).then(() => {
             closeStatusModal();
             getReturn();
         }).catch(msg => $scope.showErrorMsg(msg))
@@ -1054,11 +1055,13 @@ function DetailReturnsController($scope, $uibModal, $timeout, $q, requestContext
             }
             if (!isInvalid) {
                 $scope.showLoading();
-                returnsService.updateItems(RETURN_ID, angular.copy($scope.returnItems))
-                    .then(()=>getReturn())
+                returnsService.updateItems(RETURN_ID, angular.copy($scope.returnItems), $scope.returns.updated_time)
+                    .then(()=>{
+                        getReturn();
+                        toggleEdit();
+                    })
                     .catch(msg => $scope.showErrorMsg(msg))
                     .finally(() => $scope.hideLoading());
-                toggleEdit();
             }
         } else {
             $scope.showWarning($scope.resourceBundle['return.specify.quantity']);
@@ -1155,7 +1158,7 @@ function ReceiveReturnsController($scope, returnsService, requestContext) {
                     }
                 } else {
                     if (isBatchesInvalid(returnItem)) {
-                        $scope.showWarning("Material status is mandatory. Please specify for all batches as well.");
+                        $scope.showWarning($scope.resourceBundle['return.batch.material.status.mandatory']);
                         return true;
                     }
                 }
@@ -1169,7 +1172,8 @@ function ReceiveReturnsController($scope, returnsService, requestContext) {
             $scope.showLoading();
             returnsService.receive(RETURN_ID, {
                 comment: $scope.comment,
-                items: $scope.returnItems
+                items: $scope.returnItems,
+                updated_time: $scope.returns.updated_time
             }).then(() => $scope.toggleReceive(true))
                 .catch(msg => $scope.showErrorMsg(msg))
                 .finally(() => $scope.hideLoading());
@@ -1490,13 +1494,13 @@ function ListReturnsController($scope, $location, requestContext, RETURNS, retur
     let getFilterStatusLabel = (status) => {
         switch (status) {
             case 'op':
-                return 'Pending';
+                return $scope.getLabelFromResourceBundle('Pending');
             case 'sp':
-                return 'Shipped';
+                return $scope.getLabelFromResourceBundle('Shipped');
             case 'rd':
-                return 'Received';
+                return $scope.getLabelFromResourceBundle('Received');
             case 'cn':
-                return 'Cancelled';
+                return $scope.getLabelFromResourceBundle('Cancelled');
         }
     };
 

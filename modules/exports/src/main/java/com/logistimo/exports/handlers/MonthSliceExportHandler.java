@@ -46,7 +46,7 @@ public class MonthSliceExportHandler implements IExportHandler {
 
   public String getCSVHeader(Locale locale, DomainConfig dc, String type) {
     String header = daySliceHandler.getCSVHeader(locale, dc, type);
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+    ResourceBundle messages = Resources.getBundle(locale);
     header += "," + messages.getString("stockout") + " " + messages.getString("duration") + "," +
         messages.getString("stockout") + " " + messages.getString("count") + "," +
         messages.getString("stockout") + " " + messages.getString("duration") + " " + messages

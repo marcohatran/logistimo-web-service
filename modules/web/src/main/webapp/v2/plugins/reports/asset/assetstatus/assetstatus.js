@@ -60,16 +60,16 @@ registerWidget('aas', 'rpt-asset-status', 'Assets', 'Asset status','asset/assets
             }
         });
 
-        $scope.secondaryMetric.push({name: 'Number of times assets changed to this state', value: '0'});
+        $scope.secondaryMetric.push({name: $scope.resourceBundle['reports.asset.status.number.of.times.asset.changed.state'], value: '0'});
 
         if (typeof addSecondaryMetricOptions === "function") {
-            addSecondaryMetricOptions($scope.secondaryMetric,reportType);
+            addSecondaryMetricOptions($scope.secondaryMetric,reportType, $scope.resourceBundle);
         }
 
         $scope.metricHeadings.push({name: $scope.resourceBundle['overview'], code: "ot"});
-        $scope.metricHeadings.push({name: $scope.resourceBundle['by.upper']+" "+$scope.resourceBundle['locations.lower'], code: "rt"});
-        $scope.metricHeadings.push({name: $scope.resourceBundle['by.upper']+" "+$scope.resourceBundle['manufacturer.lower'], code: "mnt"});
-        $scope.metricHeadings.push({name: $scope.resourceBundle['by.upper']+" "+$scope.resourceBundle['model.lower'], code: "amt"});
+        $scope.metricHeadings.push({name: $scope.resourceBundle['by.upper']+ " "+ $scope.resourceBundle['locations.lower'], code: "rt"});
+        $scope.metricHeadings.push({name: $scope.resourceBundle['by.upper']+ " "+ $scope.resourceBundle['manufacturer.lower'], code: "mnt"});
+        $scope.metricHeadings.push({name: $scope.resourceBundle['by.upper']+ " "+ $scope.resourceBundle['model.lower'], code: "amt"});
 
         $scope.downloadAsCSV = function (daily) {
             if(daily) {
@@ -218,7 +218,7 @@ registerWidget('aas', 'rpt-asset-status', 'Assets', 'Asset status','asset/assets
 
                 $scope.dtableCaption=undefined;
                 $scope.dtableHeading = [];
-                $scope.dtableHeading.push("Date");
+                $scope.dtableHeading.push($scope.resourceBundle['date']);
                 if(checkNotNullEmpty(compareFields[0])) {
                     angular.forEach(compareFields, function (d) {
                         $scope.dtableHeading.push(d);
@@ -244,7 +244,7 @@ registerWidget('aas', 'rpt-asset-status', 'Assets', 'Asset status','asset/assets
 
                 $scope.tableCaption=$scope.cOptions.subcaption;
                 $scope.tableHeading = [];
-                $scope.tableHeading.push("Date");
+                $scope.tableHeading.push($scope.resourceBundle['date']);
                 if(checkNotNullEmpty(compareFields[0])) {
                     $scope.tableMetric = $scope.cOptions.caption;
                     angular.forEach(compareFields, function (d) {

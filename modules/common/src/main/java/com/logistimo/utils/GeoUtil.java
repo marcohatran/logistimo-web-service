@@ -40,7 +40,7 @@ public class GeoUtil {
     if (geoErrorCode == null || geoErrorCode.isEmpty()) {
       return null;
     }
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+    ResourceBundle messages = Resources.getBundle(locale);
     String str;
     switch (geoErrorCode) {
       case "1":

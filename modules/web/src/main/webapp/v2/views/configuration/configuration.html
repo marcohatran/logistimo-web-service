@@ -64,6 +64,9 @@
             <li ng-class="{enable: subview == 'rebalancing'}">
                 <a href="#/configuration/rebalancing/">{{resourceBundle['stock.rebalancing']}}</a>
             </li>
+            <li ng-if="tspsConfigured" ng-class="{enable: subview == 'transporters'}">
+                <a href="#/configuration/transporters/">{{resourceBundle['transporters']}}</a>
+            </li>
             <li ng-if="iSU" ng-class="{enable: subview == 'forms'}">
                 <a href="#/configuration/forms/">{{resourceBundle['forms']}}</a>
             </li>
@@ -120,6 +123,9 @@
         </div>
         <div ng-switch-when="rebalancing">
             <div ng-include="'views/configuration/stock-rebalancing.html'"></div>
+        </div>
+        <div ng-switch-when="transporters">
+            <div ng-if="tspsConfigured" ng-include="'views/configuration/transporters.html'"></div>
         </div>
         <div ng-switch-when="forms">
             <div ng-if="iSU" ng-include="'views/configuration/forms.html'"></div>

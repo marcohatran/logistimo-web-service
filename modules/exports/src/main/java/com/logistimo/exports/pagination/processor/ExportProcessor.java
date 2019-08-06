@@ -128,7 +128,7 @@ public class ExportProcessor extends InstrumentedProcessor {
     xLogger.fine("exportParams.gcsFilename = {0}", exportParams.gcsFilename);
 
     if (exportParams.gcsFilename == null) {
-      messages = Resources.get().getBundle("Messages", Locale.ENGLISH);
+      messages = Resources.getBundle(Locale.ENGLISH);
       // Change the type only if exportParams.type is ReportsConstants.TYPE_STOCKEVENT. This is done so that the user gets an email with
       // the title Abnormal Stock instead of Stock Event. Also the csv file is called abnormalstock_<date>.csv instead of stev_<date>.csv
       String type = exportParams.type;

@@ -104,6 +104,14 @@ public class TransactionUtil {
   private TransactionUtil() {
   }
 
+  /**
+   * Check if transaction is in progress.
+   * @param saveTime - save time of the request
+   * @param userId - user id
+   * @param kioskId - store id
+   * @param partialId - transaction part id, typically comes via SMS.
+   * @return - true if it is already in progress, else
+   */
   public static boolean deduplicateBySaveTimePartial(String saveTime, String userId,
                                                      String kioskId, String partialId) {
     // Global checking without partial ID - skip write when partial id is available
@@ -130,17 +138,17 @@ public class TransactionUtil {
         cacheKey += CharacterConstants.DOT + partialId;
       }
       if (cache != null) {
-        // Get last checksum
-        if (cache.get(cacheKey) != null) {
-          return true;
-        } else if (!skipWrite) {
+        if (skipWrite) {
+          // Get last checksum
+          return cache.get(cacheKey) != null;
+        } else {
           // Put new checksum back into cache
-          cache.put(cacheKey, TransactionUtil.IN_PROGRESS, DEDUPLICATION_DURATION_NEW);
+          return !cache.putIfNotExist(cacheKey, TransactionUtil.IN_PROGRESS, DEDUPLICATION_DURATION_NEW);
         }
       }
     } catch (Exception e) {
       xLogger
-          .warn("{0} when deduplicating transactions: {1}", e.getClass().getName(), e.getMessage());
+          .warn("{0} when de duplicating transactions: {1}", e.getClass().getName(), e.getMessage());
     }
     return false;
   }
@@ -243,18 +251,9 @@ public class TransactionUtil {
       MemcacheService cache = AppFactory.get().getMemcacheService();
       String
           cacheKey =
-          TRANSACTION_CHECKSUM_KEY_PREFIX + trans.getKioskId() + "." + trans.getSourceUserId();
+          TRANSACTION_CHECKSUM_KEY_PREFIX + trans.getKioskId() + "." + trans.getSourceUserId()+"."+checkSum;
       if (cache != null) {
-        // Get last checksum
-        Checksum lastCheckSum = (Checksum) cache.get(cacheKey);
-        // Put new checksum back into cache
-        cache.put(cacheKey, new Checksum(checkSum, timestamp), DEDUPLICATION_DURATION);
-        if (lastCheckSum == null) {
-          return false;
-        } else if (checkSum.equals(lastCheckSum.c)) {
-          long diffSeconds = ((timestamp.getTime() - lastCheckSum.t.getTime()) / 1000);
-          return (diffSeconds < DEDUPLICATION_DURATION);
-        }
+        return cache.putIfNotExist(cacheKey, new Checksum(checkSum, timestamp), DEDUPLICATION_DURATION);
       }
     } catch (Exception e) {
       xLogger
@@ -338,8 +337,7 @@ public class TransactionUtil {
 
   public static String getDisplayName(String transType, String transNaming, Locale locale) {
     String name = "";
-    // Get the resource bundle
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+    ResourceBundle messages = Resources.getBundle(locale);
     if (messages == null) {
       return "";
     }

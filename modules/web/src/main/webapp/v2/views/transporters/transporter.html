@@ -1,0 +1,202 @@
+<!--
+  ~ Copyright © 2017 Logistimo.
+  ~
+  ~ This file is part of Logistimo.
+  ~
+  ~ Logistimo software is a mobile & web platform for supply chain management and remote temperature monitoring in
+  ~ low-resource settings, made available under the terms of the GNU Affero General Public License (AGPL).
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+  ~ Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+  ~ later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+  ~ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License along with this program.  If not, see
+  ~ <http://www.gnu.org/licenses/>.
+  ~
+  ~ You can be released from the requirements of the license by purchasing a commercial license. To know more about
+  ~ the commercial license, please contact us at opensource@logistimo.com
+  -->
+
+<div class="box topbox">
+  <div ng-controller="TransporterDetailMenuController">
+    <div class="row" ng-show="loading == false && transporter">
+      <div class="col-sm-12">
+        <form class="form-horizontal">
+          <div class="filter-box">
+            <div class="filter-title">
+              {{transporter.name}}
+            </div>
+          </div>
+          <div class="row action-bar">
+            <a ng-if="currentDomain == transporter.sdid && iAdm && !dp.vp"
+               href="#/setup/transporters/all/edit?tid={{transporter.id}}" class="btn btn-sm btn-primary"
+               ng-click="editTransporter()">{{resourceBundle['edit']}}</a>
+            <!--<a ng-click="$back()" class="btn btn-sm btn-default">{{resourceBundle['back']}}</a>-->
+                         <span class="caption pull-right cbx">
+                            <span ng-show="isDef(transporter.cre_t)">
+                                 {{resourceBundle['createdon']}} {{transporter.cre_t}}<span
+                                    ng-show="isUndef(transporter.creby) && isDef(transporter.t)">,</span>
+                            </span>
+                            <span ng-show="isDef(transporter.creby)">{{resourceBundle['by']}}
+                                <a href="#/setup/users/all/details?userId={{transporter.creby}}" target="_new"
+                                        >{{isDef(transporter.crebyn) ? transporter.crebyn : transporter.creby}}</a>
+                              <span ng-show="isDef(transporter.t)">,</span>
+                            </span>
+                            <span ng-show="isDef(transporter.t)">
+                                {{resourceBundle['lastupdated']}}&nbsp;{{resourceBundle['on']}}
+                                {{transporter.t}}
+                                <span ng-show="isDef(transporter.udby)">
+                                     {{resourceBundle['by']}}
+                                    <a href="#/setup/users/all/details?userId={{transporter.udby}}"
+                                       target="_new">
+                                      {{isDef(transporter.udbyn) ? transporter.udbyn :transporter.udby }}</a>
+                                </span>
+                            </span>
+                        </span>
+          </div>
+          <div class="col-sm-8">
+            <div class="row">
+              <div class="col-sm-12">
+                <div class="bgr">
+                  <div class="title-heading">
+                    {{resourceBundle['transporter.infotitle']}}
+                  </div>
+                  <div class="row">
+                    <div class="col-sm-4">
+                      <label class="control-label">{{resourceBundle['transporter.name']}}:</label>
+                    </div>
+                    <div class="col-sm-8 cbx">
+                      {{transporter.name}}
+                    </div>
+                  </div>
+                  <div class="row" ng-if="transporter.desc">
+                    <div class="col-sm-4">
+                      <label class="control-label">{{resourceBundle['description']}}:</label>
+                    </div>
+                    <div class="col-sm-8 cbx">
+                      {{transporter.desc}}
+                    </div>
+                  </div>
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <label class="control-label">{{resourceBundle['user.mobile']}}:</label>
+                        </div>
+                        <div class="col-sm-8 cbx">
+                            {{transporter.phnm}}
+                        </div>
+                    </div>
+                  <div class="row">
+                    <div class="col-sm-4">
+                      <label class="control-label">{{resourceBundle['country']}}:</label>
+                    </div>
+                    <div class="col-sm-8 cbx">
+                      {{transporter.cnt}}
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-sm-4">
+                      <label class="control-label">{{resourceBundle['state']}}:</label>
+                    </div>
+                    <div class="col-sm-8 cbx">
+                      {{transporter.st}}
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-sm-4">
+                      <label class="control-label">{{resourceBundle['district']}}:</label>
+                    </div>
+                    <div class="col-sm-8 cbx">
+                      {{transporter.ds}}
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-sm-4">
+                      <label class="control-label">{{resourceBundle['taluk']}}:</label>
+                    </div>
+                    <div class="col-sm-8 cbx">
+                      {{transporter.tlk}}
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-sm-4">
+                      <label class="control-label">{{resourceBundle['village']}}:</label>
+                    </div>
+                    <div class="col-sm-8 cbx">
+                      {{transporter.ct}}
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-sm-4">
+                      <label class="control-label">{{resourceBundle['streetaddress']}}:</label>
+                    </div>
+                    <div class="col-sm-8 cbx">
+                      {{transporter.stn}}
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-sm-4">
+                      <label class="control-label">{{resourceBundle['zipcode']}}:</label>
+                    </div>
+                    <div class="col-sm-8 cbx">
+                      {{transporter.pin}}
+                    </div>
+                  </div>
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <label class="control-label">{{resourceBundle['vehicle']}} {{resourceBundle['details'] | lowercase}}:</label>
+                        </div>
+                        <div class="col-sm-8 cbx">
+                            {{transporter.vhcl}}
+                        </div>
+                    </div>
+                </div>
+
+                  <div class="bgr" ng-if="transporter.is_api_enabled">
+                      <div class="title-heading">
+                          {{resourceBundle['transporter.service.configtitle']}}
+                      </div>
+                      <div class="row">
+                          <div class="col-sm-4">
+                              <label class="control-label">{{resourceBundle['provider']}}:</label>
+                          </div>
+                          <div class="col-sm-8 cbx">
+                              {{transporter.tsp_name}}
+                          </div>
+                      </div>
+                      <div class="row">
+                          <div class="col-sm-4">
+                              <label class="control-label">{{resourceBundle['url']}}:</label>
+                          </div>
+                          <div class="col-sm-8 cbx">
+                              {{transporter.url}}
+                          </div>
+                      </div>
+                      <div class="row">
+                          <div class="col-sm-4">
+                              <label class="control-label">{{resourceBundle['account.id']}}:</label>
+                          </div>
+                          <div class="col-sm-8 cbx">
+                              {{transporter.ac_id}}
+                          </div>
+                      </div>
+                      <div class="row">
+                          <div class="col-sm-4">
+                              <label class="control-label">{{resourceBundle['secret.key']}}:</label>
+                          </div>
+                          <div class="col-sm-8 cbx">
+                              {{transporter.secret}}
+                          </div>
+                      </div>
+                  </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

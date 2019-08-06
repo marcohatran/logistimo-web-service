@@ -22,7 +22,7 @@
   -->
 
 <div class="box topbox" ng-controller="CreateReturnsController">
-    <h3>Create returns for
+    <h3>{{resourceBundle['returns.create']}} {{resourceBundle['for']}}
         <span ng-hide="returnOrder.oty == 0"> {{resourceBundle['order']}}:  <a ng-href="#/orders/detail/{{returnOrder.id}}/">{{returnOrder.id}}</a></span>
         <span ng-show="returnOrder.oty == 0">
             <span ng-hide="transRelease"> {{resourceBundle['transactions.transfer.upper']}}: </span>
@@ -251,7 +251,7 @@
                                        typeahead-template-url="materialTemplate"
                                        ng-model="newMaterial"
                                        class="form-control"
-                                       placeholder="Type material name to choose"
+                                       placeholder="{{resourceBundle['type.material.name.to.choose']}}"
                                        uib-typeahead="item as item.nm for item in availableReturnItems | filter:{nm:$viewValue} | limitTo:8"
                                        typeahead-editable="false"
                                        typeahead-on-select="addReturnItem($item); newMaterial = ''"
@@ -270,7 +270,7 @@
             <div class="panel panel-default">
                 <div class="panel-body">
                     <div class="row mt10">
-                        <label class="col-sm-2 control-label">Comment </label>
+                        <label class="col-sm-2 control-label">{{resourceBundle['comment']}} </label>
                         <div class="col-sm-5">
                             <textarea class="form-control" rows="4" ng-model="comment"></textarea>
                         </div>

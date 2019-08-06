@@ -96,7 +96,7 @@ public class DashboardController {
   String create(@RequestBody DashboardModel model) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     long domainId = sUser.getCurrentDomainId();
     try {
       IDashboard db = dashboardBuilder.buildDashboard(model, sUser.getUsername());

@@ -71,15 +71,9 @@ blkUpControllers.controller('BulkUploadController',['$scope','blkUpService','API
             $scope.serr = !$scope.serr;
         };
 
-        /*$scope.downloadFile = function(key) {
-            $scope.downloading = true;
-            exportService.downloadFile(key).then(function(data) {
-                $scope.actionURL = data.data;
-            });
-        };*/
         $scope.uploadPostUrl = function(){
-            if($scope.fileData.size > 20 * 1024 * 1024 ) { // Max file size to upload 10 MB
-                $scope.showWarning("Maximum file size is 20MB.");
+            if($scope.fileData.size > 20 * 1024 * 1024 ) {
+                $scope.showWarning($scope.resourceBundle["bulkupload.maximum.file.size.warning"]);
                 return;
             }
             var uploadName = "";
@@ -92,7 +86,7 @@ blkUpControllers.controller('BulkUploadController',['$scope','blkUpService','API
                 } else {
                     uploadName = $scope.uploadType;
                 }
-                $scope.showSuccess($scope.resourceBundle['bulkupload.successfullyscheduled'] + " " + uploadName);
+                $scope.showSuccess(messageFormat($scope.resourceBundle['bulkupload.successfullyscheduled'], uploadName));
             }).catch(function error(msg) {
                 $scope.showErrorMsg(msg);
             }).finally(function(){
@@ -117,7 +111,7 @@ blkUpControllers.controller('BulkUploadController',['$scope','blkUpService','API
             }else{
                 $scope.uploadTypeMessage = $scope.uploadType;
             }
-            if (!confirm($scope.resourceBundle['bulkupload.containcsvdata'] + ' ' + $scope.uploadTypeMessage + '?')) {
+            if (!confirm(messageFormat($scope.resourceBundle['bulkupload.containcsvdata'], $scope.uploadTypeMessage))) {
                 return;
             }
             return true;

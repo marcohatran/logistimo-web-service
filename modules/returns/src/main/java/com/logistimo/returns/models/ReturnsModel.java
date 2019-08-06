@@ -78,4 +78,7 @@ public class ReturnsModel {
   @SerializedName("tracking_details")
   private ReturnsTrackingModel returnsTrackingModel;
 
+  @SerializedName("updated_time")
+  private Long updatedTime;
+
 }

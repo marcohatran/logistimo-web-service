@@ -23,13 +23,18 @@
 
 package com.logistimo.shipments;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+
 /**
  * Created by Mohan Raja on 29/09/16
  */
 public enum ShipmentStatus {
   // PENDING is introduced only for display purpose. Not to be used as a status.
   // Just to maintain consistency with Order. Will be removed once Order status use OPEN.
-  OPEN("op"), PENDING("op"), CONFIRMED("cf"), SHIPPED("sp"), FULFILLED("fl"), CANCELLED("cn");
+  OPEN("op"), PENDING("op"), CONFIRMED("cf"), READY_FOR_DISPATCH("rp"), SHIPPED("sp"),
+  FULFILLED("fl"), CANCELLED("cn");
   private String value;
 
   ShipmentStatus(String value) {
@@ -49,4 +54,11 @@ public enum ShipmentStatus {
   public String toString() {
     return value;
   }
+
+  public static final Collection<ShipmentStatus> INACTIVE_SHIPMENT_STATUSES =
+      Collections.singletonList(CANCELLED);
+  public static final Collection<ShipmentStatus> ALLOCATABLE_STATUSES =
+      Arrays.asList(OPEN, PENDING);
+  public static final Collection<ShipmentStatus> PRE_SHIP_STATUSES =
+      Arrays.asList(OPEN, PENDING, READY_FOR_DISPATCH);
 }

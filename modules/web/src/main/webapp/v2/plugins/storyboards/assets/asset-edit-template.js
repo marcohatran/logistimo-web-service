@@ -8,6 +8,7 @@ logistimoApp.controller('assetTemplateController', ['$scope', '$timeout', 'domai
         $scope.showErrorMsg(msg);
     }).finally(function () {
         $scope.hideLoading();
+
     });
 
     $scope.filterAssets = function (query) {
@@ -21,20 +22,20 @@ logistimoApp.controller('assetTemplateController', ['$scope', '$timeout', 'domai
     };
 
     $scope.secondaryMetric = [];
-    $scope.secondaryMetric.push({name: ">= 1 hour", value: "0"});
-    $scope.secondaryMetric.push({name: ">= 2 hours", value: "1"});
-    $scope.secondaryMetric.push({name: ">= 3 hours", value: "2"});
-    $scope.secondaryMetric.push({name: ">= 5 hours", value: "3"});
-    $scope.secondaryMetric.push({name: ">= 10 hours", value: "4"});
+    $scope.secondaryMetric.push({name: ">= 1 " + $scope.resourceBundle['hour'], value: "0"});
+    $scope.secondaryMetric.push({name: ">= 2 " + $scope.resourceBundle['hours.lower'], value: "1"});
+    $scope.secondaryMetric.push({name: ">= 3 " + $scope.resourceBundle['hours.lower'] , value: "2"});
+    $scope.secondaryMetric.push({name: ">= 5 " + $scope.resourceBundle['hours.lower'], value: "3"});
+    $scope.secondaryMetric.push({name: ">= 10 " + $scope.resourceBundle['hours.lower'], value: "4"});
 
     $scope.filterStatus = function (query) {
 
         var sData = {results: []};
 
-        sData.results[0] = {id: 'tn', text: "Normal"};
-        sData.results[1] = {id: 'tl', text: "Low"};
-        sData.results[2] = {id: 'th', text: "High"};
-        sData.results[3] = {id: 'tu', text: "Unknown"};
+        sData.results[0] = {id: 'tn', text: $scope.resourceBundle['overview.temperature.dashboard.status.normal']};
+        sData.results[1] = {id: 'tl', text: $scope.resourceBundle['overview.temperature.dashboard.status.low']};
+        sData.results[2] = {id: 'th', text: $scope.resourceBundle['overview.temperature.dashboard.status.high']};
+        sData.results[3] = {id: 'tu', text: $scope.resourceBundle['overview.temperature.dashboard.status.unknown']};
 
         query.callback(sData);
     };
@@ -60,13 +61,13 @@ logistimoApp.controller('assetTemplateController', ['$scope', '$timeout', 'domai
             $scope.widget.conf.exposureTime = "";
             $scope.secondaryMetric = [];
             if(newVal == "0") {
-                $scope.secondaryMetric.push({name: ">= 1 hour", value: "0"});
-                $scope.secondaryMetric.push({name: ">= 5 hours", value: "3"});
-                $scope.secondaryMetric.push({name: ">= 10 hours", value: "4"});
+                $scope.secondaryMetric.push({name: ">= 1 " + $scope.resourceBundle['hour'], value: "0"});
+                $scope.secondaryMetric.push({name: ">= 5 " + $scope.resourceBundle['hours.lower'], value: "3"});
+                $scope.secondaryMetric.push({name: ">= 10 " + $scope.resourceBundle['hours.lower'], value: "4"});
             } else if(newVal == "1") {
-                $scope.secondaryMetric.push({name: ">= 1 hour", value: "0"});
-                $scope.secondaryMetric.push({name: ">= 2 hours", value: "1"});
-                $scope.secondaryMetric.push({name: ">= 3 hours", value: "2"});
+                $scope.secondaryMetric.push({name: ">= 1 " + $scope.resourceBundle['hour'], value: "0"});
+                $scope.secondaryMetric.push({name: ">= 2 " + $scope.resourceBundle['hours.lower'], value: "1"});
+                $scope.secondaryMetric.push({name: ">= 3 " + $scope.resourceBundle['hours.lower'], value: "2"});
             }
         }
     });

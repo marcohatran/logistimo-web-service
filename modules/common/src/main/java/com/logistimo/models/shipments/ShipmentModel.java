@@ -24,7 +24,6 @@
 package com.logistimo.models.shipments;
 
 
-
 import com.logistimo.shipments.ShipmentStatus;
 
 import java.util.List;
@@ -38,7 +37,9 @@ public class ShipmentModel {
   public Long vendorId;
   public List<ShipmentItemModel> items;
   public ShipmentStatus status;
+  public Long transporterId;
   public String transporter;
+  public String phonenum;
   public String trackingId;
   public String reason;
   public String cdrsn;
@@ -145,9 +146,25 @@ public class ShipmentModel {
    * Comment for shipment
    */
   public String comment;
+
   /**
    * Sales Reference id
    */
   public String salesRefId;
+
+  /**
+   * Consignment details
+   */
+  public ConsignmentModel consignment;
+
+  /**
+   * Vehicle details
+   */
+  public String vehicle;
+
+  /**
+   * Is customer pickup
+   */
+  public boolean isCustomerPickup;
 
 }

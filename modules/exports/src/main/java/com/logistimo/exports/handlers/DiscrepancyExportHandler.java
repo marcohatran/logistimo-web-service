@@ -53,43 +53,42 @@ public class DiscrepancyExportHandler implements IExportHandler {
   @Override
   public String getCSVHeader(Locale locale, DomainConfig dc, String type) {
 
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-    ResourceBundle jsMessages = Resources.get().getBundle("JSMessages", locale);
+    ResourceBundle messages = Resources.getBundle(locale);
     StringBuilder headerSb = new StringBuilder();
-    headerSb.append(jsMessages.getString("discrepancy")).append(CharacterConstants.COMMA)
+    headerSb.append(messages.getString("discrepancy")).append(CharacterConstants.COMMA)
         .append(messages.getString("order")).append(CharacterConstants.COMMA)
         .append(messages.getString("referenceid")).append(CharacterConstants.COMMA)
         .append(messages.getString("order")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("createdon.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("createdon.lower")).append(CharacterConstants.COMMA)
         .append(messages.getString("material")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("id")).append(CharacterConstants.COMMA)
+        .append(messages.getString("id")).append(CharacterConstants.COMMA)
         .append(messages.getString("customid.material")).append(CharacterConstants.COMMA)
         .append(messages.getString("material.name")).append(CharacterConstants.COMMA)
-        .append(jsMessages.getString("order.recommended")).append(CharacterConstants.COMMA)
-        .append(jsMessages.getString("ordered")).append(CharacterConstants.COMMA)
-        .append(jsMessages.getString("discrepancy.ordering.reasons"))
+        .append(messages.getString("order.recommended")).append(CharacterConstants.COMMA)
+        .append(messages.getString("ordered")).append(CharacterConstants.COMMA)
+        .append(messages.getString("discrepancy.ordering.reasons"))
         .append(CharacterConstants.COMMA)
-        .append(jsMessages.getString("shipped")).append(CharacterConstants.COMMA)
-        .append(jsMessages.getString("discrepancy.shipping.reasons"))
+        .append(messages.getString("shipped")).append(CharacterConstants.COMMA)
+        .append(messages.getString("discrepancy.shipping.reasons"))
         .append(CharacterConstants.COMMA)
-        .append(jsMessages.getString("received")).append(CharacterConstants.COMMA)
-        .append(jsMessages.getString("discrepancy.fulfillment.reasons"))
+        .append(messages.getString("received")).append(CharacterConstants.COMMA)
+        .append(messages.getString("discrepancy.fulfillment.reasons"))
         .append(CharacterConstants.SPACE).append(CharacterConstants.O_BRACKET)
-        .append(jsMessages.getString("discrepancy.fulfillment.reasons.addinfo"))
+        .append(messages.getString("discrepancy.fulfillment.reasons.addinfo"))
         .append(CharacterConstants.C_BRACKET).append(CharacterConstants.COMMA)
         .append(messages.getString("status")).append(CharacterConstants.COMMA)
         .append(messages.getString("status")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("updatedon.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("updatedon.lower")).append(CharacterConstants.COMMA)
         .append(messages.getString("customer")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("id")).append(CharacterConstants.COMMA)
+        .append(messages.getString("id")).append(CharacterConstants.COMMA)
         .append(messages.getString("customid.customer")).append(CharacterConstants.COMMA)
         .append(messages.getString("customer")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("name.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("name.lower")).append(CharacterConstants.COMMA)
         .append(messages.getString("vendor")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("id")).append(CharacterConstants.COMMA)
+        .append(messages.getString("id")).append(CharacterConstants.COMMA)
         .append(messages.getString("customid.vendor")).append(CharacterConstants.COMMA)
         .append(messages.getString("vendor")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("name.lower"));
+        .append(messages.getString("name.lower"));
     return headerSb.toString();
 
   }

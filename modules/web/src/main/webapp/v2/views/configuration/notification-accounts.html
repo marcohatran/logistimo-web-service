@@ -33,8 +33,8 @@
 
             <div class="col-sm-4 mb10">
                 <select ng-model="nof.acc" ng-change="fetchEvent('accounts')" class="form-control" id="nofMsg">
-                    <option value="">-- {{resourceBundle['select']}} {{'event'}} --</option>
-                    <option ng-repeat="account in accountsLabel" value="{{account.name}}">{{account.name}}</option>
+                    <option value="">-- {{resourceBundle['select']}} {{resourceBundle['event']}} --</option>
+                    <option ng-repeat="account in accountsLabel" value="{{account.name}}">{{getLabelFromResourceBundle(account.name)}}</option>
                 </select>
             </div>
             <div class="lnk" ng-show="prShow || prSelect">

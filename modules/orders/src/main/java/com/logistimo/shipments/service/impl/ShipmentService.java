@@ -23,6 +23,12 @@
 
 package com.logistimo.shipments.service.impl;
 
+import com.google.common.collect.Sets;
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+
+import com.logistimo.api.patch.OperationType;
+import com.logistimo.api.patch.Patch;
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.SecurityUtil;
 import com.logistimo.auth.utils.SecurityUtils;
@@ -33,12 +39,17 @@ import com.logistimo.constants.QueryConstants;
 import com.logistimo.conversations.entity.IMessage;
 import com.logistimo.conversations.service.ConversationService;
 import com.logistimo.dao.JDOUtils;
+import com.logistimo.deliveryrequest.actions.GetDeliveryRequestsAction;
+import com.logistimo.deliveryrequest.models.DeliveryRequestModel;
+import com.logistimo.deliveryrequest.models.DeliveryRequestUpdateWrapper;
+import com.logistimo.deliveryrequest.validator.NoActiveDeliveryRequestValidator;
 import com.logistimo.domains.utils.DomainsUtil;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.events.entity.IEvent;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.LogiException;
+import com.logistimo.exception.SystemException;
 import com.logistimo.exception.ValidationException;
 import com.logistimo.inventory.entity.IInvAllocation;
 import com.logistimo.inventory.entity.IInvntryBatch;
@@ -47,6 +58,8 @@ import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.models.ResponseModel;
+import com.logistimo.models.shipments.ConsignmentModel;
+import com.logistimo.models.shipments.PackageDimensions;
 import com.logistimo.models.shipments.ShipmentItemBatchModel;
 import com.logistimo.models.shipments.ShipmentItemModel;
 import com.logistimo.models.shipments.ShipmentMaterialsModel;
@@ -58,21 +71,27 @@ import com.logistimo.orders.models.PDFResponseModel;
 import com.logistimo.orders.service.IDemandService;
 import com.logistimo.orders.service.OrderManagementService;
 import com.logistimo.pagination.Results;
-import com.logistimo.proto.JsonTagsZ;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.impl.PMF;
+import com.logistimo.shipments.ConsignmentRepository;
 import com.logistimo.shipments.FulfilledQuantityModel;
 import com.logistimo.shipments.ShipmentRepository;
 import com.logistimo.shipments.ShipmentStatus;
 import com.logistimo.shipments.ShipmentUtils;
+import com.logistimo.shipments.action.FulfillShipmentAction;
 import com.logistimo.shipments.action.ShipmentActivty;
 import com.logistimo.shipments.action.UpdateShipmentStatusAction;
+import com.logistimo.shipments.constants.PatchPaths;
+import com.logistimo.shipments.entity.Consignment;
+import com.logistimo.shipments.entity.IConsignment;
 import com.logistimo.shipments.entity.IShipment;
 import com.logistimo.shipments.entity.IShipmentItem;
 import com.logistimo.shipments.entity.IShipmentItemBatch;
+import com.logistimo.shipments.mapper.ConsignmentMapper;
+import com.logistimo.shipments.mapper.ShipmentItemBatchMapper;
 import com.logistimo.shipments.service.IShipmentService;
 import com.logistimo.shipments.validators.CreateShipmentValidator;
 import com.logistimo.users.entity.IUserAccount;
@@ -91,6 +110,7 @@ import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -98,6 +118,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
@@ -115,6 +136,7 @@ import static com.logistimo.shipments.ShipmentUtils.generateEvent;
 public class ShipmentService implements IShipmentService {
 
   private static final XLog xLogger = XLog.getLog(ShipmentService.class);
+
   private SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATE_FORMAT);
 
   private MaterialCatalogService materialCatalogService;
@@ -125,9 +147,28 @@ public class ShipmentService implements IShipmentService {
   private ConversationService conversationService;
   private UsersService usersService;
 
+  //Action classes
   private CreateShipmentValidator createShipmentValidator;
   private GenerateShipmentVoucherAction generateShipmentVoucherAction;
   private UpdateShipmentStatusAction updateShipmentStatusAction;
+  private ConsignmentMapper consignmentMapper;
+  private GetDeliveryRequestsAction getDeliveryRequestsAction;
+  private FulfillShipmentAction fulfillShipmentAction;
+  private ShipmentItemBatchMapper shipmentItemBatchMapper;
+  private NoActiveDeliveryRequestValidator noActiveDeliveryRequestValidator;
+
+
+  @Autowired
+  public ShipmentService setFulfillShipmentAction(FulfillShipmentAction fulfillShipmentAction) {
+    this.fulfillShipmentAction = fulfillShipmentAction;
+    return this;
+  }
+
+  @Autowired
+  public ShipmentService setShipmentItemBatchMapper(ShipmentItemBatchMapper shipmentItemBatchMapper) {
+    this.shipmentItemBatchMapper = shipmentItemBatchMapper;
+    return this;
+  }
 
   @Autowired
   public ShipmentService setShipmentActivty(ShipmentActivty shipmentActivty) {
@@ -143,7 +184,13 @@ public class ShipmentService implements IShipmentService {
     return this;
   }
 
+  @Autowired
+  public void setConsignmentRepository(ConsignmentRepository consignmentRepository) {
+    this.consignmentRepository = consignmentRepository;
+  }
+
   private ShipmentRepository shipmentRepository;
+  private ConsignmentRepository consignmentRepository;
 
   @Autowired
   public void setUpdateShipmentStatusAction(UpdateShipmentStatusAction updateShipmentStatusAction){
@@ -197,27 +244,48 @@ public class ShipmentService implements IShipmentService {
     this.generateShipmentVoucherAction = generateShipmentVoucherAction;
   }
 
+  @Autowired
+  public void setConsignmentMapper(ConsignmentMapper consignmentMapper) {
+    this.consignmentMapper = consignmentMapper;
+  }
+
+  @Autowired
+  public void setGetDeliveryRequestsAction(GetDeliveryRequestsAction getDeliveryRequestsAction) {
+    this.getDeliveryRequestsAction = getDeliveryRequestsAction;
+  }
+
+  @Autowired
+  public void setNoActiveDeliveryRequestValidator(
+      NoActiveDeliveryRequestValidator noActiveDeliveryRequestValidator) {
+    this.noActiveDeliveryRequestValidator = noActiveDeliveryRequestValidator;
+  }
+
   /**
    * Create shipment
    *
    * @param model {@code ShipmentModel}
+   * @param pm
    * @return -
    */
   @Override
   @SuppressWarnings("unchecked")
-  public String createShipment(ShipmentModel model, int source, Boolean updateOrderFields)
+  public String createShipment(ShipmentModel model, int source, Boolean updateOrderFields,
+                               PersistenceManager pm)
       throws ServiceException, ValidationException {
     LockUtil.LockStatus lockStatus = LockUtil.lock(Constants.TX_O + model.orderId);
     if (!LockUtil.isLocked(lockStatus)) {
       throw new InvalidServiceException(new ServiceException("O002", model.orderId));
     }
-    PersistenceManager pm = PMF.get().getPersistenceManager();
-    Transaction tx = pm.currentTransaction();
+    boolean isPMLocal = pm == null;
+    Transaction tx = null;
+    if(isPMLocal) {
+      pm = PMF.get().getPersistenceManager();
+      tx = pm.currentTransaction();
+    }
     try {
-            /*if (!validate(model)) {
-                throw new InvalidDataException("Invalid data. Shipment cannot be created.");
-            }*/
-      tx.begin();
+      if(isPMLocal) {
+        tx.begin();
+      }
       Date now = new Date();
       IShipment shipment = JDOUtils.createInstance(IShipment.class);
       shipment.setShipmentId(constructShipmentId(model.orderId));
@@ -234,6 +302,10 @@ public class ShipmentService implements IShipmentService {
       shipment.setKioskId(model.customerId);
       shipment.setServicingKiosk(model.vendorId);
       shipment.setTransporter(model.transporter);
+      shipment.setTrackingContactNumber(model.phonenum);
+      shipment.setTransporterId(model.transporterId);
+      shipment.setVehicleDetails(model.vehicle);
+      shipment.setIsCustomerPickup(model.isCustomerPickup);
       shipment.setTrackingId(model.trackingId);
       shipment.setPackageSize(model.ps);
       shipment.setReason(model.reason);
@@ -251,6 +323,10 @@ public class ShipmentService implements IShipmentService {
       IKiosk vendor = entitiesService.getKiosk(model.vendorId, false);
       DomainConfig dc = DomainConfig.getInstance(vendor.getDomainId());
       boolean containsBatchMaterial = false;
+      if(model.consignment != null) {
+        Long consignmentId = persistConsignment(pm, model.consignment).getId();
+        shipment.setConsignmentId(consignmentId);
+      }
       for (ShipmentItemModel item : model.items) {
         if (item.isBa) {
           containsBatchMaterial = true;
@@ -319,7 +395,7 @@ public class ShipmentService implements IShipmentService {
 
       final boolean
           isDirectShipOrFulfil =
-          model.status != null && !model.status.equals(ShipmentStatus.OPEN);
+          model.status != null && !ShipmentStatus.PRE_SHIP_STATUSES.contains(model.status);
       String tempSensitiveStatus = null;
       String materialStatus = null;
       if (!containsBatchMaterial && dc.getOrdersConfig().autoAssignFirstMatStatus()) {
@@ -349,7 +425,7 @@ public class ShipmentService implements IShipmentService {
             quantityByBatch.kid = model.customerId;
             quantityByBatch.siId = items.get(i).getShipmentItemId();
             quantityByBatch.sdid = model.sdid;
-            IShipmentItemBatch sbItem = createShipmentItemBatch(quantityByBatch);
+            IShipmentItemBatch sbItem = shipmentItemBatchMapper.invoke(quantityByBatch);
             bItems.add(sbItem);
             sbatch.add(sbItem);
           }
@@ -373,13 +449,15 @@ public class ShipmentService implements IShipmentService {
       // if both conversation and activity returns success, proceed to commit changes
       if (isDirectShipOrFulfil) {
         updateShipmentStatus(shipment.getShipmentId(), model.status, null, model.userID, pm, null,
-            shipment, true, false, source, model.salesRefId, ead, updateOrderFields);
+            shipment, true, false, source, model.salesRefId, ead, updateOrderFields, true);
       } else {
         orderManagementService.updateOrderMetadata(model.orderId, model.userID, pm);
       }
-      generateEvent(model.sdid, IEvent.CREATED, shipment, null, null);
-
-      tx.commit();
+      generateEvent(model.sdid, IEvent.CREATED, shipment.getShipmentId(), shipment.getStatus(),
+          null, null);
+      if(isPMLocal) {
+        tx.commit();
+      }
       return shipment.getShipmentId();
     } catch (ServiceException | ValidationException ie) {
       throw ie;
@@ -387,18 +465,26 @@ public class ShipmentService implements IShipmentService {
       xLogger.severe("Error while creating shipment", e);
       ResourceBundle
           backendMessages =
-          Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
+          Resources.getBundle(SecurityUtils.getLocale());
       throw new ServiceException(backendMessages.getString("shipment.create.error"), e);
     } finally {
-      if (tx.isActive()) {
-        tx.rollback();
+      if(isPMLocal) {
+        if (tx.isActive()) {
+          tx.rollback();
+        }
+        PMF.close(pm);
       }
-      PMF.close(pm);
       if (LockUtil.shouldReleaseLock(lockStatus) && !LockUtil
           .release(Constants.TX_O + model.orderId)) {
         xLogger.warn("Unable to release lock for key {0}", Constants.TX_O + model.orderId);
       }
     }
+  }
+
+  private IConsignment persistConsignment(PersistenceManager pm, ConsignmentModel model) {
+    IConsignment consignment = consignmentMapper.mapToEntity(model);
+    pm.makePersistent(consignment);
+    return pm.detachCopy(consignment);
   }
 
   private void setMaterialStatus(ShipmentModel model, boolean isDirectShipOrFulfil,
@@ -419,26 +505,6 @@ public class ShipmentService implements IShipmentService {
     }
   }
 
-  private IShipmentItemBatch createShipmentItemBatch(ShipmentItemBatchModel batches)
-      throws ServiceException {
-    Date now = new Date();
-    IShipmentItemBatch sbItem = JDOUtils.createInstance(IShipmentItemBatch.class);
-    sbItem.setCreatedBy(batches.uid);
-    sbItem.setCreatedOn(now);
-    sbItem.setUpdatedBy(batches.uid);
-    sbItem.setUpdatedOn(now);
-    sbItem.setMaterialId(batches.mid);
-    sbItem.setKioskId(batches.kid);
-    sbItem.setBatchManufacturer(batches.bmfnm);
-    sbItem.setShipmentItemId(batches.siId);
-
-    sbItem.setQuantity(batches.q);
-    sbItem.setBatchId(batches.id);
-    sbItem.setShippedMaterialStatus(batches.smst);
-    DomainsUtil.addToDomain(sbItem, batches.sdid, null);
-    return sbItem;
-  }
-
   private IShipmentItem createShipmentItem(ShipmentItemModel item) throws ServiceException {
     IShipmentItem sItem = JDOUtils.createInstance(IShipmentItem.class);
     sItem.setCreatedBy(item.uid);
@@ -454,15 +520,6 @@ public class ShipmentService implements IShipmentService {
     sItem.setFulfilledMaterialStatus(item.fmst);
     DomainsUtil.addToDomain(sItem, item.sdid, null);
     return sItem;
-  }
-
-  private boolean validate(ShipmentModel model) throws ParseException {
-    Date now = new Date();
-    if ((StringUtils.isNotEmpty(model.ead) && sdf.parse(model.ead).before(now))
-        || model.items == null) {
-      return false;
-    }
-    return true;
   }
 
   private String constructShipmentId(Long orderId) throws Exception {
@@ -493,10 +550,10 @@ public class ShipmentService implements IShipmentService {
                                             String message,
                                             String userId,
                                             String reason, boolean updateOrderStatus,
-                                            PersistenceManager pm, int source)
+                                            PersistenceManager pm, int source, boolean transferAllocations)
       throws LogiException {
     return updateShipmentStatus(shipmentId, status, message, userId, pm, reason, null,
-        updateOrderStatus, false, source);
+        updateOrderStatus, false, source, transferAllocations);
   }
 
   @Override
@@ -520,7 +577,7 @@ public class ShipmentService implements IShipmentService {
                                              IShipment shipment, int source)
       throws LogiException {
     return updateShipmentStatus(shipmentId, status, message, userId, pm, reason, shipment, true,
-        false, source);
+        false, source, true);
   }
 
   private ResponseModel updateShipmentStatus(String shipmentId, ShipmentStatus status,
@@ -531,7 +588,7 @@ public class ShipmentService implements IShipmentService {
                                              boolean isOrderFulfil, int source)
       throws LogiException {
     return updateShipmentStatus(shipmentId, status, message, userId, pm, reason, shipment, true,
-        isOrderFulfil, source);
+        isOrderFulfil, source, true);
   }
 
   private ResponseModel updateShipmentStatus(String shipmentId, ShipmentStatus status,
@@ -539,10 +596,10 @@ public class ShipmentService implements IShipmentService {
                                              PersistenceManager pm, String reason,
                                              IShipment shipment,
                                              boolean updateOrderStatus, boolean isOrderFulfil,
-                                             int source) throws LogiException {
+                                             int source, boolean transferAllocations) throws LogiException {
     return updateShipmentStatus(shipmentId, status, message, userId, pm, reason, shipment,
         updateOrderStatus, isOrderFulfil, source,
-        null, null, false);
+        null, null, false, transferAllocations);
   }
 
 
@@ -553,11 +610,11 @@ public class ShipmentService implements IShipmentService {
                                              IShipment shipment,
                                              boolean updateOrderStatus, boolean isOrderFulfil,
                                              int source, String salesRefId,
-                                             Date estimatedDateOfArrival, Boolean updateOrderFields)
+                                             Date estimatedDateOfArrival, Boolean updateOrderFields, boolean transferAllocations)
       throws LogiException {
     return updateShipmentStatusAction
         .invoke(shipmentId, status, message, userId, pm, reason, shipment, updateOrderStatus, isOrderFulfil, source, salesRefId, estimatedDateOfArrival,
-            updateOrderFields);
+            updateOrderFields, transferAllocations);
   }
 
 
@@ -621,7 +678,7 @@ public class ShipmentService implements IShipmentService {
                     shipmentItemBatchModel.mid = shipmentItem.getMaterialId();
                     shipmentItemBatchModel.siId = shipmentItem.getShipmentItemId();
                     shipmentItemBatchModel.sdid = shipmentItem.getDomainId();
-                    IShipmentItemBatch b = createShipmentItemBatch(shipmentItemBatchModel);
+                    IShipmentItemBatch b = shipmentItemBatchMapper.invoke(shipmentItemBatchModel);
                     newShipmentItemBatches.add(b);
                   }
                 }
@@ -669,7 +726,7 @@ public class ShipmentService implements IShipmentService {
           if (item.aq != null && BigUtil.greaterThan(item.aq, item.q)) {
             ResourceBundle
                 backendMessages =
-                Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
+                Resources.getBundle(SecurityUtils.getLocale());
             throw new ServiceException(backendMessages.getString("allocated.qty.greater"));
           }
           inventoryManagementService
@@ -682,7 +739,8 @@ public class ShipmentService implements IShipmentService {
         shipment.setUpdatedBy(model.userId);
         pm.makePersistent(shipment);
         orderManagementService.updateOrderMetadata(orderId, model.userId, pm);
-        generateEvent(shipment.getDomainId(), IEvent.MODIFIED, shipment, null, null);
+        generateEvent(shipment.getDomainId(), IEvent.MODIFIED, shipment.getShipmentId(), shipment
+                .getStatus(), null, null);
         tx.commit();
       } catch (ObjectNotFoundException e) {
         xLogger.warn("Order not found - ", e);
@@ -715,6 +773,8 @@ public class ShipmentService implements IShipmentService {
     }
     IShipment shipment = shipmentRepository.getById(sId);
     if (shipment != null) {
+      IConsignment consignment = consignmentRepository.findOne(shipment.getConsignmentId());
+      AtomicBoolean consignmentUpdated = new AtomicBoolean(Boolean.FALSE);
       PersistenceManager pm = PMF.get().getPersistenceManager();
       Transaction tx = pm.currentTransaction();
       try {
@@ -729,13 +789,21 @@ public class ShipmentService implements IShipmentService {
           }
         }
         shipmentMetadata.entrySet().stream().forEach(entry -> {
-          if ("tpName".equals(entry.getKey())) {
+          if (SHIPMENT_TRANSPORTER_NAME.equals(entry.getKey())) {
             shipment.setTransporter(entry.getValue());
-          } else if ("tId".equals(entry.getKey())) {
+          } else if (SHIPMENT_TRANSPORTER_ID.equals(entry.getKey())) {
+            if(StringUtils.isNotBlank(entry.getValue())) {
+              shipment.setTransporterId(Double.valueOf(entry.getValue()).longValue());
+            } else {
+              shipment.setTransporterId(null);
+            }
+          } else if (SHIPMENT_VEHICLE_DTLS.equals(entry.getKey())) {
+            shipment.setVehicleDetails(entry.getValue());
+          } else if (TRACKING_ID.equals(entry.getKey())) {
             shipment.setTrackingId(entry.getValue());
           } else if ("rsn".equals(entry.getKey())) {
             shipment.setReason(entry.getValue());//todo: update reason for shipment pending.
-          } else if ("date".equals(entry.getKey())) {
+          } else if (DATE.equals(entry.getKey())) {
             if (StringUtils.isNotBlank(entry.getValue())) {
               try {
                 shipment.setExpectedArrivalDate(sdf.parse(entry.getValue()));
@@ -745,20 +813,29 @@ public class ShipmentService implements IShipmentService {
             } else {
               shipment.setExpectedArrivalDate(null);
             }
-          } else if ("ps".equals(entry.getKey())) {
+          } else if (PACKAGE_SIZE.equals(entry.getKey())) {
             shipment.setPackageSize(entry.getValue());
+          } else if (SHIPMENT_CONTACT_PHONE_NUM.equals(entry.getKey())) {
+            shipment.setTrackingContactNumber(entry.getValue());
           } else if ("rid".equals(entry.getKey())) {
             shipment.setSalesReferenceId(entry.getValue());
+          } else if(isConsignmentUpdateRequest(entry.getKey())) {
+            updateConsignmentData(consignment, entry);
+            consignmentUpdated.set(true);
           }
         });
 
         shipment.setUpdatedBy(userId);
         shipment.setUpdatedOn(new Date());
 
-        generateEvent(shipment.getDomainId(), IEvent.MODIFIED, shipment, null, null);
+        generateEvent(shipment.getDomainId(), IEvent.MODIFIED, shipment.getShipmentId(), shipment
+                .getStatus(), null, null);
 
         tx.begin();
         pm.makePersistent(shipment);
+        if(consignmentUpdated.get()) {
+          pm.makePersistent(consignment);
+        }
         orderManagementService.updateOrderMetadata(orderId, userId, pm);
         tx.commit();
         return shipmentRepository.getById(sId);
@@ -780,249 +857,58 @@ public class ShipmentService implements IShipmentService {
         }
       }
     }
-
     throw new ServiceException("Shipment not found");
   }
 
-  @Override
-  public ResponseModel fulfillShipment(String shipmentId, String userId, int source)
-      throws ServiceException {
-    IShipment shipment = shipmentRepository.getById(shipmentId);
-    includeShipmentItems(shipment);
-    ShipmentMaterialsModel sModel = new ShipmentMaterialsModel();
-    sModel.sId = shipmentId;
-    sModel.userId = userId;
-    sModel.afd = sdf.format(new Date());
-    sModel.items = new ArrayList<>();
-    for (IShipmentItem sItem : shipment.getShipmentItems()) {
-      ShipmentItemModel siModel = new ShipmentItemModel();
-      siModel.mId = sItem.getMaterialId();
-      siModel.fq = siModel.q = sItem.getQuantity();
-      IMaterial material = materialCatalogService.getMaterial(sItem.getMaterialId());
-      IKiosk kiosk = entitiesService.getKiosk(shipment.getServicingKiosk(), false);
-      siModel.isBa = material.isBatchEnabled() && kiosk.isBatchMgmtEnabled();
-      if (siModel.isBa) {
-        siModel.bq = new ArrayList<>();
-
-        if (ShipmentStatus.OPEN.equals(shipment.getStatus())) {
-          List<IInvAllocation> allocations =
-              inventoryManagementService.getAllocationsByTypeId(shipment.getServicingKiosk(),
-                  siModel.mId, IInvAllocation.Type.SHIPMENT, shipmentId);
-          if (allocations != null && !allocations.isEmpty()) {
-            for (IInvAllocation alloc : allocations) {
-              if (BigUtil.greaterThanZero(alloc.getQuantity())) {
-                ShipmentItemBatchModel sbModel = new ShipmentItemBatchModel();
-                sbModel.fq = sbModel.q = alloc.getQuantity();
-                sbModel.id = alloc.getBatchId();
-                siModel.bq.add(sbModel);
-              }
-            }
-          }
-        } else {
-          for (IShipmentItemBatch shipmentItemBatch : sItem.getShipmentItemBatch()) {
-            ShipmentItemBatchModel sbModel = new ShipmentItemBatchModel();
-            sbModel.fq = sbModel.q = shipmentItemBatch.getQuantity();
-            sbModel.id = shipmentItemBatch.getBatchId();
-            siModel.bq.add(sbModel);
-          }
-        }
+  private void updateConsignmentData(IConsignment consignment,
+                                     Map.Entry<String, String> entry) {
+    try {
+      String key = entry.getKey();
+      switch (key) {
+        case CNSGNMNT_DECLARATION:
+          consignment.setDeclaration(entry.getValue());
+          break;
+        case CNSGNMNT_DIMENSIONS:
+          PackageDimensions dimensions =
+              new Gson().fromJson(entry.getValue(), PackageDimensions.class);
+          consignment.setLength(dimensions.getLengthInInches());
+          consignment.setBreadth(dimensions.getWidthInInches());
+          consignment.setHeight(dimensions.getHeightInInches());
+          break;
+        case CNSGNMNT_PACKAGE_CNT:
+          consignment.setNumberOfPackages((int) Double.parseDouble(entry.getValue()));
+          break;
+        case CNSGNMNT_VALUE:
+          consignment.setValue(Double.parseDouble(entry.getValue()));
+          break;
+        case CNSGNMNT_WEIGHT:
+          consignment.setWeightInKg(BigDecimal.valueOf(Double.parseDouble(entry.getValue())));
+          break;
       }
-      sModel.items.add(siModel);
+    } catch (NullPointerException | NumberFormatException | JsonSyntaxException e) {
+      throw new SystemException("G009", new Object[0]);
     }
+  }
 
-    return fulfillShipment(sModel, userId, source);
+  private boolean isConsignmentUpdateRequest(String field) {
+    return Sets.newHashSet(CNSGNMNT_DECLARATION, CNSGNMNT_DIMENSIONS,
+        CNSGNMNT_PACKAGE_CNT, CNSGNMNT_VALUE, CNSGNMNT_WEIGHT)
+        .contains(field);
+  }
+
+  @Override
+  public ResponseModel fulfillShipment(String shipmentId, String userId, String message, int source)
+      throws ServiceException {
+    return fulfillShipmentAction.invoke(shipmentId, userId, message, source);
   }
 
 
   @Override
   public ResponseModel fulfillShipment(ShipmentMaterialsModel model, String userId, int source) {
-    Long orderId = extractOrderId(model.sId);
-    LockUtil.LockStatus lockStatus = LockUtil.lock(Constants.TX_O + orderId);
-    if (!LockUtil.isLocked(lockStatus)) {
-      throw new InvalidServiceException(new ServiceException("O002", orderId));
-    }
-    PersistenceManager pm = null;
-    Transaction tx = null;
-    ResponseModel responseModel = new ResponseModel();
-    try {
-      IOrder order = orderManagementService.getOrder(orderId);
-      if (StringUtils.isNotBlank(model.orderUpdatedAt)) {
-        if (!model.orderUpdatedAt.equals(
-            LocalDateUtil.formatCustom(order.getUpdatedOn(), Constants.DATETIME_FORMAT, null))) {
-          IUserAccount userAccount = usersService.getUserAccount(order.getUpdatedBy());
-          throw new LogiException("O004", userAccount.getFullName(),
-              LocalDateUtil.format(order.getUpdatedOn(), SecurityUtils.getLocale(),
-                  userAccount.getTimezone()));
-        }
-      }
-      pm = PMF.get().getPersistenceManager();
-      tx = pm.currentTransaction();
-      tx.begin();
-      IShipment shipment = shipmentRepository.getById(model.sId, true, pm);
-      Map<Long, List<IShipmentItemBatch>> newShipmentItemBatchesMap = new HashMap<>();
-      if (shipment != null) {
-        for (ShipmentItemModel item : model.items) {
-          for (IShipmentItem shipmentItem : shipment.getShipmentItems()) {
-            if (item.mId.equals(shipmentItem.getMaterialId())) {
-              if (item.isBa) {
-                if (item.bq == null || item.bq.isEmpty()) {
-                  ResourceBundle
-                      backendMessages =
-                      Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
-                  throw new IllegalArgumentException(
-                      backendMessages.getString("shipment.fulfill.error") + " " + model.sId +
-                          ", " + backendMessages.getString("materials.batch.empty") + " "
-                          + item.mnm);
-                }
-                BigDecimal totalFQ = BigDecimal.ZERO;
-                BigDecimal totalDQ = BigDecimal.ZERO;
-                for (ShipmentItemBatchModel shipmentItemBatchModel : item.bq) {
-                  boolean newBatch = true;
-                  for (IShipmentItemBatch shipmentItemBatch : shipmentItem.getShipmentItemBatch()) {
-                    if (shipmentItemBatch.getBatchId().equals(shipmentItemBatchModel.id)) {
-                      if (shipmentItemBatchModel.fq == null || BigUtil.lesserThanZero(
-                          shipmentItemBatchModel.fq)) {
-                        ResourceBundle
-                            backendMessages =
-                            Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
-                        throw new ServiceException(
-                            backendMessages.getString("shipment.batch.item") + " " +
-                                shipmentItemBatchModel.id + " " + backendMessages
-                                .getString("qty.lower") + " " +
-                                shipmentItemBatchModel.fq + backendMessages.getString("valid.qty"));
-                      }
-                      updateShipmentItemBatch(shipmentItemBatch, shipmentItemBatchModel,
-                          Boolean.FALSE);
-                      //shipmentItemBatch.setDiscrepancyQuantity(shipmentItemBatch.getQuantity().subtract(shipmentItemBatchModel.q));
-                      totalFQ = totalFQ.add(shipmentItemBatch.getFulfilledQuantity());
-                      totalDQ = totalDQ.add(shipmentItemBatch.getDiscrepancyQuantity());
-                      newBatch = false;
-                      break;
-                    }
-                  }
-                  if (newBatch && BigUtil.greaterThanZero(shipmentItemBatchModel.fq)) {
-                    IShipmentItemBatch shipmentItemBatch =
-                        getShipmentItemBatchFromShipmentItem(model.userId, shipmentItem,
-                            shipmentItemBatchModel);
-                    shipmentItemBatch.setBatchExpiry(LocalDateUtil
-                        .parseCustom(shipmentItemBatchModel.e, Constants.DATE_FORMAT, null));
-                    if (StringUtils.isNotEmpty(shipmentItemBatchModel.bmfdt)) {
-                      shipmentItemBatch.setBatchManufacturedDate(LocalDateUtil
-                          .parseCustom(shipmentItemBatchModel.bmfdt, Constants.DATE_FORMAT, null));
-                    }
-                    updateShipmentItemBatch(shipmentItemBatch, shipmentItemBatchModel,
-                        Boolean.FALSE);
-                    totalFQ = totalFQ.add(shipmentItemBatch.getFulfilledQuantity());
-                    totalDQ = totalDQ.add(shipmentItemBatch.getDiscrepancyQuantity());
 
-                    if (newShipmentItemBatchesMap.containsKey(shipmentItem.getMaterialId())) {
-                      newShipmentItemBatchesMap.get(shipmentItem.getMaterialId())
-                          .add(shipmentItemBatch);
-                    } else {
-                      List<IShipmentItemBatch> newShipmentItemBatches = new ArrayList<>(1);
-                      newShipmentItemBatches.add(shipmentItemBatch);
-                      newShipmentItemBatchesMap
-                          .put(shipmentItem.getMaterialId(), newShipmentItemBatches);
-                    }
-                  }
-                }
-                shipmentItem.setFulfilledQuantity(totalFQ);
-                shipmentItem.setDiscrepancyQuantity(totalDQ);
-              } else {
-                shipmentItem.setFulfilledQuantity(item.fq);
-                shipmentItem.setDiscrepancyQuantity(shipmentItem.getQuantity().subtract(item.fq));
-                shipmentItem.setFulfilledMaterialStatus(item.fmst);
-                shipmentItem.setFulfilledDiscrepancyReason(item.frsn);
-              }
-              break;
-            }
-          }
-        }
-
-        for (IShipmentItem shipmentItem : shipment.getShipmentItems()) {
-          List<IShipmentItemBatch> shipmentItemBatches = (List<IShipmentItemBatch>) shipmentItem
-              .getShipmentItemBatch();
-          if (newShipmentItemBatchesMap.containsKey(shipmentItem.getMaterialId())) {
-            shipmentItemBatches.addAll(newShipmentItemBatchesMap.get(shipmentItem.getMaterialId()));
-          }
-        }
-
-        for (IShipmentItem shipmentItem : shipment.getShipmentItems()) {
-          List<IShipmentItemBatch> batches = (List<IShipmentItemBatch>) shipmentItem
-              .getShipmentItemBatch();
-          if (CollectionUtils.isNotEmpty(batches)) {
-            pm.makePersistentAll(batches);
-          }
-        }
-        pm.makePersistentAll(shipment.getShipmentItems());
-        Map<Long, IDemandItem> items = demandService.getDemandMetadata(extractOrderId(model.sId), pm);
-        for (IShipmentItem sItem : shipment.getShipmentItems()) {
-          IDemandItem item = items.get(sItem.getMaterialId());
-          item.setFulfilledQuantity(item.getFulfilledQuantity().add(sItem.getFulfilledQuantity()));
-          item.setDiscrepancyQuantity(
-              item.getDiscrepancyQuantity().add(sItem.getDiscrepancyQuantity()));
-        }
-        pm.makePersistentAll(items.values());
-        shipment.setActualFulfilmentDate(sdf.parse(model.afd));
-        pm.makePersistent(shipment);
-        responseModel =
-            updateShipmentStatus(model.sId, ShipmentStatus.FULFILLED, model.msg, model.userId,
-                pm, null, shipment, model.isOrderFulfil, source);
-        orderManagementService.updateOrderMetadata(orderId, userId, pm);
-        tx.commit();
-      }
-    } catch (InvalidServiceException | LogiException e) {
-      xLogger.warn("Error while updating shipment", e);
-      throw new InvalidServiceException(e.getMessage());
-    } catch (Exception e1) {
-      xLogger.warn("Error while updating shipment", e1);
-      throw new InvalidServiceException(e1);
-    } finally {
-      if (tx != null && tx.isActive()) {
-        tx.rollback();
-      }
-      if (pm != null) {
-        pm.close();
-      }
-      if (LockUtil.shouldReleaseLock(lockStatus) && !LockUtil.release(Constants.TX_O + orderId)) {
-        xLogger.warn("Unable to release lock for key {0}", Constants.TX_O + orderId);
-      }
-    }
-
-    return responseModel;
+    return fulfillShipmentAction.invoke(model, userId, source);
   }
 
-
-  private IShipmentItemBatch getShipmentItemBatchFromShipmentItem(String userId,
-                                                                  IShipmentItem shipmentItem,
-                                                                  ShipmentItemBatchModel shipmentItemBatchModel)
-      throws ServiceException {
-    shipmentItemBatchModel.uid = userId;
-    shipmentItemBatchModel.kid = shipmentItem.getKioskId();
-    shipmentItemBatchModel.mid = shipmentItem.getMaterialId();
-    shipmentItemBatchModel.siId = shipmentItem.getShipmentItemId();
-    shipmentItemBatchModel.sdid = shipmentItem.getDomainId();
-    return createShipmentItemBatch(shipmentItemBatchModel);
-  }
-
-  private void updateShipmentItemBatch(IShipmentItemBatch shipmentItemBatch,
-                                       ShipmentItemBatchModel shipmentItemBatchModel,
-                                       Boolean setBatch) throws ParseException {
-
-    shipmentItemBatch.setFulfilledMaterialStatus(shipmentItemBatchModel.fmst);
-    shipmentItemBatch.setFulfilledQuantity(shipmentItemBatchModel.fq);
-    shipmentItemBatch.setDiscrepancyQuantity(
-        shipmentItemBatch.getQuantity().subtract(shipmentItemBatchModel.fq));
-    shipmentItemBatch.setFulfilledDiscrepancyReason(shipmentItemBatchModel.frsn);
-    if (setBatch) {
-      shipmentItemBatch.setBatchExpiry(
-          LocalDateUtil.parseCustom(shipmentItemBatchModel.e, Constants.DATE_FORMAT, null));
-      shipmentItemBatch.setBatchId(shipmentItemBatchModel.id);
-      shipmentItemBatch.setBatchManufacturer(shipmentItemBatchModel.bmfnm);
-      shipmentItemBatch.setBatchManufacturedDate(
-          LocalDateUtil.parseCustom(shipmentItemBatchModel.bmfdt, Constants.DATE_FORMAT, null));
-    }
-  }
 
   @Override
   @SuppressWarnings("unchecked")
@@ -1193,7 +1079,7 @@ public class ShipmentService implements IShipmentService {
     Query query = pm.newQuery("javax.jdo.query.SQL",
             "SELECT DISTINCT TRANSPORTER FROM `SHIPMENT` WHERE ID IN "
                 + "(SELECT ID_OID FROM SHIPMENT_DOMAINS WHERE DOMAIN_ID = ?) AND "
-                + "TRANSPORTER LIKE ? LIMIT 0,8");
+                + "TRANSPORTER COLLATE UTF8_GENERAL_CI LIKE ? LIMIT 0,8");
     parameters.add(domainId);
     parameters.add(text.concat("%"));
     try {
@@ -1247,77 +1133,7 @@ public class ShipmentService implements IShipmentService {
     return null;
   }
 
-  private BigDecimal getAllocatedQuantityForShipmentItem(InventoryManagementService ims,
-                                                         IShipmentItem shipmentItem) {
 
-    try {
-      List<IInvAllocation>
-          iAllocs =
-          ims.getAllocationsByTypeId(shipmentItem.getKioskId(), shipmentItem.getMaterialId(),
-              IInvAllocation.Type.SHIPMENT, String.valueOf(shipmentItem.getShipmentItemId()));
-      if (iAllocs != null && !iAllocs.isEmpty()) {
-        BigDecimal alq = new BigDecimal(0);
-        for (IInvAllocation iAlloc : iAllocs) {
-          alq = alq.add(iAlloc.getQuantity());
-        }
-        return alq;
-      }
-    } catch (Exception e) {
-      xLogger.warn("Exception while getting inventory allocation for the demand item {0}",
-          shipmentItem.getShipmentId(), e);
-    }
-    return null;
-  }
-
-  public Map<String, String> getShipmentItemBatchAsMap(IShipmentItemBatch sib, String timezone) {
-    Map<String, String> map = new HashMap<>(1);
-    if (StringUtils.isNotEmpty(sib.getBatchId())) {
-      map.put(JsonTagsZ.BATCH_ID, sib.getBatchId());
-    }
-    if (StringUtils.isNotEmpty(sib.getBatchManufacturer())) {
-      map.put(JsonTagsZ.BATCH_MANUFACTUER_NAME, sib.getBatchManufacturer());
-    }
-    if (sib.getBatchManufacturedDate() != null) {
-      map.put(JsonTagsZ.BATCH_MANUFACTURED_DATE,
-          LocalDateUtil.formatCustom(sib.getBatchManufacturedDate(), Constants.DATE_FORMAT,
-              timezone));
-    }
-    if (sib.getBatchExpiry() != null) {
-      map.put(JsonTagsZ.BATCH_EXPIRY,
-          LocalDateUtil.formatCustom(sib.getBatchExpiry(), Constants.DATE_FORMAT, timezone));
-    }
-
-    map.put(JsonTagsZ.QUANTITY, BigUtil.getFormattedValue(sib.getQuantity()));
-    map.put(JsonTagsZ.FULFILLED_QUANTITY, BigUtil.getFormattedValue(sib.getFulfilledQuantity()));
-    if (sib.getUpdatedOn() != null) {
-      map.put(JsonTagsZ.TIMESTAMP,
-          LocalDateUtil.formatCustom(sib.getUpdatedOn(), Constants.DATE_FORMAT, timezone));
-    } else if (sib.getCreatedOn() != null) {
-      map.put(JsonTagsZ.TIMESTAMP,
-          LocalDateUtil.formatCustom(sib.getCreatedOn(), Constants.DATE_FORMAT, timezone));
-    }
-    // Get inventoryAllocation for batch
-    try {
-      List<IInvAllocation>
-          iAllocs =
-          inventoryManagementService.getAllocationsByTypeId(sib.getKioskId(), sib.getMaterialId(),
-              IInvAllocation.Type.SHIPMENT, sib.getShipmentItemId().toString());
-
-      if (iAllocs != null && !iAllocs.isEmpty()) {
-        for (IInvAllocation iAlloc : iAllocs) {
-          if (iAlloc.getBatchId() != null && !iAlloc.getBatchId().isEmpty() && iAlloc.getBatchId()
-              .equals(sib.getBatchId())) {
-            map.put(JsonTagsZ.ALLOCATED_QUANTITY, BigUtil.getFormattedValue(iAlloc.getQuantity()));
-          }
-        }
-      }
-    } catch (Exception e) {
-      xLogger.warn(
-          "Exception while getting inventory allocation for the shipment item batch with id {0}",
-          sib.getShipmentItemId(), e);
-    }
-    return map;
-  }
 
 
   @Override
@@ -1394,6 +1210,86 @@ public class ShipmentService implements IShipmentService {
 
     }
     return fulfilledQuantityModelList;
+  }
+
+  @Override
+  public IShipment patchShipmentDetails(String userId, String sId,
+                                        Collection<Patch> patchRequests,
+                                        String orderUpdatedAt) throws LogiException {
+    Results<DeliveryRequestModel> drs = getDeliveryRequestsAction.getByShipmentId(sId, false);
+    if (drs.getResults() != null) {
+      noActiveDeliveryRequestValidator.validate(sId);
+    }
+    Map<String, String> metadata = new HashMap<>();
+    patchRequests.forEach(patch -> {
+      if (OperationType.REPLACE.equals(patch.getOperation())) {
+        try {
+          switch (patch.getPath()) {
+            case PatchPaths.CONSIGNMENT_PACKAGE_CNT_PATH:
+              metadata.put(CNSGNMNT_PACKAGE_CNT, patch.getValue().toString());
+              break;
+            case PatchPaths.CONSIGNMENT_DECLARATION_PATH:
+              metadata.put(CNSGNMNT_DECLARATION, patch.getValue().toString());
+              break;
+            case PatchPaths.CONSIGNMENT_DIMENSIONS_PATH:
+              metadata.put(CNSGNMNT_DIMENSIONS, patch.getValue().toString());
+              break;
+            case PatchPaths.CONSIGNMENT_VALUE_PATH:
+              metadata.put(CNSGNMNT_VALUE, patch.getValue().toString());
+              break;
+            case PatchPaths.CONSIGNMENT_WEIGHT_PATH:
+              metadata.put(CNSGNMNT_WEIGHT, patch.getValue().toString());
+              break;
+            case PatchPaths.SHIPMENT_TRANSPORTER_ID_PATH:
+              metadata.put(SHIPMENT_TRANSPORTER_ID, patch.getValue().toString());
+              break;
+            case PatchPaths.SHIPMENT_TRANSPORTER_NAME_PATH:
+              metadata.put(SHIPMENT_TRANSPORTER_NAME, patch.getValue().toString());
+              break;
+            case PatchPaths.SHIPMENT_PHONE_NUMBER_PATH:
+              metadata.put(SHIPMENT_CONTACT_PHONE_NUM, patch.getValue().toString());
+              break;
+            case PatchPaths.SHIPMENT_VEHICLE_DTLS_PATCH:
+              metadata.put(SHIPMENT_VEHICLE_DTLS, patch.getValue().toString());
+              break;
+            default:
+              throw new UnsupportedOperationException("Unsupported operation");
+          }
+        } catch (NullPointerException e) {
+          throw new SystemException("G009", new Object[0]);
+        }
+      }
+    });
+    return updateShipmentData(metadata, orderUpdatedAt, sId, userId);
+  }
+
+  @Override
+  public IConsignment updateConsignmentDetails(Long consignmentId,
+                                               ConsignmentModel consignmentModel,
+                                               PersistenceManager pm)
+      throws ServiceException {
+    consignmentModel.setId(consignmentId);
+    IConsignment consignment;
+    try {
+      consignment = pm.getObjectById(Consignment.class, consignmentId);
+      consignmentMapper.populateEntity(consignment, consignmentModel);
+    } catch (Exception e) {
+      xLogger.severe("Error while updating consignment", e);
+      throw new ServiceException("Error while updating consignment details", e);
+    }
+    return consignment;
+  }
+
+  @Override
+  public void updateShipmentDetails(String shipmentId, String username,
+                                    DeliveryRequestUpdateWrapper updateModel)
+      throws LogiException {
+    Map<String, String> updData = new HashMap<>();
+    updData.put("tId", String.valueOf(updateModel.getShipmentTrackingId()));
+    if(updateModel.getEta() != null) {
+      updData.put("date", new SimpleDateFormat(Constants.DATE_FORMAT).format(updateModel.getEta()));
+    }
+    updateShipmentData(updData, null, shipmentId, username);
   }
 
 }

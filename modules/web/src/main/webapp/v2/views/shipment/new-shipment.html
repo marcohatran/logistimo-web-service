@@ -22,7 +22,7 @@
   -->
 
 <div class="box topbox" ng-controller="NewShipmentController">
-    <h3>Create shipment for order <a ng-href="#/orders/detail/{{orderId}}/">{{order.id}}</a></h3>
+    <h3>{{resourceBundle['orders.create.shipment']}} <a ng-href="#/orders/detail/{{orderId}}/">{{order.id}}</a></h3>
     <hr/>
     <div class="row mt10">
         <div class="col-sm-6">
@@ -64,17 +64,29 @@
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    Details
+                    Consignments
+                </div>
+                <div class="panel-body">
+                    <div ng-include="'views/orders/add-consignment.html'"
+                         ng-init="model = consignment; enableGrid = true; disableCategory = true"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    Tracking details
                 </div>
                 <div class="panel-body">
                     <div class="row">
                         <div class="col-sm-6">
                             <div class="row mb10">
                                 <label class="col-sm-4 cbx control-label ml10" ng-class="{'required': oCfg.tm}">{{resourceBundle['transporter']}}</label>
-
-                                <div class="col-sm-7">
-                                    <input class="form-control" ng-model="transporter" placeholder="Transporter">
-                                </div>
+                                <transporter-select transporter-model="trsp" class="col-sm-7"
+                                                    place-holder="Search/Enter transporter" show-confirm="false">
+                                </transporter-select>
                             </div>
                             <div class="row mb10">
                                 <label class="col-sm-4 cbx control-label ml10"> {{resourceBundle['trackingid']}}</label>
@@ -118,7 +130,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-sm-6 mt10">
+                        <!--<div class="col-sm-6 mt10">
                             <div class="row">
                                 <label class="col-sm-4 control-label cbx ml10">{{resourceBundle['packagesize']}}</label>
                                 <div class="col-sm-7 mb10">
@@ -131,7 +143,7 @@
                                     <input type="text"class="form-control" ng-show="isUndef(packageSize)" ng-model="ps">
                                 </div>
                             </div>
-                        </div>
+                        </div>-->
                         <div class="col-sm-6 mt10">
                             <div class="row">
                                 <label class="col-sm-4 control-label cbx ml10" ng-class="{'required': oCfg.ridm}">{{resourceBundle['sales.reference.id']}}</label>
@@ -151,24 +163,25 @@
             </div>
         </div>
     </div>
+
     <div class="row">
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    Items
+                    {{resourceBundle['items']}}
                 </div>
                 <div class="panel-body">
                     <table class="table table-condensed table-hover table-logistimo">
                         <tr>
-                            <th class="col-sm-1 text-center">SI.No.</th>
-                            <th class="col-sm-2 ">Material</th>
-                            <th class="col-sm-1 text-center">Ordered</th>
-                            <th class="col-sm-1 text-center" ng-show="allocate">Allocated</th>
-                            <th class="col-sm-1 text-center">Shipped</th>
-                            <th class="col-sm-1 text-center">Yet to ship</th>
-                            <th class="col-sm-2 text-center">On shipments</th>
-                            <th class="col-sm-2 text-center">Ship</th>
-                            <th class="col-sm-1 text-center" ng-show="allocate">Allocate from Order</th>
+                            <th class="col-sm-1 text-center">{{resourceBundle['serialnum']}}</th>
+                            <th class="col-sm-2 ">{{resourceBundle['material.upper']}}</th>
+                            <th class="col-sm-1 text-center">{{resourceBundle['ordered']}}</th>
+                            <th class="col-sm-1 text-center" ng-show="allocate">{{resourceBundle['allocated']}}</th>
+                            <th class="col-sm-1 text-center">{{resourceBundle['shipped']}}</th>
+                            <th class="col-sm-1 text-center">{{resourceBundle['yet.to.ship']}}</th>
+                            <th class="col-sm-2 text-center">{{resourceBundle['orders.on.shipments']}}</th>
+                            <th class="col-sm-2 text-center">{{resourceBundle['ship']}}</th>
+                            <th class="col-sm-1 text-center" ng-show="allocate">{{resourceBundle['orders.allocate.from.order']}}</th>
                         </tr>
                         <tr ng-repeat="item in sMTShip">
                             <td class="text-center"><p class="cbx">{{$index + 1}}</p></td>

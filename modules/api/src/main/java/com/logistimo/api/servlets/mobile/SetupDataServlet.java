@@ -276,32 +276,32 @@ public class SetupDataServlet extends JsonRestServlet {
   }
 
   public void processGet(HttpServletRequest req, HttpServletResponse resp,
-                         ResourceBundle backendMessages, ResourceBundle messages)
+                         ResourceBundle messages)
       throws ServletException, IOException, ServiceException {
     xLogger.fine("Entering processGet");
-    processPost(req, resp, backendMessages, messages);
+    processPost(req, resp, messages);
     xLogger.fine("Exiting processGet");
   }
 
   public void processPost(HttpServletRequest req, HttpServletResponse resp,
-                          ResourceBundle backendMessages, ResourceBundle messages)
+                          ResourceBundle messages)
       throws ServletException, IOException, ServiceException {
     xLogger.fine("Inside processPost");
     // Get the post parameters
     String action = req.getParameter(RestConstantsZ.ACTION);
     if (RestConstantsZ.ACTION_CREATEUSERKIOSK.equalsIgnoreCase(action)
         || RestConstantsZ.ACTION_UPDATEUSERKIOSK.equalsIgnoreCase(action)) {
-      setupData(req, resp, backendMessages, action);
+      setupData(req, resp, messages, action);
     } else if (RestConstantsZ.ACTION_UPDATEPASSWRD.equalsIgnoreCase(action)) {
-      updatePassword(req, resp, backendMessages);
+      updatePassword(req, resp, messages);
     } else if (RestConstantsZ.ACTION_RESETPASSWRD.equalsIgnoreCase(action)) {
-      resetPassword(req, resp, backendMessages);
+      resetPassword(req, resp, messages);
     } else if (RestConstantsZ.ACTION_REMOVE.equalsIgnoreCase(action)) {
-      remove(req, resp, backendMessages);
+      remove(req, resp, messages);
     } else if (RestConstantsZ.ACTION_CREATERELATIONSHIP.equalsIgnoreCase(action)
         || RestConstantsZ.ACTION_UPDATERELATIONSHIP.equalsIgnoreCase(action)
         || RestConstantsZ.ACTION_REMOVERELATIONSHIP.equalsIgnoreCase(action)) {
-      manageRelationship(req, resp, backendMessages, action);
+      manageRelationship(req, resp, messages, action);
     } else if (RestConstantsZ.ACTION_GETRELATEDENTITIES.equalsIgnoreCase(action)) {
       getRelatedEntities(req, resp);
     } else if (RestConstantsZ.ACTION_GET_FORMSCONFIG.equalsIgnoreCase(action)) {

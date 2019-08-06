@@ -136,6 +136,7 @@ public class ReturnsRepository extends Repository {
           ModelMapperUtil.map(returnsTrackingDetails, ReturnsTrackingDetailsVO.class);
       vo.setReturnsTrackingDetailsVO(trackingDetailsVO);
     }
+    vo.setUpdatedTime(vo.getUpdatedAt().getTime());
     return vo;
   }
 

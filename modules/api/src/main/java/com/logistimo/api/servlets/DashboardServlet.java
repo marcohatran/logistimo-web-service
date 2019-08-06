@@ -222,7 +222,7 @@ public class DashboardServlet extends JsonRestServlet {
 
   @Override
   protected void processGet(HttpServletRequest request,
-                            HttpServletResponse response, ResourceBundle backendMessages,
+                            HttpServletResponse response,
                             ResourceBundle messages) throws ServletException, IOException,
       ServiceException {
     xLogger.fine("Entered processGet");
@@ -253,10 +253,10 @@ public class DashboardServlet extends JsonRestServlet {
 
   @Override
   protected void processPost(HttpServletRequest request,
-                             HttpServletResponse response, ResourceBundle backendMessages,
+                             HttpServletResponse response,
                              ResourceBundle messages) throws ServletException, IOException,
       ServiceException {
-    processGet(request, response, backendMessages, messages);
+    processGet(request, response, messages);
   }
 
   // Get the stock view dashboard

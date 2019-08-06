@@ -43,9 +43,9 @@
                         <div ng-hide="iAU" class="col-sm-6">
                             <label class="cbx filter-label ml10">{{resourceBundle['kiosk']}} {{resourceBundle['multiple.tags']}}:</label>
                             <span ng-show="isDef(includeETag)"><span ng-repeat="tag in eTagObj track by $index" class="label label-default mt5 dinline" style="padding:.2em;">{{tag.text}}</span></span>
-                            <span ng-show="isUndef(includeETag)" class="cbx" style="margin-top: 20px">All</span>
-                            <span ng-show="isDef(excludeETag)" class="codegray">(Exclude: <span ng-repeat="tag in eeTagObj track by $index" class="label label-default mt5 dinline" style="padding:.2em;">{{tag.text}}</span>)</span>
-                            <span uib-tooltip="Filters" ng-click="toggleFilter('e')" class="glyphicons glyphicons-filter codegray pt10"></span>
+                            <span ng-show="isUndef(includeETag)" class="cbx" style="margin-top: 20px">{{resourceBundle['all']}}</span>
+                            <span ng-show="isDef(excludeETag)" class="codegray">({{resourceBundle['exclude']}}: <span ng-repeat="tag in eeTagObj track by $index" class="label label-default mt5 dinline" style="padding:.2em;">{{tag.text}}</span>)</span>
+                            <span uib-tooltip="{{resourceBundle['filters.uppercase']}}" ng-click="toggleFilter('e')" class="glyphicons glyphicons-filter codegray pt10"></span>
                         </div>
                         <div class="pop_filter_box col-sm-4 ws " id="filter_e"
                              style="margin-top:25px;">
@@ -56,7 +56,7 @@
                                     </span>
                                     </label>
                                     <span class="col-sm-8 noLRpad lPad5">
-                                    <tag-select tags-model="eTag" place-holder="All"
+                                    <tag-select tags-model="eTag" place-holder="{{resourceBundle['all']}}"
                                                 type="'entity'"
                                                 multiple="'true'"
                                                 force-no-udf="'true'">
@@ -72,7 +72,7 @@
                                     </label>
 
                                     <span class="col-sm-8 noLRpad lPad5">
-                                    <tag-select tags-model="excludeTag" place-holder="All"
+                                    <tag-select tags-model="excludeTag" place-holder="{{resourceBundle['all']}}"
                                                 type="'entity'"
                                                 multiple="'true'"
                                                 force-no-udf="'true'">
@@ -84,9 +84,9 @@
                                 <div class="col-sm-12">
                                     <span class="pull-right">
                                         <input type="button" class="btn btn-sm btn-primary" ng-click="applyFilters()"
-                                               value="Filter">
+                                               value="{{resourceBundle['filter']}}">
                                         <input type="button" class="btn btn-sm btn-default" ng-click="cancelFilter('e')"
-                                               value="Cancel">
+                                               value="{{resourceBundle['cancel']}}">
                                     </span>
                                 </div>
                             </div>
@@ -119,17 +119,17 @@
                 </div>
                 <div ng-show="!loading" class="row pt5" style="min-height: 350px">
                     <div ng-hide="tempOnlyAU" ng-class="{'col-sm-6 norightpad' : tempEnabled, 'col-sm-offset-3 col-sm-6': !tempEnabled}">
-                        <h4 class="text-center mb0">{{p1caption}} <span uib-tooltip="% of inventory items that are normal or abnormal (zero stock, < min. or > max) across all {{resourceBundle['kiosks.lowercase']}} in this jurisdiction. An inventory item is a material at a {{resourceBundle['kiosk.lowercase']}}." style="display: inline" class="litetext glyphicons glyphicons-info-sign"></span>
-                            <div uib-tooltip="Filters" ng-click="toggleFilter('i')" class="pull-right glyphicons glyphicons-filter codegray" style="cursor: pointer"></div>
+                        <h4 class="text-center mb0">{{p1caption}} <span uib-tooltip="{{resourceBundle['overview.inventory.dashboard.info']}}" style="display: inline" class="litetext glyphicons glyphicons-info-sign"></span>
+                            <div uib-tooltip="{{resourceBundle['filters.uppercase']}}" ng-click="toggleFilter('i')" class="pull-right glyphicons glyphicons-filter codegray" style="cursor: pointer"></div>
                         </h4>
                         <div ng-if="p1subCaption != '&amp;nbsp;'" class="litetext text-center pr30" ng-bind-html="p1subCaption"></div>
-                        <div class="litetext text-center pr30" ng-if="fdate"><b>Date: </b>{{fdate}}</div>
+                        <div class="litetext text-center pr30" ng-if="fdate"><b>{{resourceBundle['date']}}: </b>{{fdate}}</div>
                         <div class="pop_filter_box col-sm-11 ws" id="filter_i" style="margin-left: 3%;">
                             <div class="row pb10 pt10">
                                 <div class="col-sm-12">
                                     <label class="col-sm-3 noLRpad control-label cbx">{{resourceBundle['material']}} {{resourceBundle['multiple.tags']}}</label>
                                     <span class="col-sm-9 noLRpad lPad5">
-                                    <tag-select tags-model="mtag" place-holder="All"
+                                    <tag-select tags-model="mtag" place-holder="{{resourceBundle['all']}}"
                                                 type="'material'"
                                                 force-no-udf="'true'">
                                     </tag-select>
@@ -138,43 +138,43 @@
                             </div>
                             <div class="row pb10">
                                 <div class="col-sm-12">
-                                    <label class="col-sm-3 noLRpad control-label cbx">Material name</label>
+                                    <label class="col-sm-3 noLRpad control-label cbx">{{resourceBundle['filter.material.name']}}</label>
                                     <span class="col-sm-9 noLRpad lPad5">
-                                    <material-drop-down ng-model="material" mtag="mtag.text"></material-drop-down>
+                                    <material-drop-down ng-model="material" mtag="mtag.text" place-holder="{{resourceBundle['all']}}"></material-drop-down>
                                 </span>
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-sm-12">
-                                    <label class="col-sm-3 noLRpad control-label cbx">Date</label>
+                                    <label class="col-sm-3 noLRpad control-label cbx">{{resourceBundle['date']}}</label>
                                     <div class="col-sm-9 noLRpad lPad5">
-                                        <date-picker date-model="date" min-date="createdOn" place-holder="Date" max-date="today"></date-picker>
+                                        <date-picker date-model="date" min-date="createdOn" place-holder="{{resourceBundle['date']}}" max-date="today"></date-picker>
                                     </div>
-                                    <span class="col-sm-offset-3 litetext lPad10 pb10">Period "Now" will reflect activity and inventory as of selected date.</span>
+                                    <span class="col-sm-offset-3 litetext lPad10 pb10">{{resourceBundle['overview.inventory.dashboard.date.note']}}</span>
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-sm-12">
-                                    <label class="col-sm-3 noLRpad control-label cbx">Period (since)</label>
+                                    <label class="col-sm-3 noLRpad control-label cbx">{{resourceBundle['period.since']}}</label>
                                     <div class="col-sm-9 noLRpad lPad5 btn-group">
                                         <select ng-model="period" class="form-control">
-                                            <option value="0">Now</option>
-                                            <option value="1">1 day</option>
-                                            <option value="2">2 days</option>
-                                            <option value="3">3 days</option>
-                                            <option value="7">7 days</option>
-                                            <option value="15">15 days</option>
-                                            <option value="30">30 days</option>
+                                            <option value="0">{{resourceBundle['now.uppercase']}}</option>
+                                            <option value="1">1 {{resourceBundle['day']}}</option>
+                                            <option value="2">2 {{resourceBundle['days']}}</option>
+                                            <option value="3">3 {{resourceBundle['days']}}</option>
+                                            <option value="7">7 {{resourceBundle['days']}}</option>
+                                            <option value="15">15 {{resourceBundle['days']}}</option>
+                                            <option value="30">30 {{resourceBundle['days']}}</option>
                                         </select>
                                     </div>
-                                    <span class="col-sm-offset-3 litetext lPad10 pb10">"Now" for activity will be considered as {{aper}} days.</span>
+                                    <span class="col-sm-offset-3 litetext lPad10 pb10">{{resourceBundle['overview.inventory.dashboard.period.note']}} {{aper}} {{resourceBundle['days']}}.</span>
                                 </div>
                             </div>
                             <div class="row pb10">
                                 <div class="col-sm-12">
                                 <span class="pull-right">
-                                    <input type="button" class="btn btn-sm btn-primary" ng-click="applyFilters()" value="Filter">
-                                    <input type="button" class="btn btn-sm btn-default" ng-click="cancelFilter('i')" value="Cancel">
+                                    <input type="button" class="btn btn-sm btn-primary" ng-click="applyFilters()" value="{{resourceBundle['filter']}}">
+                                    <input type="button" class="btn btn-sm btn-default" ng-click="cancelFilter('i')" value="{{resourceBundle['cancel']}}">
                                 </span>
                                 </div>
                             </div>
@@ -193,59 +193,59 @@
                                               chart-id="stackBar">
                                 </fusion-chart>
                             </div>
-                            <div class="litetext text-center position-relative mtm15" >Activity <span ng-if="showActivityLabel">({{aper}} days) </span><span uib-tooltip="% of {{resourceBundle['kiosks.lowercase']}} that are active or inactive, i.e. have done at least one transaction within the specified period." style="display: inline" class="litetext glyphicons glyphicons-info-sign"></span></div>
+                            <div class="litetext text-center position-relative mtm15" >{{resourceBundle['activity']}} <span ng-if="showActivityLabel">({{aper}} {{resourceBundle['days']}}) </span><span uib-tooltip="{{resourceBundle['overview.activity.dashboard.tooltip']}}" style="display: inline" class="litetext glyphicons glyphicons-info-sign"></span></div>
                         </div>
                     </div>
                     <div ng-show="tempEnabled" ng-class="{'col-sm-6 col-sm-offset-3':isTempMonOnly || iAU,'col-sm-6 noleftpad':!(isTempMonOnly || iAU)}" style="width: 50%">
-                        <h4 class="text-center mb0">{{p2caption}} <span uib-tooltip="% of cold-chain assets whose temperature status is normal, low, high or unknown across this jurisdiction." style="display: inline" class="litetext glyphicons glyphicons-info-sign"></span>
-                            <span uib-tooltip="Filters" ng-click="toggleFilter('a')" class="pull-right glyphicons glyphicons-filter codegray" style="cursor: pointer"></span>
+                        <h4 class="text-center mb0">{{p2caption}} <span uib-tooltip="{{resourceBundle['overview.asset.dashboard.info']}}" style="display: inline" class="litetext glyphicons glyphicons-info-sign"></span>
+                            <span uib-tooltip="{{resourceBundle['filters.uppercase']}}" ng-click="toggleFilter('a')" class="pull-right glyphicons glyphicons-filter codegray" style="cursor: pointer"></span>
                         </h4>
                         <div class="litetext text-center pr30" ng-if="p2subCaption!= '&amp;nbsp;'" ng-bind-html="p2subCaption"></div>
                         <div ng-show="fdate" class="litetext">&nbsp;&nbsp;</div>
                         <div class="pop_filter_box col-sm-11 ws" id="filter_a" style="margin-left:3%">
                             <div class="row pb10 pt10">
                                 <div class="col-sm-12">
-                                    <label class="col-sm-4 noLRpad control-label cbx">Asset type</label>
+                                    <label class="col-sm-4 noLRpad control-label cbx">{{resourceBundle['asset.type']}}</label>
                                     <span class="col-sm-8 noLRpad lPad5">
-                                    <lg-uib-select multiple="'multiple" query="filterAssets(q)" ui-model="asset" place-holder="All"> </lg-uib-select>
+                                    <lg-uib-select multiple="'multiple" query="filterAssets(q)" ui-model="asset" place-holder="{{resourceBundle['all']}}"> </lg-uib-select>
                                 </span>
                                 </div>
                             </div>
                             <div class="row pb10">
                                 <div class="col-sm-12">
-                                    <label class="col-sm-4 noLRpad control-label cbx">Period (since)</label>
+                                    <label class="col-sm-4 noLRpad control-label cbx">{{resourceBundle['period.since']}}</label>
                                     <div class="col-sm-8 noLRpad lPad5">
                                         <select ng-model="tperiod" class="form-control">
-                                            <option value="M_0">Now</option>
-                                            <option value="M_30">30 minutes</option>
-                                            <option value="H_1">1 hour</option>
-                                            <option value="H_2">2 hours</option>
-                                            <option value="H_3">3 hours</option>
-                                            <option value="H_6">6 hours</option>
-                                            <option value="H_12">12 hours</option>
-                                            <option value="D_1">1 day</option>
-                                            <option value="D_2">2 days</option>
-                                            <option value="D_3">3 days</option>
-                                            <option value="D_7">7 days</option>
-                                            <option value="D_15">15 days</option>
-                                            <option value="D_30">30 days</option>
+                                            <option value="M_0">{{resourceBundle['now.uppercase']}}</option>
+                                            <option value="M_30">30 {{resourceBundle['minutes']}}</option>
+                                            <option value="H_1">1 {{resourceBundle['hour']}}</option>
+                                            <option value="H_2">2 {{resourceBundle['hours.lower']}}</option>
+                                            <option value="H_3">3 {{resourceBundle['hours.lower']}}</option>
+                                            <option value="H_6">6 {{resourceBundle['hours.lower']}}</option>
+                                            <option value="H_12">12 {{resourceBundle['hours.lower']}}</option>
+                                            <option value="D_1">1 {{resourceBundle['day']}}</option>
+                                            <option value="D_2">2 {{resourceBundle['days']}}</option>
+                                            <option value="D_3">3 {{resourceBundle['days']}}</option>
+                                            <option value="D_7">7 {{resourceBundle['days']}}</option>
+                                            <option value="D_15">15 {{resourceBundle['days']}}</option>
+                                            <option value="D_30">30 {{resourceBundle['days']}}</option>
                                         </select>
                                     </div>
                                 </div>
                             </div>
                             <div class="row pb10">
                                 <div class="col-sm-12">
-                                    <label class="col-sm-4 noLRpad control-label cbx">Exclude temperature state</label>
+                                    <label class="col-sm-4 noLRpad control-label cbx">{{resourceBundle['exclude.temp.state']}}</label>
                                     <span class="col-sm-8 noLRpad lPad5">
-                                    <lg-uib-select multiple="'multiple" query="filterStatus(q)" ui-model="exTempState" place-holder="None"> </lg-uib-select>
+                                    <lg-uib-select multiple="'multiple" query="filterStatus(q)" ui-model="exTempState" place-holder="{{resourceBundle['none']}}"> </lg-uib-select>
                                 </span>
                                 </div>
                             </div>
                             <div class="row pb10">
                                 <div class="col-sm-12">
                                 <span class="pull-right">
-                                    <input type="button" class="btn btn-sm btn-primary" ng-click="applyFilters()" value="Filter">
-                                    <input type="button" class="btn btn-sm btn-default" ng-click="cancelFilter('a')" value="Cancel">
+                                    <input type="button" class="btn btn-sm btn-primary" ng-click="applyFilters()" value="{{resourceBundle['filter']}}">
+                                    <input type="button" class="btn btn-sm btn-default" ng-click="cancelFilter('a')" value="{{resourceBundle['cancel']}}">
                                 </span>
                                 </div>
                             </div>
@@ -267,18 +267,18 @@
             <div ng-if="!mloading" class="row" style="min-height: 700px">
                 <h4 class="text-center mb0">{{caption}}</h4>
                 <div class="litetext text-center" ng-if="subCaption != '&amp;nbsp;'" ng-bind-html="subCaption"></div>
-                <div class="litetext text-center" ng-if="fdate"><b>Date: </b>{{fdate}}</div>
+                <div class="litetext text-center" ng-if="fdate"><b>{{resourceBundle['date']}}: </b>{{fdate}}</div>
                 <div class="row pt20">
                     <div ng-class="{'col-sm-offset-2':!matBarData}" class="col-sm-8">
-                        <div class="text-center text-bold">By location
+                        <div class="text-center text-bold">{{resourceBundle['by.location']}}
                             <div class="btn-group float-right" ng-show="showSwitch">
                                 <label class="btn btn-sm btn-default" ng-click="setShowMap(true)" ng-model="showMap" uib-btn-radio="true" uib-tooltip="{{resourceBundle['map.view']}}"><span style="padding-top: 3px" class="glyphicons glyphicons-globe"></span></label>
-                                <label class="btn btn-sm btn-default" ng-click="setShowMap(false)" ng-model="showMap" uib-btn-radio="false" uib-tooltip="Bar&nbsp;view"><span style="padding-top: 3px" class="glyphicons glyphicons-paragraph"></span></label>
+                                <label class="btn btn-sm btn-default" ng-click="setShowMap(false)" ng-model="showMap" uib-btn-radio="false" uib-tooltip="{{resourceBundle['bar.view']}}"><span style="padding-top: 3px" class="glyphicons glyphicons-paragraph"></span></label>
                             </div>
                         </div>
                     </div>
                     <div class="col-sm-4" ng-if="matBarData">
-                        <div class="text-center text-bold">By material</div>
+                        <div class="text-center text-bold">{{resourceBundle['by.material']}}</div>
                     </div>
                 </div>
                 <div ng-if="showMap" ng-class="{'col-sm-offset-2':!matBarData}" class="col-sm-8 norightpad">
@@ -327,7 +327,7 @@
         <div class="box topbox tabminheight">
             <div class="row">
                 <div class="col-sm-12 mt10">
-                    <div class="alert alert-warning">Please choose default country for the domain to enable dashboards.</div>
+                    <div class="alert alert-warning">{{resourceBundle['default.country']}}</div>
                 </div>
             </div>
         </div>

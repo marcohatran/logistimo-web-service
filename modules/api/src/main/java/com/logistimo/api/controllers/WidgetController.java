@@ -77,7 +77,7 @@ public class WidgetController {
   String create(@RequestBody WidgetModel model) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     long domainId = sUser.getCurrentDomainId();
     try {
       IWidget wid = builder.buildWidget(model, domainId, sUser.getUsername());

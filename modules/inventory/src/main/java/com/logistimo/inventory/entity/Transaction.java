@@ -238,7 +238,7 @@ public class Transaction implements ITransaction {
   public static String getDisplayName(String transType, String transNaming, Locale locale) {
     String name = "";
     // Get the resource bundle
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+    ResourceBundle messages = Resources.getBundle(locale);
     if (messages == null) {
       return "";
     }

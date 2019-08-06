@@ -71,7 +71,7 @@ public class ActivityController {
   public
   @ResponseBody
   ActivityModel createActivity(@RequestBody ActivityModel model) {
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
+    ResourceBundle backendMessages = Resources.getBundle(SecurityUtils.getLocale());
     ActivityModel retmodel;
     try {
       IActivity activity = builder.buildActivity(model);

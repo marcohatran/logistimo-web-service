@@ -94,6 +94,7 @@ public class ReportServiceUtil {
 
   private static final String LONG = "Long";
   private static final String FLOAT = "Float";
+  private static final String DOUBLE = "Double";
   private static final String MAP = "Map";
 
   private static final XLog xLogger = XLog.getLog(ReportServiceUtil.class);
@@ -152,6 +153,13 @@ public class ReportServiceUtil {
             field.set(report, new Float(row.getDouble(j)));
           } else {
             field.set(report, 0F);
+          }
+          break;
+        case DOUBLE:
+          if (StringUtils.isNotBlank(row.getString(j))) {
+            field.set(report, row.getDouble(j));
+          } else {
+            field.set(report, 0D);
           }
           break;
         case MAP:

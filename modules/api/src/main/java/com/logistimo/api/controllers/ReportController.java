@@ -115,7 +115,7 @@ public class ReportController {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     String userId = sUser.getUsername();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     String timezone = sUser.getTimezone();
     Long domainId = sUser.getCurrentDomainId();
     Map<String, Object> filters = getFilters(fcRequest, domainId);

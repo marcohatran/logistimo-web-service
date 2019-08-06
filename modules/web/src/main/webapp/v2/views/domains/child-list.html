@@ -38,11 +38,11 @@
                 <span class="title domain-child" ng-show="!item.hc">&nbsp;{{item.text}}</span>
                 <!--<span class="title" ng-class="{'domain-parent':item.hc,'domain-child':!item.hc}">&nbsp;&nbsp;{{item.text}}</span>&nbsp;&nbsp;-->
                 <span class="" ng-show="item.showIcons">
-                    <span class="glyphicons glyphicons-transfer lPad17 click-element" ng-show="item.showIcons" ng-click="switchDomain(item.id,item.text)" title="Switch domain"></span>
-                    <span class="glyphicons glyphicons-edit lPad10 click-element" ng-show="item.showIcons && iSU && !isUserPage && editDomains" ng-click="editDomainPermission(item.id,item.text)" title="Edit"></span>
-                    <span class="glyphicons glyphicons-eye-open lPad10 click-element" ng-show="item.showIcons && !iSU && !isUserPage && !iAU && editDomains" ng-click="editDomainPermission(item.id,item.text)" title="View permission"></span>
-                    <span class="glyphicons glyphicons-bin lPad10 click-element" ng-show="!item.hc && item.showIcons && iSU && !isUserPage && editDomains" ng-click="deleteDomainLink(item.id)" title="Delete"></span>
-                    <span class="glyphicons glyphicons-bin lPad10 click-element" ng-show="isUserPage && isUserPageDel && item.id != currentDomain && editDomains" ng-click="removeDomain(item.id)" title="Delete"></span>
+                    <span class="glyphicons glyphicons-transfer lPad17 click-element" ng-show="item.showIcons" ng-click="switchDomain(item.id,item.text)" title="{{resourceBundle['domain.switch.button']}}"></span>
+                    <span class="glyphicons glyphicons-edit lPad10 click-element" ng-show="item.showIcons && iSU && !isUserPage && editDomains" ng-click="editDomainPermission(item.id,item.text)" title="{{resourceBundle['edit']}}"></span>
+                    <span class="glyphicons glyphicons-eye-open lPad10 click-element" ng-show="item.showIcons && !iSU && !isUserPage && !iAU && editDomains" ng-click="editDomainPermission(item.id,item.text)" title="{{resourceBundle['domain.view.permission']}}"></span>
+                    <span class="glyphicons glyphicons-bin lPad10 click-element" ng-show="!item.hc && item.showIcons && iSU && !isUserPage && editDomains" ng-click="deleteDomainLink(item.id)" title="{{resourceBundle['delete.uppercase']}}"></span>
+                    <span class="glyphicons glyphicons-bin lPad10 click-element" ng-show="isUserPage && isUserPageDel && item.id != currentDomain && editDomains" ng-click="removeDomain(item.id)" title="{{resourceBundle['delete.uppercase']}}"></span>
                 </span>
             </td>
         </tr>

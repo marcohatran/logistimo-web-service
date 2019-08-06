@@ -200,7 +200,7 @@ public class MapUtil {
     }
     xLogger.fine("objects.size: " + objects.size());
     // Get the resource bundle
-    ///ResourceBundle messages = Resources.get().getBundle( "Messages", locale );
+    ///ResourceBundle messages = Resources.getBundle( "Messages", locale );
     boolean isOrders = (objects.get(0) instanceof IOrder);
     // Init. bounding box coordinates (required for centering the map to this box)
     double latNorth = 0, lngEast = 0, latSouth = 0, lngWest = 0;

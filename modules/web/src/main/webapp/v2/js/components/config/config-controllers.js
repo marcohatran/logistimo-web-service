@@ -26,7 +26,7 @@ systemCfgControllers.controller('SystemConfigController', ['$scope', 'configServ
     function ($scope, configService, requestContext) {
         var renderContext = requestContext.getRenderContext("manage.system-config", "config_type");
         $scope.configTypes = ["generalconfig", "dashboardconfig", "maplocationconfig", "temperaturesysconfig",
-            "currencies", "smsconfig", "languages", "languages_mobile", "locations", "optimization", "reports"];
+            "currencies", "smsconfig", "languages", "languages_mobile", "locations", "optimization", "reports","transportersconfig"];
         if (checkNotNullEmpty(requestContext.getParam("config_type"))) {
             $scope.configType = requestContext.getParam("config_type");
         } else {
@@ -54,7 +54,7 @@ systemCfgControllers.controller('SystemConfigController', ['$scope', 'configServ
             try {
                 a = JSON.parse($scope.config);
             } catch (e) {
-                $scope.showError("Oops !! Looks like an invalid json, please check.");
+                $scope.showError($scope.resourceBundle['system.config.invalid.json']);
             }
             configService.updateConfigJson($scope.configType, $scope.config).then(function (data) {
                 $scope.showSuccess(data.data);
@@ -86,7 +86,7 @@ systemCfgControllers.controller('SystemConfigController', ['$scope', 'configServ
 
         $scope.updateLocationsMasterData = function(){
             configService.updateLocationsMasterData().then(function(data){
-                $scope.showSuccess("Update succesful !! Please check the data or logs ");
+                $scope.showSuccess($scope.resourceBundle['system.config.location.update.successful']);
             }).catch(function (err) {
                 $scope.showError(err);
             })

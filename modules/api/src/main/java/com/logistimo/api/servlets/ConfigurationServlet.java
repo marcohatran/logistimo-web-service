@@ -53,13 +53,13 @@ public class ConfigurationServlet extends SgServlet {
   private static final String ACTION_COPYDOMAINCONFIG = "copydomainconfig";
 
   public void processGet(HttpServletRequest req, HttpServletResponse resp,
-                         ResourceBundle backendMessages, ResourceBundle messages)
+                         ResourceBundle messages)
       throws ServletException, IOException, ServiceException {
-    processPost(req, resp, backendMessages, messages);
+    processPost(req, resp, messages);
   }
 
   public void processPost(HttpServletRequest req, HttpServletResponse resp,
-                          ResourceBundle backendMessages, ResourceBundle messages)
+                          ResourceBundle messages)
       throws ServletException, IOException, ServiceException {
     xLogger.fine("Entered processPost");
     // Get the action

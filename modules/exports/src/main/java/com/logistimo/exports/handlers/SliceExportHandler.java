@@ -53,7 +53,7 @@ public class SliceExportHandler implements IExportHandler {
   @Override
   public String getCSVHeader(Locale locale, DomainConfig dc, String type) {
     xLogger.fine("Entering getCSVHeader. locale: {0}", locale);
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+    ResourceBundle messages = Resources.getBundle(locale);
     ReportObjDimType reportObjDimType = ReportsUtil.getObjectDimType(((ReportsSlice)slice).cassandraRow);
     String header = messages.getString("date") + ",";
     header += ReportsUtil.getDisplayName(reportObjDimType.objType, messages) + ",";

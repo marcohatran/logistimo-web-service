@@ -58,7 +58,7 @@ public class DataXExportStatusProcessor {
   public void execute(ExportResponseModel model)
       throws MessageHandlingException, IOException, ServiceException {
     jmsMeter.mark();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", Locale.ENGLISH);
+    ResourceBundle backendMessages = Resources.getBundle(Locale.ENGLISH);
     Long jobId = Long.parseLong(model.meshId.substring(model.meshId.lastIndexOf(
         CharacterConstants.UNDERSCORE) + 1));
 

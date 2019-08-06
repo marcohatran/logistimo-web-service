@@ -136,10 +136,15 @@ public class RedisMemcacheService implements MemcacheService {
 
   @Override
   public boolean putIfNotExist(String cacheKey, Object obj) {
+    return putIfNotExist(cacheKey, obj, 60);
+  }
+
+  @Override
+  public boolean putIfNotExist(String cacheKey, Object obj, int expiry) {
     Jedis jedis = null;
     try {
       jedis = pool.getResource();
-      String status = jedis.set(cacheKey.getBytes(), getBytes(obj), NX, EX, 60);
+      String status = jedis.set(cacheKey.getBytes(), getBytes(obj), NX, EX, expiry);
       pool.returnResource(jedis);
       return Constants.OK.equals(status);
     } catch (Exception e) {

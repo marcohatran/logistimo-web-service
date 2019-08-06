@@ -42,6 +42,9 @@ public class ShipmentItemBatchModel {
   public String mr;
   public String bmfdt;
   public String e;
+  /**
+   * Batch id
+   */
   public String id;
   public String bmfnm;
 

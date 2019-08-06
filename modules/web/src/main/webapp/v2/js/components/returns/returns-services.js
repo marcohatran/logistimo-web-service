@@ -119,7 +119,8 @@ logistimoApp.service('returnsService', ['APIService', function (apiService) {
     let getShipRequest = returns => {
         return {
             comment: returns.comment,
-            tracking_details: getTrackingDetails(returns)
+            tracking_details: getTrackingDetails(returns),
+            updated_time: returns.updated_time
         }
     };
 
@@ -151,7 +152,7 @@ logistimoApp.service('returnsService', ['APIService', function (apiService) {
         return apiService.post(getUpdateTrackingDetailsRequest(data), `/s2/api/returns/${id}/tracking-details`);
     };
 
-    let getUpdateItemRequest = returnItems => {
+    let getUpdateItemRequest = (returnItems, updated_time) => {
         angular.forEach(returnItems, returnItem => {
             if(checkNotNullEmpty(returnItem.new_return_quantity)) {
                 returnItem.return_quantity = returnItem.new_return_quantity || returnItem.return_quantity;
@@ -164,11 +165,11 @@ logistimoApp.service('returnsService', ['APIService', function (apiService) {
                 });
             }
         });
-        return {items: returnItems};
+        return {items: returnItems, updated_time};
     };
 
-    this.updateItems = (id, data) => {
-        return apiService.post(getUpdateItemRequest(data), `/s2/api/returns/${id}/update-items`);
+    this.updateItems = (id, data, updated_time) => {
+        return apiService.post(getUpdateItemRequest(data, updated_time), `/s2/api/returns/${id}/update-items`);
     };
 
     this.getQuantityByOrder = (orderId) => {

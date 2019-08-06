@@ -33,18 +33,18 @@
 
                 <div class="col-sm-3 mb10">
                     <select ng-model="nof.inv" ng-change="fetchEvent('inventory')" class="form-control" id="nofMsg">
-                        <option value="">-- {{resourceBundle['select']}} {{'event'}} --</option>
-                        <option ng-repeat="inv in inventoryLabel" value="{{inv.name}}">{{inv.name}}</option>
+                        <option value="">-- {{resourceBundle['select']}} {{resourceBundle['event']}} --</option>
+                        <option ng-repeat="inv in inventoryLabel" value="{{inv.name}}">{{getLabelFromResourceBundle(inv.name)}}</option>
                     </select>
                 </div>
                 <div class="lnk" ng-show="prShow || showSelection || showStatusSelection">
                 <span class="col-sm-4" ng-show="prShow">
-                    {{prefixName}}<input only-digits type="text" class="form-control w60 stat-bottom" ng-model="nof.pr" id="prefix"
-                                         placeholder="{{placeHolder}}" ng-change="resetStatus('prefix')">
+                    {{getLabelFromResourceBundle(prefixName)}} <input only-digits type="text" class="form-control w60 stat-bottom" ng-model="nof.pr" id="prefix"
+                                         placeholder="{{getLabelFromResourceBundle(placeHolder)}}" ng-change="resetStatus('prefix')">
                 </span>
                 <span class="col-sm-3" ng-show="showSelection">
                     <select ng-model="nof.os" class="form-control" ng-change="resetStatus('status')">
-                        <option value="">{{placeHolder}}</option>
+                        <option value="">{{getLabelFromResourceBundle(placeHolder)}}</option>
                         <option ng-show="prSelect == 'stockCounted'" ng-repeat="count in stockCounted"
                                 value="{{count}}">{{count}}
                         </option>
@@ -72,7 +72,7 @@
                 </span>
                  <span class="col-sm-3" ng-show="showStatusSelection">
                     <select ng-model="nof.mst" class="form-control" ng-change="resetStatus('status')">
-                        <option value="">{{extraParamsPlaceHolder}}</option>
+                        <option value="">{{getLabelFromResourceBundle(extraParamsPlaceHolder)}}</option>
                         <option ng-show="prExtraSelect == 'stockCounted'" ng-repeat="countStatus in stockCountedStatus"
                                 value="{{countStatus}}">{{countStatus}}
                         </option>

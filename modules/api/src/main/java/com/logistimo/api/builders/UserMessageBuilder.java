@@ -94,7 +94,7 @@ public class UserMessageBuilder {
       model.sto = user.getFullName() + " (" + user.getMobilePhoneNumber() + ")";
     }
     model.tm = LocalDateUtil.format(messageLog.getTimestamp(), locale, timezone);
-    model.sta = ms.getStatusMessage(messageLog.getStatus(), locale);
+    model.sta = ms.getStatusMessage(messageLog.getStatus(), locale, messageLog.getProviderId());
     if (sender != null) {
       model.sby = sender.getFullName();
     }

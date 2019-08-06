@@ -259,6 +259,12 @@ ordServices.factory('ordService', ['APIService', function (apiService) {
         updateShipmentPackageSize: function (updValue, sID) {
             return apiService.post("'" + updValue + "'", '/s2/api/shipment/update/' + sID + '/ps');
         },
+        updateTrackingPhoneNumber: function (updValue, sID) {
+            return apiService.post("'" + updValue + "'", '/s2/api/shipment/update/' + sID + '/phnm');
+        },
+        updateShipmentDetails: function(sID, patches, orderUpdatedAt) {
+            return apiService.patch(patches, '/s2/api/shipment/' + sID + '?orderUpdatedAt=' + orderUpdatedAt);
+        },
         fetchRequesters: function(text) {
             return apiService.get("/s2/api/order-approvals-meta/requesters?q=" + text);
         },
@@ -270,6 +276,29 @@ ordServices.factory('ordService', ['APIService', function (apiService) {
         },
         updateShipmentReferenceId: function(updValue, sId, orderUpdatedAt) {
             return apiService.post("'" + updValue + "'", '/s2/api/shipment/update/' + sId + '/referenceId?orderUpdatedAt=' + orderUpdatedAt);
+        },
+        createDeliveryRequest: function (data, orderId, shipmentId) {
+            if(shipmentId && orderId) {
+                return apiService.post(data, '/s2/api/orders/' + orderId + '/shipments/' + shipmentId + '/delivery-requests');
+            } else if(orderId) {
+                return apiService.post(data, '/s2/api/orders/' + orderId + '/delivery-requests');
+            }
+        },
+        fetchShippingOptions : function (deliveryRequest) {
+            return apiService.post(deliveryRequest, '/s2/api/delivery-requests/shipping-options');
+        },
+        fetchDeliveryRequests: function (sId, countOnly) {
+            var urlStr = '/s2/api/delivery-requests?sId=' + sId;
+            if(checkNotNullEmpty(countOnly)) {
+                urlStr += '&countOnly=' + countOnly;
+            }
+            return apiService.get(urlStr);
+        },
+        syncDeliveryRequest: function(id) {
+            return apiService.get("/s2/api/shipment/sync-delivery-request/" + id);
+        },
+        cancelDeliveryRequest: function(id) {
+            return apiService.delete("/s2/api/delivery-requests/" + id);
         }
     }
 }]);

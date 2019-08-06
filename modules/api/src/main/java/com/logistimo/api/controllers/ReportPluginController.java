@@ -51,11 +51,11 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.text.MessageFormat;
 import java.text.ParseException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.ResourceBundle;
 
 /**
@@ -160,13 +160,10 @@ public class ReportPluginController {
   String exportData(@RequestBody String json) throws ParseException, ServiceException {
     ExportModel model = reportPluginService.buildExportModel(json);
     long jobId = exportService.scheduleExport(model,"report");
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", Locale.ENGLISH);
     IUserAccount u = usersService.getUserAccount(SecurityUtils.getUsername());
-    return backendMessages.getString("export.success1") + " " + u.getEmail() + " "
-        + backendMessages.getString("export.success2") + " "
-        + backendMessages.getString("exportstatusinfo2") + " "
-        + jobId + ". "
-        + backendMessages.getString("exportstatusinfo1");
+    ResourceBundle backendMessages = Resources.getBundle(u.getLocale());
+    return MessageFormat
+        .format(backendMessages.getString("export.status.message"), u.getEmail(), jobId);
   }
 
   @RequestMapping(value ="/min-max-history", method = RequestMethod.GET)

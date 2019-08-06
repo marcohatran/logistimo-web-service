@@ -41,14 +41,14 @@
                 </div>
                 <div class="row mt10" ng-hide="(order.st == ORDER.CANCELLED || order.st == ORDER.FULFILLED || dp.vp || (!order.atc && isUndef(order.eddLabel)) ) && !eddt">
                     <div class="col-sm-3">
-                        <label class="control-label">Required by date:</label>
+                        <label class="control-label">{{resourceBundle['required.bydate']}}:</label>
                     </div>
                     <div class="col-sm-9">
-                        <span ng-hide="edit.etdate">{{order.eddLabel ? order.eddLabel : "Select date" }}</span>
+                        <span ng-hide="edit.etdate">{{order.eddLabel ? order.eddLabel : resourceBundle['select.date'] }}</span>
 
                         <div ng-show="edit.etdate">
                             <date-picker ng-show="edit.etdate" class="col-sm-12 noLRpad pb3" date-model="dates.edd"
-                                         min-date="today" place-holder="Required by date"></date-picker>
+                                         min-date="today" place-holder="{{resourceBundle['required.bydate']}}"></date-picker>
                             <button class="btn btn-sm btn-primary" ng-click="updateDueDate()">
                                 {{resourceBundle['save']}}
                             </button>
@@ -107,7 +107,7 @@
                         <label class="control-label">{{resourceBundle['eda']}}:</label>
                     </div>
                     <div class="col-sm-9">
-                        <span ng-hide="edit.efdate">{{order.efdLabel ? order.efdLabel : "Select date" }}</span>
+                        <span ng-hide="edit.efdate">{{order.efdLabel ? order.efdLabel : resourceBundle['select.date'] }}</span>
 
                         <div ng-show="edit.efdate">
                             <date-picker ng-show="edit.efdate" class="col-sm-12 noLRpad pb3" date-model="dates.efd"

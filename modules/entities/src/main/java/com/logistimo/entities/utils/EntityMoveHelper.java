@@ -142,11 +142,11 @@ public class EntityMoveHelper {
     if (relatedAsset.getKioskId() != null && !kiosk.getKioskId().equals(relatedAsset.getKioskId())) {
       ResourceBundle
           backendMessages =
-          Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
+          Resources.getBundle(SecurityUtils.getLocale());
       errorMsg.append(MsgUtil.newLine()).append(backendMessages.getString("kiosk"))
           .append(": ")
           .append(kiosk.getName()).append(MsgUtil.newLine())
-          .append(backendMessages.getString("assets")).append(": ").append(assetSerialNumber);
+          .append(backendMessages.getString("one.or.more.asset")).append(": ").append(assetSerialNumber);
 
     }
     return errorMsg.toString();

@@ -818,7 +818,7 @@ tempControllers.controller('DeviceProfileController', ['$injector', '$scope', '$
         $scope.vendorMapping = {};
         $scope.deviceConfiguredStatus = true;
         $scope.entityInformation = {};
-        $scope.configCommunicationChannel = [{id: 0, value: "SMS"}, {id: 1, value: "Internet"}];
+        $scope.configCommunicationChannel = [{id: 0, value: $scope.resourceBundle['communication.channel.sms']}, {id: 1, value: $scope.resourceBundle['communication.channel.internet']}];
         $scope.configCommChannelArray = ["SMS", "Internet"];
         $scope.loadingInvItems = true;
         $scope.loadCounter = 0;
@@ -1341,7 +1341,7 @@ tempControllers.controller('DeviceController', ['$scope', '$location', 'tempServ
         $scope.deviceConfigCopy = {};
         $scope.device = {sim: {phn: ""}, pushDeviceConfig: 1, editConfig: false};
         $scope.selAll = false;
-        $scope.configCommunicationChannel = [{id: 0, value: "SMS"}, {id: 1, value: "Internet"}];
+        $scope.configCommunicationChannel = [{id: 0, value: $scope.resourceBundle['communication.channel.sms']}, {id: 1, value: $scope.resourceBundle['communication.channel.internet']}];
         $scope.uVisited = {};
         $scope.loadCounter = 0;
         $scope.complete = false;

@@ -50,25 +50,33 @@ public class GetOrderOverallStatusAction {
     boolean hasShipped = false;
     boolean hasFulfilled = false;
     boolean allShipped = !shipments.isEmpty();
+    boolean allReadyForDispatch = !shipments.isEmpty();
     boolean allFulfilled = !shipments.isEmpty();
     for (IShipment shipment : shipments) {
       switch (shipment.getStatus()) {
         case SHIPPED:
           hasShipped = true;
           allFulfilled = false;
+          allReadyForDispatch = false;
           break;
         case FULFILLED:
           hasFulfilled = true;
+          allReadyForDispatch = false;
+          break;
+        case READY_FOR_DISPATCH:
+          allShipped = false;
+          allFulfilled = false;
           break;
         case CANCELLED:
           break;
         default:
           allShipped = false;
+          allReadyForDispatch = false;
           allFulfilled = false;
       }
     }
-    return getNewOrderStatus(allItemsInShipments, allFulfilled, allShipped, hasShipped,
-        hasFulfilled, orderId);
+    return getNewOrderStatus(allItemsInShipments, allFulfilled, allShipped, allReadyForDispatch,
+        hasShipped, hasFulfilled, orderId);
   }
 
   /**
@@ -84,7 +92,7 @@ public class GetOrderOverallStatusAction {
    * @return new order status for the order.
    */
   private String getNewOrderStatus(boolean allItemsInShipments, boolean fulfilled,
-                                   boolean shipped,
+                                   boolean shipped, boolean readyForDispatch,
                                    boolean hasShipped, boolean hasFulfilled, Long orderId)
       throws ServiceException {
     String newOrderStatus;
@@ -93,6 +101,8 @@ public class GetOrderOverallStatusAction {
         newOrderStatus = IOrder.FULFILLED;
       } else if (shipped) {
         newOrderStatus = IOrder.COMPLETED;
+      } else if (readyForDispatch) {
+        newOrderStatus = IOrder.READY_FOR_DISPATCH;
       } else if (hasShipped || hasFulfilled) {
         newOrderStatus = IOrder.BACKORDERED;
       } else {

@@ -47,7 +47,7 @@
                             <div class="form-group">
                                 <label class="col-sm-4 control-label">{{resourceBundle.domainstoadd}}</label>
                                 <div class="col-sm-5">
-                                    <user-domain-select model="domainsToAdd"></user-domain-select>
+                                    <user-domain-select model="domainsToAdd" place-holder="{{resourceBundle['select.domains']}}"></user-domain-select>
                                 </div>
                                 <div class="col-sm-3">
                                     <button type="button" ng-disabled="(currentDomain != user.sdid)"

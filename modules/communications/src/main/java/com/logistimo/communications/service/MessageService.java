@@ -310,7 +310,7 @@ public abstract class MessageService {
   public abstract String getFormattedAddress(String address);
 
   // Get the status description, given a code
-  public abstract String getStatusMessage(String statusCode, Locale locale);
+  public abstract String getStatusMessage(String statusCode, Locale locale, String providerId);
 
   // Get the provider Id
   public abstract String getProviderId();

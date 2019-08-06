@@ -1,0 +1,87 @@
+<!--
+  ~ Copyright © 2018 Logistimo.
+  ~
+  ~ This file is part of Logistimo.
+  ~
+  ~ Logistimo software is a mobile & web platform for supply chain management and remote temperature monitoring in
+  ~ low-resource settings, made available under the terms of the GNU Affero General Public License (AGPL).
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+  ~ Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+  ~ later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+  ~ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License along with this program.  If not, see
+  ~ <http://www.gnu.org/licenses/>.
+  ~
+  ~ You can be released from the requirements of the license by purchasing a commercial license. To know more about
+  ~ the commercial license, please contact us at opensource@logistimo.com
+  -->
+
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Cache-Control" content="max-age=0" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>Logistimo</title>
+    <link rel="stylesheet" href="../../../../css/3rdparty/bootstrap.min.css">
+    <link rel="stylesheet" href="../../../../css/logistimo.css">
+    <link rel="stylesheet" href="../../../../css/help.css">
+    <link rel="shortcut icon" href="../../../../../titleiconnew.ico">
+</head>
+<body class="mainbody">
+    <div class="container" style="border-bottom: 2px solid #F56C64;padding:10px 0">
+        <div>
+            <div class="row">
+                <div class="col-sm-12">
+                    <img style="max-height: 60px;max-width: 360px;" src="../../../../images/acquia_marina_logo.png">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container" style="margin-top:15px;min-height: 90%">
+        <div class="mh300">
+            <div class="page-header" style="margin-top: 20px">
+                <div class="heading">Stock anormal</div>
+            </div>
+            <p>
+                Le rapport de stock anormal fournit des informations sur les anomalies de stock basées sur des événements de stock anormaux, notamment des événements stock zéro, < minimum et> maximum. Il offre des vues par nombre d'événements sur une période donnée, ainsi que par durée, avec des graphiques consultables dans le temps et des listes tabulaires disponibles sous d'autres dimensions telles que les matériaux, les entités et les emplacements.
+            </p>
+
+            <p>
+                Vous pouvez sélectionner un ou plusieurs filtres de matériau, d'entité ou de lieu et cliquer sur «Obtenir le rapport» pour obtenir le rapport. Dans la vue du rapport, vous pouvez sélectionner n'importe quel type d'anomalie tel que stock zéro, < min et > max et l'une des métriques ci-dessous pour afficher le rapport.
+            </p>
+
+            <p>
+                Les métriques de ce rapport, décrites ci-dessous:
+            </p>
+            <ul>
+                <li>
+                    <b>Nombre d'événements:</b> Cette métrique représente le nombre d'événements d'anomalie de stock (soit zéro stock, < min or > max, comme sélectionné) dans la période donnée.
+                </li>
+                <li>
+                    <b>Nombre moyen d'événements par entité:</b>
+                    Cette métrique représente le nombre moyen d'événements d'anomalie de stock (soit zéro stock, < min or > max, comme sélectionné) dans la période donnée. Ceci est calculé en divisant le nombre total d'événements par le nombre d'entités.
+                </li>
+                <li>
+                    <b>Durée de l'événement (jours):</b> Cette métrique représente la durée totale des événements (soit zéro stock, < min or > max, comme sélectionné) dans la période donnée.
+                    Dans une période donnée (par exemple un mois), la partie du temps pendant laquelle un événement était ouvert est attribuée à cette période. Ce pourrait être une partie du temps ou le temps entier.
+                </li>
+                <li>
+                    <b>Durée moyenne par événement (jours):</b> Cette métrique représente la durée moyenne par événement d'anomalie (que ce soit zéro stock, < min or > max). Ceci est calculé en divisant la durée totale des événements d'une période donnée par le nombre d'événements de la même période.
+                </li>
+                <li>
+                    <b>% d'articles en stock présentant cette anomalie:</b> Cette métrique représente le pourcentage d'articles en stock d'un type d'anomalie particulier. (soit zéro stock, < min or > max) for X% of the period, where X = 100%, >= 90%, >= 80%, >= 70%.
+                    Par exemple, cela donne une idée du pourcentage d'articles en stock qui ont été, par exemple, en rupture de stock, pendant plus de 90% du temps, par exemple. Cette métrique est calculée en divisant le nombre d'articles de stock présentant une anomalie de stock particulière (telle que stock zéro, < min ou > max) par le nombre total d'articles de stock dans ce domaine.
+                </li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

@@ -231,7 +231,7 @@ public class OrderAutomationAction {
   }
 
   private String getAddMaterialsMessage(List<ITransaction> kioskTransactions, Locale locale) {
-    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     List<String> matList = kioskTransactions.stream()
         .map(ITransaction::getMaterialId)
         .map(materialId -> {
@@ -250,7 +250,7 @@ public class OrderAutomationAction {
 
   private void createNewOrder(Long kioskId, List<ITransaction> kioskTransactions, Locale locale)
       throws ServiceException {
-    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     OrderResults results = orderManagementService
         .updateOrderTransactions(kioskTransactions.get(0).getDomainId(), Constants.SYSTEM_USER_ID,
             ITransaction.TYPE_ORDER, kioskTransactions, kioskId, null,

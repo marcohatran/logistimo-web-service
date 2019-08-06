@@ -25,7 +25,7 @@
     <div class="report-filter" ng-class="{'hide-filter':hideFilter}">
         <div class="row" ng-click="hideFilter?openFilters():cancel()" id="fixedfilter">
             <div class="col-sm-8 norightpad lPad5">
-                    <span uib-tooltip="Filters" tooltip-append-to-body="true"
+                    <span uib-tooltip="{{resourceBundle['filters.uppercase']}}" tooltip-append-to-body="true"
                           class="glyphicons glyphicons-filter codegray pt5">
                     </span>
                     <span class="badge filtered-data pt5" ng-show="value" ng-repeat="(key,value) in filterLabels">
@@ -53,24 +53,24 @@
         <div class="row">
             <div class="col-sm-6 card-left">
                 <div class="filter-card">
-                    <div class="filter-heading" ng-class="{'required': mandatoryFilters['monitor']}">Type</div>
+                    <div class="filter-heading" ng-class="{'required': mandatoryFilters['monitor']}">{{resourceBundle['type']}}</div>
                     <div class="filter-sub-heading">
-                        <span ng-class="{'active':cards.mc == undefined}" ng-click="changeSubHeading('m')">By monitoring type</span>
-                        <span ng-class="{'active':cards.mc == 't'}" ng-click="changeSubHeading('m','t')">By asset type</span>
+                        <span ng-class="{'active':cards.mc == undefined}" ng-click="changeSubHeading('m')">{{resourceBundle['reports.by.monitoring.type']}}</span>
+                        <span ng-class="{'active':cards.mc == 't'}" ng-click="changeSubHeading('m','t')">{{resourceBundle['reports.by.asset.type']}}</span>
                     </div>
                     <rpt-monitor-type-filter filter-model="filter.mt" ng-disabled="disableMonitor || ((filter.entity || filter.etag) && filter.mf)" ng-if="cards.mc == undefined"></rpt-monitor-type-filter>
                     <rpt-asset-filter filter-model="filter.at" filter-type="{{disableMonitor ? defaultAssetType : 'all'}}" ng-if="cards.mc == 't'"></rpt-asset-filter>
                 </div>
                 <div class="filter-card" ng-if="!disableManufacturer">
-                    <div class="filter-heading">Manufacturer</div>
+                    <div class="filter-heading">{{resourceBundle['manufacturer']}}</div>
                     <div class="filter-sub-heading">
-                        <span ng-class="{'active':cards.mfc == undefined}" ng-click="changeSubHeading('mf')">By manufacturer</span>
-                        <span ng-class="{'active':cards.mfc == 'm'}" ng-click="changeSubHeading('mf','m')">By model</span>
+                        <span ng-class="{'active':cards.mfc == undefined}" ng-click="changeSubHeading('mf')">{{resourceBundle['by.upper']}} {{resourceBundle['manufacturer.lower']}}</span>
+                        <span ng-class="{'active':cards.mfc == 'm'}" ng-click="changeSubHeading('mf','m')">{{resourceBundle['by.upper']}} {{resourceBundle['model.lower']}}</span>
                     </div>
                     <rpt-manufacturer-filter filter-model="filter.mf" ng-disabled="filter.mt && (filter.entity || filter.etag)" filter-type="filter.mt" ng-if="cards.mfc == undefined"></rpt-manufacturer-filter>
                     <rpt-model-filter filter-model="filter.mm" ng-if="cards.mfc == 'm'"></rpt-model-filter>
                     <div class="filter-sub-heading pt10">
-                        <span class="active">By manufacturing year</span>
+                        <span class="active">{{resourceBundle['reports.by.manufacturing.year']}}</span>
                     </div>
                     <rpt-age-filter offset="0" filter-model="filter.myear"/>
                 </div>
@@ -79,39 +79,39 @@
                 <div class="filter-card">
                     <div class="filter-heading">{{resourceBundle['kiosk']}}</div>
                     <div class="filter-sub-heading">
-                        <span ng-class="{'active':cards.ec == undefined}" ng-click="changeSubHeading('e')">By tag</span>
-                        <span ng-class="{'active':cards.ec == 'i'}" ng-click="changeSubHeading('e','i')">By name</span>
+                        <span ng-class="{'active':cards.ec == undefined}" ng-click="changeSubHeading('e')">{{resourceBundle['by.upper']}} {{resourceBundle['tag.lower']}}</span>
+                        <span ng-class="{'active':cards.ec == 'i'}" ng-click="changeSubHeading('e','i')">{{resourceBundle['by.upper']}} {{resourceBundle['name.lower']}}</span>
                     </div>
-                    <rpt-tag-filter place-holder="Select {{resourceBundle['kiosk.lowercase']}} tag"
+                    <rpt-tag-filter place-holder="{{resourceBundle['reports.filters.select.entity.tag']}}"
                                     filter-model="filter.etag" ng-disabled="filter.mt && filter.mf" filter-type="entity"
                                     ng-if="cards.ec == undefined"></rpt-tag-filter>
                     <rpt-entity-filter ng-disabled="filter.st || filter.dis || filter.tlk || filter.cty || (filter.mt && filter.mf)"
-                                       place-holder="Select {{resourceBundle['kiosk.lowercase']}}" filter-model="filter.entity"
+                                       place-holder="{{resourceBundle['reports.filters.select.entity']}}" filter-model="filter.entity"
                                        ng-if="cards.ec == 'i'"></rpt-entity-filter>
                     <span ng-show="(filter.st || filter.dis || filter.tlk || filter.cty) && cards.ec == 'i'"
                           class="limit">{{resourceBundle['filter.disable.entity']}}</span>
                 </div>
                 <div class="filter-card">
-                    <div class="filter-heading">Location</div>
+                    <div class="filter-heading">{{resourceBundle['location']}}</div>
                     <div class="filter-sub-heading">
-                        <span ng-class="{'active':cards.lc == undefined}" ng-click="changeSubHeading('l')">By state</span>
-                        <span ng-class="{'active':cards.lc == 'd'}" ng-click="changeSubHeading('l','d')">By district/county</span>
-                        <span ng-class="{'active':cards.lc == 't'}" ng-click="changeSubHeading('l','t')">By taluk/block</span>
-                        <span ng-class="{'active':cards.lc == 'c'}" ng-click="changeSubHeading('l','c')">By city/village</span>
+                        <span ng-class="{'active':cards.lc == undefined}" ng-click="changeSubHeading('l')">{{resourceBundle['reports.by.state']}}</span>
+                        <span ng-class="{'active':cards.lc == 'd'}" ng-click="changeSubHeading('l','d')">{{resourceBundle['reports.by.district']}}</span>
+                        <span ng-class="{'active':cards.lc == 't'}" ng-click="changeSubHeading('l','t')">{{resourceBundle['reports.by.taluk']}}</span>
+                        <span ng-class="{'active':cards.lc == 'c'}" ng-click="changeSubHeading('l','c')">{{resourceBundle['reports.by.city']}}</span>
                     </div>
-                    <rpt-location-filter place-holder="{{resourceBundle['select']}} state"
+                    <rpt-location-filter place-holder="{{resourceBundle['reports.filters.select.state']}}"
                                          filter-model="filter.st" filter-type="state"
                                          ng-disabled="filter.mst || filter.entity"
                                          ng-if="cards.lc == undefined"></rpt-location-filter>
-                    <rpt-location-filter place-holder="{{resourceBundle['select']}} district/county"
+                    <rpt-location-filter place-holder="{{resourceBundle['reports.filters.select.district']}}"
                                          filter-model="filter.dis" filter-type="district"
                                          ng-disabled="filter.mdis || filter.entity"
                                          ng-if="cards.lc == 'd'"></rpt-location-filter>
-                    <rpt-location-filter place-holder="{{resourceBundle['select']}} taluk"
+                    <rpt-location-filter place-holder="{{resourceBundle['reports.filters.select.taluk']}}"
                                          filter-model="filter.tlk" filter-type="taluk"
                                          ng-disabled="filter.mtlk || filter.entity"
                                          ng-if="cards.lc == 't'"></rpt-location-filter>
-                    <rpt-location-filter place-holder="{{resourceBundle['select']}} city/village"
+                    <rpt-location-filter place-holder="{{resourceBundle['reports.filters.select.city']}}"
                                          filter-model="filter.cty" filter-type="city"
                                          ng-disabled="filter.mcty || filter.entity"
                                          ng-if="cards.lc == 'c'"></rpt-location-filter>
@@ -135,7 +135,7 @@
             <div class="col-sm-11">
                 <div class="pull-right">
                     <button type="button" ng-click="cancel()" class="btn btn-sm btn-default">
-                        Cancel
+                        {{resourceBundle['cancel']}}
                     </button>
                     <button type="button" ng-click="applyFilter()" class="btn btn-sm btn-primary">
                         {{resourceBundle['report.get']}}

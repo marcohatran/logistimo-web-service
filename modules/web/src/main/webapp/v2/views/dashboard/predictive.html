@@ -30,7 +30,7 @@
                         <li ng-repeat="item in links">
                         <span ng-if="$index != links.length-1" class="title domain-child"
                               ng-click="addFilter(item.filter, item.level, $index, 'true')"
-                              uib-tooltip="Go to {{item.text}}" style="padding-left: 0px;">{{item.text}}</span>
+                              uib-tooltip="{{resourceBundle['goto']}} {{item.text}}" style="padding-left: 0px;">{{item.text}}</span>
                         <span ng-if="$index == links.length-1" style="padding-left: 0px;"
                               class="title domain-child"><b>{{item.text}}</b></span>
                         </li>
@@ -47,15 +47,15 @@
             <div ng-show="!loading" class="row pt5 border-bottom" style="min-height: 350px">
                 <div ng-hide="tempOnlyAU" class="col-sm-8" style="margin-left: 16%;">
                     <h4 class="text-center mb0" style="padding-left: 20px;">Likely to stock out <span uib-tooltip="% of inventory items that are likely to stock out across all {{resourceBundle['kiosks.lowercase']}} in this jurisdiction. An inventory item is a material at a {{resourceBundle['kiosk.lowercase']}}." style="display: inline" class="litetext glyphicons glyphicons-info-sign"></span>
-                        <div uib-tooltip="Filters" ng-click="toggleFilter('i')" class="pull-right rPad10 glyphicons glyphicons-filter codegray" style="cursor: pointer"></div>
+                        <div uib-tooltip="{{resourceBundle['filters.uppercase']}}" ng-click="toggleFilter('i')" class="pull-right rPad10 glyphicons glyphicons-filter codegray" style="cursor: pointer"></div>
                     </h4>
                     <div class="litetext text-center" ng-bind-html="subCaption"></div>
                     <div class="pop_filter_box col-sm-11 ws" id="filter_i" style="margin-left: 3px;">
                         <div class="row pb10 pt10">
                             <div class="col-sm-12">
-                                <label class="col-sm-3 noLRpad control-label cbx">{{resourceBundle['material']}} {{resourceBundle['multiple.tags']}}</label>
+                                <label class="col-sm-3 noLRpad control-label cbx">{{resourceBundle['one.or.more.material.tags']}}</label>
                                 <span class="col-sm-9 noLRpad lPad5">
-                                    <tag-select tags-model="mtag" place-holder="All"
+                                    <tag-select tags-model="mtag" place-holder="{{resourceBundle['all']}}"
                                                 type="'material'"
                                                 force-no-udf="'true'">
                                     </tag-select>
@@ -64,7 +64,7 @@
                         </div>
                         <div class="row pb10">
                             <div class="col-sm-12">
-                                <label class="col-sm-3 noLRpad control-label cbx">Material name</label>
+                                <label class="col-sm-3 noLRpad control-label cbx">{{resourceBundle['material.name']}}</label>
                                 <span class="col-sm-9 noLRpad lPad5">
                                     <material-drop-down ng-model="material" mtag="mtag.text"></material-drop-down>
                                 </span>
@@ -72,10 +72,10 @@
                         </div>
                         <div class="row pb10">
                             <div class="col-sm-12">
-                                <label class="col-sm-3 noLRpad control-label cbx">{{resourceBundle['kiosk']}} {{resourceBundle['multiple.tags']}}</label>
+                                <label class="col-sm-3 noLRpad control-label cbx">{{resourceBundle['one.or.more.kiosk.tags']}}</label>
                                 <span class="col-sm-9 noLRpad lPad5">
                                     <span class="litetext">{{resourceBundle['include']}} {{resourceBundle['multiple.tags']}}</span>
-                                    <tag-select tags-model="eTag" place-holder="All"
+                                    <tag-select tags-model="eTag" place-holder="{{resourceBundle['all']}}"
                                                 type="'entity'"
                                                 multiple="'true'"
                                                 force-no-udf="'true'">
@@ -87,7 +87,7 @@
                             <div class="col-sm-12">
                                 <span class="col-sm-offset-3 col-sm-9 noLRpad lPad5">
                                     <span class="litetext">{{resourceBundle['exclude']}} {{resourceBundle['multiple.tags']}}</span>
-                                    <tag-select tags-model="excludeTag" place-holder="All"
+                                    <tag-select tags-model="excludeTag" place-holder="{{resourceBundle['all']}}"
                                                 type="'entity'"
                                                 multiple="'true'"
                                                 force-no-udf="'true'">
@@ -98,8 +98,8 @@
                         <div class="row pb10">
                             <div class="col-sm-12">
                                 <span class="pull-right">
-                                    <input type="button" class="btn btn-sm btn-primary" ng-click="applyFilters()" value="Filter">
-                                    <input type="button" class="btn btn-sm btn-default" ng-click="toggleFilter('i')" value="Cancel">
+                                    <input type="button" class="btn btn-sm btn-primary" ng-click="applyFilters()" value="{{resourceBundle['filter']}}">
+                                    <input type="button" class="btn btn-sm btn-default" ng-click="toggleFilter('i')" value="{{resourceBundle['cancel']}}">
                                 </span>
                             </div>
                         </div>
@@ -115,11 +115,11 @@
         </div>
         <div ng-hide="iAU && !tempEnabled" class="box topbox">
                 <div ng-if="!mloading" class="row" style="min-height: 700px">
-                    <h4 class="text-center mb0">Likely to stock out</h4>
+                    <h4 class="text-center mb0">{{resourceBundle['inventory.dashboard.prediction.likely.to.stockout']}}</h4>
                     <div class="litetext text-center" ng-if="subCaption != '&amp;nbsp;'" ng-bind-html="subCaption"></div>
                     <div class="pt20">
                         <div ng-class="{'col-sm-offset-2':!matBarData}" class="col-sm-6">
-                            <div class="text-center text-bold">By location
+                            <div class="text-center text-bold">{{resourceBundle['by.location']}}
                                 <div class="btn-group rPad10 float-right" ng-show="false">
                                     <label class="btn btn-sm btn-default" ng-click="setShowMap(true)" ng-model="showMap" uib-btn-radio="true" uib-tooltip="{{resourceBundle['map.view']}}"><span style="padding-top: 3px" class="glyphicons glyphicons-globe"></span></label>
                                     <label class="btn btn-sm btn-default" ng-click="setShowMap(false)" ng-model="showMap" uib-btn-radio="false" uib-tooltip="Bar&nbsp;view"><span style="padding-top: 3px" class="glyphicons glyphicons-paragraph"></span></label>
@@ -127,7 +127,7 @@
                             </div>
                         </div>
                         <div class="col-sm-6" ng-if="matBarData">
-                            <div class="text-center text-bold">By material</div>
+                            <div class="text-center text-bold">{{resourceBundle['by.material']}}</div>
                         </div>
                     </div>
                     <div class="row" style="margin-left: 15px;margin-right: 15px;">
@@ -158,7 +158,7 @@
         <div class="box topbox tabminheight">
             <div class="row">
                 <div class="col-sm-12 mt10">
-                    <div class="alert alert-warning">Please choose default country for the domain to enable dashboards.</div>
+                    <div class="alert alert-warning">{{resourceBundle['default.country']}}</div>
                 </div>
             </div>
         </div>

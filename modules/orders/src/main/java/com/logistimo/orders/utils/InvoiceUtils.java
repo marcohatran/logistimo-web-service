@@ -415,7 +415,7 @@ public class InvoiceUtils {
 
   private void updateOrderReferenceNumber(IOrder order, Map<String, Object> parameters) {
     parameters.put(SALES_REFERENCE_NUMBER, order.getSalesReferenceID());
-    ResourceBundle messages = Resources.get().getBundle("Messages", Locale.ENGLISH);
+    ResourceBundle messages = Resources.getBundle(Locale.ENGLISH);
     String referenceId = Constants.EMPTY;
     String referenceType;
     if (IOrder.TRANSFER_ORDER == order.getOrderType()) {

@@ -25,6 +25,7 @@ package com.logistimo.accounting.service.impl;
 
 import com.logistimo.accounting.entity.IAccount;
 import com.logistimo.accounting.models.CreditData;
+import com.logistimo.accounting.repository.AccountingRepository;
 import com.logistimo.accounting.service.IAccountingService;
 import com.logistimo.config.models.AccountingConfig;
 import com.logistimo.config.models.DomainConfig;
@@ -44,22 +45,17 @@ import com.logistimo.services.ServiceException;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.LocalDateUtil;
-import com.logistimo.utils.QueryUtil;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.ResourceBundle;
 
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
-import javax.jdo.Query;
 
 /**
  * Created by charan on 05/03/17.
@@ -70,6 +66,8 @@ public class AccountingServiceImpl implements IAccountingService {
   private static final XLog xLogger = XLog.getLog(AccountingServiceImpl.class);
 
   private EntitiesService entitiesService;
+  @Autowired
+  private AccountingRepository accountingRepository;
 
   @Autowired
   public void setEntitiesService(EntitiesService entitiesService) {
@@ -80,7 +78,7 @@ public class AccountingServiceImpl implements IAccountingService {
   public CreditData getCreditData(Long customerId, Long vendorId, DomainConfig dc)
       throws ServiceException {
     BigDecimal availableCredit;
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", Locale.ENGLISH);
+    ResourceBundle backendMessages = Resources.getBundle(Locale.ENGLISH);
     if (customerId == null || vendorId == null) {
       throw new IllegalArgumentException(backendMessages.getString("no.cust.vend.lower"));
     }
@@ -184,64 +182,7 @@ public class AccountingServiceImpl implements IAccountingService {
   @Override
   public Results getAccounts(Long vendorId, Long customerId, int year, String orderBy,
                              PageParams pageParams) throws ServiceException {
-    xLogger.fine("Entered getAccount");
-    PersistenceManager pm = PMF.get().getPersistenceManager();
-    List<IAccount> results = null;
-    // Form the query
-    Query q = pm.newQuery(JDOUtils.getImplClass(IAccount.class));
-    String filter = "", declaration = "";
-    String ordering = "py desc"; // default order by payables
-    Map<String, Object> params = new HashMap<>();
-    if (vendorId != null) {
-      filter = "vId == vIdParam";
-      declaration = "Long vIdParam";
-      params.put("vIdParam", vendorId);
-      if (IAccount.FIELD_ENTITY.equals(orderBy)) {
-        ordering = "cNm asc";
-      }
-    } else if (customerId != null) {
-      filter = "cId == cIdParam";
-      declaration = "Long cIdParam";
-      params.put("cIdParam", customerId);
-      if (IAccount.FIELD_ENTITY.equals(orderBy)) {
-        ordering = "vNm asc";
-      }
-    }
-    if (year > 0) {
-      if (!filter.isEmpty()) {
-        filter += " && ";
-        declaration += ", ";
-      }
-      filter += "y == yParam";
-      declaration += "Integer yParam";
-      params.put("yParam", year);
-    }
-    // Update query
-    q.setFilter(filter);
-    q.declareParameters(declaration);
-    // Set ordering
-    q.setOrdering(ordering);
-    // Update page params in query, if needed
-    if (pageParams != null) {
-      QueryUtil.setPageParams(q, pageParams);
-    }
-    String cursor = null;
-    try {
-      results = (List<IAccount>) q.executeWithMap(params);
-      results.size(); // To get all results before pm is closed
-      cursor = QueryUtil.getCursor(results);
-      results = (List<IAccount>) pm.detachCopyAll(results);
-      // Get the cursor, if present
-    } finally {
-      try {
-        q.closeAll();
-      } catch (Exception ignored) {
-        xLogger.warn("Exception while closing query", ignored);
-      }
-      pm.close();
-    }
-    xLogger.fine("Exiting getAccount");
-    return new Results(results, cursor);
+    return accountingRepository.findAccounts(vendorId, customerId, year, orderBy, pageParams);
   }
 
   // Add or update a given account

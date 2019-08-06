@@ -24,7 +24,6 @@
 package com.logistimo.auth.service;
 
 import com.logistimo.models.users.UserDetails;
-import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
 
 /**

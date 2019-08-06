@@ -39,8 +39,7 @@ public class FieldLimits {
   public static final int MAX_USER_AGE = 100;
   public static final int STREET_ADDRESS_MAX_LENGTH = 200;
   public static final int TEXT_FIELD_MAX_LENGTH = 50;
-  public static final int PASSWORD_MIN_LENGTH = 6;
-  public static final int PASSWORD_MAX_LENGTH = 18;
+  public static final int MATERIAL_NAME_MAX_LENGTH = 150;
   public static final int EMAIL_MAX_LENGTH = 100;
   public static final double LATITUDE_MIN = -90;
   public static final double LATITUDE_MAX = 90;
@@ -52,6 +51,7 @@ public class FieldLimits {
   public static final double TAX_MIN_VALUE = 0.00;
   public static final double TAX_MAX_VALUE = 100.00;
   public static final String SYSTEM_DETERMINED_REPLENISHMENT = "sq";
+  public static final String USER_SPECIFIED_REPLENISHMENT = "us";
   public static final int MATERIAL_NAME_MIN_LENGTH = 1;
   public static final int MATERIAL_SHORTNAME_MAX_LENGTH = 6;
   public static final int MATERIAL_DESCRIPTION_MAX_LENGTH = 200;
@@ -63,4 +63,13 @@ public class FieldLimits {
   public static final int GUI_THEME_SAME_AS_IN_DOMAIN_CONFIGURATION = 0;
   public static final int GUI_THEME_DEFAULT = 1;
   public static final int GUI_THEME_SIDEBAR_AND_LANDING_SCREEN = 2;
+  public static final String MAX_PRICE = "1 billion";
+  public static final String MIN_PRICE = "0";
+  public static final String YES = "yes";
+  public static final String NO = "no";
+  public static final String MIN_MAX_LOWER_LIMIT = "0";
+  public static final String MIN_MAX_UPPER_LIMIT = "1 trillion";
+  public static final String CONSUMPTION_RATE_LOWER_LIMIT = "0";
+  public static final String CONSUMPTION_RATE_UPPER_LIMIT = "1 trillion";
+  public static final int ENTITY_NAME_MIN_LENGTH = 1;
 }

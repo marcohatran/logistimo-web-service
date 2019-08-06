@@ -26,6 +26,8 @@ package com.logistimo.inventory.entity;
 import com.logistimo.tags.entity.ITag;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -51,6 +53,11 @@ public interface ITransaction
   String TRACKING_OBJECT_TYPE_ORDER = "or";
   String TRACKING_OBJECT_TYPE_ISSUE_TRANSACTION = "iss_trn";
   String TRACKING_OBJECT_TYPE_RECEIPT_TRANSACTION = "rec_trn";
+
+  Collection<String>
+      EXPORT_TYPES =
+      Arrays.asList(TYPE_ISSUE, TYPE_RECEIPT, TYPE_PHYSICALCOUNT, TYPE_TRANSFER,
+          TYPE_WASTAGE, TYPE_RETURNS_INCOMING, TYPE_RETURNS_OUTGOING);
 
   Long getKey();
 

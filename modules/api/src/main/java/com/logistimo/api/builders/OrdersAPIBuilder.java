@@ -41,6 +41,9 @@ import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.PermissionConstants;
 import com.logistimo.dao.JDOUtils;
+import com.logistimo.deliveryrequest.actions.GetDeliveryRequestsAction;
+import com.logistimo.deliveryrequest.models.DeliveryRequestModel;
+import com.logistimo.deliveryrequest.models.DeliveryRequestStatus;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.service.DomainsService;
 import com.logistimo.domains.utils.DomainsUtil;
@@ -104,6 +107,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -129,6 +133,7 @@ public class OrdersAPIBuilder {
   private IShipmentService shipmentService;
   private IInvntryDao invntryDao;
   private IApprovalsDao approvalsDao;
+  private GetDeliveryRequestsAction getDeliveryRequestsAction;
 
   @Autowired
   private ReturnsService returnsService;
@@ -181,6 +186,11 @@ public class OrdersAPIBuilder {
   @Autowired
   public void setShipmentService(IShipmentService shipmentService) {
     this.shipmentService = shipmentService;
+  }
+
+  @Autowired
+  public void setGetDeliveryRequestsAction(GetDeliveryRequestsAction getDeliveryRequestsAction) {
+    this.getDeliveryRequestsAction = getDeliveryRequestsAction;
   }
 
   @Autowired
@@ -527,7 +537,9 @@ public class OrdersAPIBuilder {
       permissions.add(PermissionConstants.ALLOCATE);
       permissions.add(PermissionConstants.EDIT);
       permissions.add(PermissionConstants.SHIP);
-      permissions.add(PermissionConstants.CREATE_SHIPMENT);
+      if(!Objects.equals(order.getStatus(), IOrder.READY_FOR_DISPATCH)) {
+        permissions.add(PermissionConstants.CREATE_SHIPMENT);
+      }
       permissions.add(PermissionConstants.REOPEN);
       permissions.add(PermissionConstants.EDIT_META_DATA);
     }
@@ -669,6 +681,7 @@ public class OrdersAPIBuilder {
     boolean
         showStocks =
         IOrder.PENDING.equals(order.getStatus()) || IOrder.CONFIRMED.equals(order.getStatus())
+          || IOrder.READY_FOR_DISPATCH.equals(order.getStatus())
             || IOrder.BACKORDERED.equals(order.getStatus());
     boolean isReturnsAllowed = IOrder.FULFILLED.equals(order.getStatus());
     boolean showVendorStock = dc.autoGI() && order.getServicingKiosk() != null;
@@ -705,6 +718,7 @@ public class OrdersAPIBuilder {
     model.lt = order.getLatitude();
     model.ln = order.getLongitude();
     model.ac = order.getGeoAccuracy();
+    model.setDeliveryRequests(getDeliveryRequestsForOrder(order.getOrderId()));
 
     if (order.getKioskId() != null) {
       try {
@@ -1079,6 +1093,14 @@ public class OrdersAPIBuilder {
       model.its = modelItems;
     }
     return model;
+  }
+
+  private List<DeliveryRequestModel> getDeliveryRequestsForOrder(Long orderId) {
+    List<DeliveryRequestModel> drs = getDeliveryRequestsAction.getByOrderId(orderId);
+    drs = drs.stream().filter(dr -> DeliveryRequestStatus.ACTIVE_DELIVERY_REQUEST_STATUSES
+        .contains(dr.getStatus()))
+        .collect(Collectors.toList());
+    return drs;
   }
 
   private ShipmentItemBatchModel getShipmentItemBatchBD(String shipmentID,

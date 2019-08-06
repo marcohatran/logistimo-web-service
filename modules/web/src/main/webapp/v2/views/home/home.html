@@ -28,17 +28,17 @@
                 <div class="row">
                     <div class="col-sm-12">
                         <div class="col-sm-3 noleftpad" >
-                            <label class="col-sm-4 noLRpad control-label">Material tag</label>
+                            <label class="col-sm-4 noLRpad control-label">{{resourceBundle['filter.material.tag']}}</label>
                             <span class="col-sm-8 norightpad">
-                                <tag-select tags-model="mtag" place-holder="All"
+                                <tag-select tags-model="mtag" place-holder="{{resourceBundle['all']}}"
                                             type="'material'"
                                             multiple="'false'" force-no-udf="'true'"></tag-select>
                             </span>
                         </div>
                         <div class="col-sm-3 norightpad ">
-                            <label class="col-sm-4 noLRpad control-label">Material name</label>
+                            <label class="col-sm-4 noLRpad control-label">{{resourceBundle['filter.material.name']}}</label>
                             <span class="col-sm-8 norightpad">
-                                <material-drop-down ng-model="material" mtag="mtag.text"></material-drop-down>
+                                <material-drop-down ng-model="material" mtag="mtag.text" place-holder="{{resourceBundle['all']}}"></material-drop-down>
                             </span>
                         </div>
                         <div class="col-sm-6 noLRpad form-inline">

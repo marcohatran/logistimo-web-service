@@ -26,11 +26,14 @@ package com.logistimo.orders.validators;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.exception.ValidationException;
+import com.logistimo.inventory.entity.IInvAllocation;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.service.InventoryManagementService;
+import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.materials.service.MaterialUtils;
+import com.logistimo.orders.actions.ValidateFullAllocationAction;
 import com.logistimo.orders.approvals.service.IOrderApprovalsService;
 import com.logistimo.orders.entity.IDemandItem;
 import com.logistimo.orders.entity.IOrder;
@@ -45,6 +48,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Created by charan on 16/07/17.
@@ -65,13 +69,30 @@ public class UpdateOrderStatusValidator {
   @Autowired
   IOrderApprovalsService orderApprovalsService;
 
+  @Autowired
+  ValidateFullAllocationAction validateFullAllocationAction;
+
+  private static final XLog xLogger = XLog.getLog(UpdateOrderStatusValidator.class);
+
   public void validateOrderStatusChange(IOrder order, String newStatus)
       throws ValidationException, ServiceException, ObjectNotFoundException {
-
+    if(Objects.equals(newStatus, order.getStatus())) {
+      xLogger.warn("Invalid order status change request. Current status is equal to new status "
+                   + "{0}", newStatus);
+      throw new ServiceException("Invalid order status change request.");
+    }
     switch (newStatus) {
       case IOrder.CONFIRMED:
         checkTransferStatus(order);
         checkIfVisibleToVendor(order);
+        checkIfMaterialsExistAtVendor(order);
+        break;
+      case IOrder.READY_FOR_DISPATCH:
+        checkCurrentStatus(order, IOrder.READY_FOR_DISPATCH);
+        checkTransferStatus(order);
+        checkShippingApproval(order);
+        checkIfVisibleToVendor(order);
+        checkFullMaterialAllocation(order.getOrderId());
         checkIfMaterialsExistAtVendor(order);
         break;
       case IOrder.COMPLETED:
@@ -81,7 +102,20 @@ public class UpdateOrderStatusValidator {
         checkIfMaterialsExistAtVendor(order);
         break;
     }
+  }
 
+  private void checkFullMaterialAllocation(Long orderId) throws ServiceException {
+    validateFullAllocationAction.invoke(IInvAllocation.Type.ORDER, String.valueOf(orderId));
+  }
+
+  private void checkCurrentStatus(IOrder order, String newStatus) {
+    if(IOrder.READY_FOR_DISPATCH.equals(newStatus)) {
+      if (IOrder.CANCELLED.equals(order.getStatus())
+          || IOrder.COMPLETED.equals(order.getStatus())
+          || IOrder.FULFILLED.equals(order.getStatus())) {
+        throw new ValidationException("O017", new Object[0]);
+      }
+    }
   }
 
   public void checkTransferStatus(IOrder order) throws ValidationException {

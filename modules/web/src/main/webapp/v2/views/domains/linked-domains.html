@@ -35,7 +35,7 @@
                                 <div class="col-sm-12">
                                     <ul class="breadcrumb domain-bread-crumb">
                                         <li ng-repeat="item in parents | reverse">
-                                            <span ng-if="currentDomain != item.dId" class="title domain-child" ng-click="switchDomain(item.dId, item.name)" uib-tooltip="Switch to {{item.name}}" style="padding-left: 0px;">{{item.name}}</span>
+                                            <span ng-if="currentDomain != item.dId" class="title domain-child" ng-click="switchDomain(item.dId, item.name)" uib-tooltip="{{resourceBundle['domain.switch.to']}} {{item.name}}" style="padding-left: 0px;">{{item.name}}</span>
                                             <span ng-if="currentDomain == item.dId" style="color: #F56C64;padding-left: 0px;" class="title domain-child">{{item.name}}</span>
                                         </li>
                                     </ul>
@@ -82,7 +82,7 @@
 
                                         <div class="col-sm-6">
                                             <child-domain-select child-domain-model="nchld.ldl"
-                                                                 place-holder="Choose Domains"></child-domain-select>
+                                                                 place-holder="{{resourceBundle['select.domains']}}"></child-domain-select>
                                         </div>
                                     </div>
                                     <div class="form-group" ng-show="edit == false">

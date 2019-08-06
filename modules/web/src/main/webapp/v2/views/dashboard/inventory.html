@@ -25,9 +25,9 @@
      ng-init="init('dashboard.inventory')">
     <ul class="nav nav-tabs subnav-tabs">
         <li ng-class="{active: subview == 'overview'}"><a
-                href="#/dashboard/inventory">Overview</a></li>
+                href="#/dashboard/inventory">{{resourceBundle['overview']}}</a></li>
         <li ng-class="{active: subview == 'predictive'}" ng-show="iPredEnabled"><a
-                href="#/dashboard/inventory/predictive">Stock out prediction</a></li>
+                href="#/dashboard/inventory/predictive">{{resourceBundle['inventory.dashboard.stockout.prediction']}}</a></li>
     </ul>
     <div ng-include="'loader-template.html'"></div>
     <div ng-switch="subview">

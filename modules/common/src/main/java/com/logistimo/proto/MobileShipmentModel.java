@@ -60,7 +60,7 @@ public class MobileShipmentModel {
    */
   public String trsp;
   /**
-   * Transporter ID
+   * Tracking ID
    */
   public String trid;
   /**
@@ -104,5 +104,14 @@ public class MobileShipmentModel {
   public void setSalesReferenceId(String salesReferenceId) {
     this.salesReferenceId = salesReferenceId;
   }
+
+  @SerializedName(value = "dlrqs")
+  public List<MobileDeliveryRequestModel> deliveryRequests;
+
+  @SerializedName(value = "cnsg")
+  public MobileConsignmentModel  mobileConsignmentModel;
+
+  @SerializedName(value = "trnsp")
+  public MobileTransporterModel mobileTransporterModel;
 
 }

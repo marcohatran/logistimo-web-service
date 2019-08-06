@@ -60,11 +60,10 @@ public class MaterialExportHandler implements IExportHandler {
   // Get the CSV header for materials
   @Override
   public String getCSVHeader(Locale locale, DomainConfig dc, String type) {
-    ResourceBundle bundle = Resources.get().getBundle("Messages", locale);
-    ResourceBundle jsBundle = Resources.get().getBundle("JSMessages", locale);
+    ResourceBundle bundle = Resources.getBundle(locale);
     StringBuilder header = new StringBuilder();
     header.append(bundle.getString("material")).append(CharacterConstants.SPACE)
-        .append(jsBundle.getString("id")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("id")).append(CharacterConstants.COMMA)
         .append(bundle.getString("customid.material")).append(CharacterConstants.COMMA)
         .append(bundle.getString("material.name")).append(CharacterConstants.COMMA)
         .append(bundle.getString("shortname")).append(CharacterConstants.COMMA)
@@ -79,24 +78,24 @@ public class MaterialExportHandler implements IExportHandler {
         .append(bundle.getString("batch.enable")).append(CharacterConstants.COMMA)
         .append(bundle.getString("temperature.sensitive")).append(CharacterConstants.COMMA)
         .append(bundle.getString("temperature")).append(CharacterConstants.SPACE)
-        .append(jsBundle.getString("min.lower")).append(CharacterConstants.O_BRACKET).append("C")
+        .append(bundle.getString("min.lower")).append(CharacterConstants.O_BRACKET).append("C")
         .append(CharacterConstants.C_BRACKET).append(CharacterConstants.COMMA)
         .append(bundle.getString("temperature")).append(CharacterConstants.SPACE)
-        .append(jsBundle.getString("max.lower")).append(CharacterConstants.O_BRACKET).append("C")
+        .append(bundle.getString("max.lower")).append(CharacterConstants.O_BRACKET).append("C")
         .append(CharacterConstants.C_BRACKET).append(CharacterConstants.COMMA)
-        .append(jsBundle.getString("createdby")).append(CharacterConstants.SPACE)
-        .append(jsBundle.getString("id")).append(CharacterConstants.COMMA)
-        .append(jsBundle.getString("createdby")).append(CharacterConstants.SPACE)
-        .append(jsBundle.getString("customid.lower")).append(CharacterConstants.COMMA)
-        .append(jsBundle.getString("createdby")).append(CharacterConstants.SPACE)
-        .append(jsBundle.getString("fullname.lower")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("createdby")).append(CharacterConstants.SPACE)
+        .append(bundle.getString("id")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("createdby")).append(CharacterConstants.SPACE)
+        .append(bundle.getString("customid.lower")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("createdby")).append(CharacterConstants.SPACE)
+        .append(bundle.getString("fullname.lower")).append(CharacterConstants.COMMA)
         .append(bundle.getString("createdon")).append(CharacterConstants.COMMA)
         .append(bundle.getString("updatedby")).append(CharacterConstants.SPACE)
-        .append(jsBundle.getString("id")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("id")).append(CharacterConstants.COMMA)
         .append(bundle.getString("updatedby")).append(CharacterConstants.SPACE)
-        .append(jsBundle.getString("customid.lower")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("customid.lower")).append(CharacterConstants.COMMA)
         .append(bundle.getString("updatedby")).append(CharacterConstants.SPACE)
-        .append(jsBundle.getString("fullname.lower")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("fullname.lower")).append(CharacterConstants.COMMA)
         .append(bundle.getString("updatedon"));
 
     return header.toString();

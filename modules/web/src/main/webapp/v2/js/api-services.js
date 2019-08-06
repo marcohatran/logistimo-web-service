@@ -99,6 +99,14 @@ logistimoApp.factory('APIService', function ($http, $q, $rootScope) {
             }
             return $http({method: 'PUT', data: data, url: urlStr})
         },
+        patch: function(data, urlStr) {
+            if (checkDomainAndReject()) {
+                return $q(function (resolve, reject) {
+                    reject();
+                });
+            }
+            return $http({method: 'PATCH', data: data, url: urlStr})
+        },
         delete: function (urlStr) {
             if (checkDomainAndReject()) {
                 return $q(function (resolve, reject) {

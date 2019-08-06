@@ -534,10 +534,7 @@ public class EntitiesServiceImpl implements EntitiesService {
         query.closeAll();
       }
       final Locale locale = SecurityUtils.getLocale();
-      ResourceBundle messages = Resources.get().getBundle(Constants.MESSAGES, locale);
-      ResourceBundle
-          backendMessages =
-          Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
+      ResourceBundle messages = Resources.getBundle(locale);
 
       if (results == null || results.size() == 0) {
         updateKioskLocationIds(kiosk);
@@ -549,9 +546,9 @@ public class EntitiesServiceImpl implements EntitiesService {
           xLogger.warn("addKiosk: FAILED!! Cannot add kiosk {0}. Custom ID {1} already exists.",
               kiosk.getName(), kiosk.getCustomId());
           throw new ServiceException(
-              backendMessages.getString("error.cannotadd") + "'" + kiosk.getName() + "'. "
+              messages.getString("error.cannotadd") + " '" + kiosk.getName() + "'. "
                   + messages.getString("customid") + " " + kiosk.getCustomId() + " "
-                  + backendMessages.getString("error.alreadyexists") + ".");
+                  + messages.getString("error.alreadyexists") + ".");
         }
 
         if (kiosk.getTags() != null) {
@@ -560,7 +557,7 @@ public class EntitiesServiceImpl implements EntitiesService {
         // Add the kiosk to this domain and the parents of this domain (superdomains)
         kiosk =
             (IKiosk) DomainsUtil.addToDomain(kiosk, domainId,
-                pm); /// earlier: kiosk = pm.makePersistent(kiosk); // TODO: Persist here only
+                pm);
         xLogger.info("addKiosk: adding kiosk {0}. KioskID is {1}", kiosk.getName(),
             kiosk.getKioskId());
         // Increment counter
@@ -593,7 +590,7 @@ public class EntitiesServiceImpl implements EntitiesService {
               kiosk.getKioskId(), domainId, e.getMessage());
         }
       } else {
-        errMsg = kiosk.getName() + " " + backendMessages.getString("error.alreadyexists");
+        errMsg = kiosk.getName() + " " + messages.getString("error.alreadyexists");
       }
     } catch (Exception e) {
       errMsg = e.getMessage();
@@ -638,16 +635,15 @@ public class EntitiesServiceImpl implements EntitiesService {
     Transaction tx = pm.currentTransaction();
     try {
       final Locale locale = SecurityUtils.getLocale();
-      ResourceBundle messages = Resources.get().getMessageBundle(locale);
-      ResourceBundle backendMessages = Resources.get().getBackendMessageBundle(locale);
+      ResourceBundle messages = Resources.getBundle(locale);
       if (!authorizationService.authoriseUpdateKiosk(sUserId, domainId)) {
-        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(messages.getString("permission.denied"));
       }
       //First check if the kiosk already exists in the database
       IKiosk k = JDOUtils.getObjectById(IKiosk.class, kiosk.getKioskId(), pm);
       if (!domainId.equals(k.getDomainId())) {
         throw new ServiceException(
-            backendMessages.getString("entity.updation.permission.denied") + " : " + k.getName());
+            messages.getString("entity.updation.permission.denied") + " : " + k.getName());
       }
       xLogger.info("updateKiosk: Updating kiosk {0}", kiosk.getName());
       tx.begin();
@@ -715,8 +711,8 @@ public class EntitiesServiceImpl implements EntitiesService {
         xLogger.warn("updateKiosk: FAILED!! Cannot update kiosk {0}. Custom ID {1} already exists.",
             kiosk.getName(), kiosk.getCustomId());
         throw new ServiceException(
-            backendMessages.getString("error.cannotupdate") + " '" + kiosk.getName() + "'. "
-                + messages.getString("customid") + " " + kiosk.getCustomId() + " " + backendMessages
+            messages.getString("error.cannotupdate") + " '" + kiosk.getName() + "'. "
+                + messages.getString("customid") + " " + kiosk.getCustomId() + " " + messages
                 .getString("error.alreadyexists") + ".");
       }
       k.setCustomId(kiosk.getCustomId());
@@ -864,12 +860,9 @@ public class EntitiesServiceImpl implements EntitiesService {
     } catch (JDOObjectNotFoundException e) {
       xLogger.warn("getKiosk: Kiosk {0} does not exist", kioskId);
       final Locale locale = SecurityUtils.getLocale();
-      ResourceBundle messages = Resources.get().getBundle(Constants.MESSAGES, locale);
-      ResourceBundle
-          backendMessages =
-          Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
+      ResourceBundle messages = Resources.getBundle(locale);
       throw new ObjectNotFoundException(
-          messages.getString("kiosk") + " " + kioskId + " " + backendMessages
+          messages.getString("kiosk") + " " + kioskId + " " + messages
               .getString("error.notfound"), e);
     } catch (Exception e) {
       throw new ServiceException(e.getMessage(), e);
@@ -896,7 +889,7 @@ public class EntitiesServiceImpl implements EntitiesService {
         final Locale locale = SecurityUtils.getLocale();
         ResourceBundle
             backendMessages =
-            Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
+            Resources.getBundle(locale);
         throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
       List<IKiosk> kiosks = new ArrayList<>(kioskIds.size());
@@ -917,7 +910,7 @@ public class EntitiesServiceImpl implements EntitiesService {
         final Locale locale = SecurityUtils.getLocale();
         ResourceBundle
             backendMessages =
-            Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
+            Resources.getBundle(locale);
         throw new ServiceException(
             backendMessages.getString("entity.deletion.permission.denied") + " : " + StringUtil
                 .getCSV(sdFailedKiosks));
@@ -1510,11 +1503,8 @@ public class EntitiesServiceImpl implements EntitiesService {
     xLogger.fine("Exiting updatePoolGroup");
     if (!poolgroupExists) {
       final Locale locale = SecurityUtils.getLocale();
-      ResourceBundle messages = Resources.get().getBundle(Constants.MESSAGES, locale);
-      ResourceBundle
-          backendMessages =
-          Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
-      errMsg = messages.getString("poolgroup") + " " + backendMessages.getString("error.notfound");
+      ResourceBundle messages = Resources.getBundle(locale);
+      errMsg = messages.getString("poolgroup") + " " + messages.getString("error.notfound");
     }
     if (errMsg != null) {
       throw new ServiceException(errMsg, exception);
@@ -1566,11 +1556,8 @@ public class EntitiesServiceImpl implements EntitiesService {
     } catch (JDOObjectNotFoundException e) {
       xLogger.warn("getPoolGroup: FAILED!! PoolGroup {0} does not exist", groupId);
       final Locale locale = SecurityUtils.getLocale();
-      ResourceBundle messages = Resources.get().getBundle(Constants.MESSAGES, locale);
-      ResourceBundle
-          backendMessages =
-          Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
-      errMsg = messages.getString("poolgroup") + " " + backendMessages.getString("error.notfound");
+      ResourceBundle messages = Resources.getBundle(locale);
+      errMsg = messages.getString("poolgroup") + " " + messages.getString("error.notfound");
       exception = e;
     } catch (Exception e) {
       errMsg = e.getMessage();

@@ -58,7 +58,6 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
             } else {
                 $scope.material = null;
             }
-            //$scope.searchTag = requestContext.getParam("tag") || "";
             $scope.type = requestContext.getParam("type") || "";
             $scope.tag = requestContext.getParam("tag") || "";
             $scope.etag = requestContext.getParam("etag") || "";
@@ -147,7 +146,7 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
             caption += getFilterTitle($scope.material, $scope.resourceBundle['material'], 'mnm');
             caption += getFilterTitle(getTransactionTypeLabel($scope.type), $scope.resourceBundle['type']);
             caption += getFilterTitle(formatDate2Url($scope.from), $scope.resourceBundle['from']);
-            caption += getFilterTitle($scope.atd ? "Yes" : "No", $scope.resourceBundle.filterby + " " + $scope.resourceBundle['date.actual.transaction.small']);
+            caption += getFilterTitle($scope.atd ? $scope.resourceBundle['yes'] : $scope.resourceBundle['no'], $scope.resourceBundle.filterby + " " + $scope.resourceBundle['date.actual.transaction.small']);
             caption += getFilterTitle(formatDate2Url($scope.to), $scope.resourceBundle['to']);
             caption += getFilterTitle($scope.cust, $scope.resourceBundle['customer'], 'nm');
             caption += getFilterTitle($scope.vend, $scope.resourceBundle['vendor'], 'nm');
@@ -285,7 +284,7 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
                 $scope.hideLoading();
             });
         };
-        //to the get actual transaction date check is enabled or not from the inventory config
+
         domainCfgService.getActualTransDateCheck().then(function(data){
             $scope.hasAtd = data.data;
         });
@@ -382,15 +381,15 @@ trnControllers.controller('TransMapCtrl', ['$scope','mapService','uiGmapGoogleMa
             function formatAddress(type, add, lt, ln) {
                 var address = "<html><b>";
                 if (type == "t") {
-                    address += "Transaction at: " + add;
+                    address += $scope.resourceBundle['transaction.at'] + ": " + add;
                 } else if ($scope.enMap) {
-                    address += $scope.resourceBundle['kiosk'] + " at: " + add;
+                    address += $scope.resourceBundle['entity.at'] + ": " + add;
                 } else {
-                    address += ($scope.ltype == 'c' ? $scope.resourceBundle['customer'] + " at: " : $scope.resourceBundle['vendor'] + " at:") + add;
+                    address += ($scope.ltype == 'c' ? $scope.resourceBundle['customer.at'] + ": " : $scope.resourceBundle['vendor.at'] + ": ") + add;
                 }
                 address += "</b><br>";
                 address += lt + "," + ln;
-                address += "</html>"
+                address += "</html>";
                 return address;
             }
             geocoder.geocode({'latLng': latLng}, function (results, status) {
@@ -501,11 +500,11 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                 material.isVisited = material.isVisited || checkNotNullEmpty(source);
                 if(material.isVisited) {
                     if (checkNotNull(material.ind) && checkNullEmpty(material.quantity) || ($scope.transaction.type != 'p' && material.quantity <= 0)) {
-                        showPopUP(material, $scope.resourceBundle['invalid.quantity'] + " " + $scope.resourceBundle['for'] + " " + (material.mnm || material.name.mnm), index);
+                        showPopUP(material, messageFormat($scope.resourceBundle['transaction.invalid.quantity'], (material.mnm || material.name.mnm)), index);
                         return false;
                     }
                     if (checkNotNullEmpty(material.name.huName) && checkNotNullEmpty(material.name.huQty) && checkNotNullEmpty(material.quantity) && material.quantity % material.name.huQty != 0) {
-                        showPopUP(material, material.quantity + " of " + material.name.mnm + " does not match the multiples of units expected in " + material.name.huName + ". It should be in multiples of " + material.name.huQty + " " + material.name.mnm + ".", index);
+                        showPopUP(material, messageFormat($scope.resourceBundle['transaction.handling.units.mismatch'], material.quantity, material.name.mnm, material.name.huName, material.name.huQty, material.name.mnm), index);
                         return false;
                     }
                 }
@@ -583,7 +582,7 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
             }
         };
 
-        $scope.transactions_arr = [{value: 'z', displayName: '-- Select Type --', capabilityName: ''},
+        $scope.transactions_arr = [{value: 'z', displayName: '-- ' + $scope.resourceBundle['select.transaction.type'] + ' --', capabilityName: ''},
             {value: 'i', displayName: $scope.resourceBundle['issues'], capabilityName: 'es'},
             {value: 'r', displayName: $scope.resourceBundle['receipts'], capabilityName: 'er'},
             {value: 'p', displayName: $scope.resourceBundle['transactions.stockcount.upper'], capabilityName: 'sc'},
@@ -770,7 +769,7 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                     return true;
                 }
                 if(checkNotNullEmpty($scope.exRow[index])){
-                    $scope.showWarning($scope.resourceBundle['trn.batch.open'] + ' ' + $scope.transaction.modifiedmaterials[index].name.mnm + '. ' + $scope.resourceBundle['trn.batch.save.cancel']);
+                    $scope.showWarning(messageFormat($scope.resourceBundle['transaction.batch.form.open'], $scope.transaction.modifiedmaterials[index].name.mnm));
                     return true;
                 }
                 if (!mat.isBatch) {
@@ -784,13 +783,12 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                         }
                     });
                     if(!val) {
-                        $scope.showWarning($scope.resourceBundle['invalid.quantity'] + " " + $scope.resourceBundle['of'] + " " + (mat.mnm || mat.name.mnm));
+                        $scope.showWarning(messageFormat($scope.resourceBundle['transaction.invalid.quantity'], mat.mnm || mat.name.mnm));
                         return true;
                     }
                     if (checkNullEmpty(mat.reason) && $scope.reasonMandatory && !$scope.isTransactionTypeReturn()) {
-                        $scope.showWarning($scope.resourceBundle['reason.required'] + " " + $scope.resourceBundle['for'] + " " + (mat.mnm || mat.name.mnm));
+                        $scope.showWarning(messageFormat($scope.resourceBundle['transaction.reason.required'] , mat.mnm || mat.name.mnm));
                         return true;
-
                     }
                 }
                 index+=1;
@@ -879,20 +877,20 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
 
         function validateReturnTransactions() {
             if (checkNullEmpty($scope.transaction.modifiedmaterials)) {
-                $scope.showWarning($scope.resourceBundle['invalid.return.quantity'] + " " + $scope.resourceBundle['for'] + " " + $scope.transaction.materials[0].name.mnm);
+                $scope.showWarning(messageFormat($scope.resourceBundle['transaction.invalid.return.quantity'], $scope.transaction.materials[0].name.mnm));
                 return false;
             }
             // Check if all the selected materials selected have quantities
             var valid = $scope.transaction.materials.every(function (material) {
                 if (checkNotNullEmpty(material.name)) {
                     if (!isMaterialInModifiedMaterials(material)) {
-                        $scope.showWarning($scope.resourceBundle['invalid.return.quantity'] + " " + $scope.resourceBundle['for'] + " " + material.name.mnm);
+                        $scope.showWarning(messageFormat($scope.resourceBundle['transaction.invalid.return.quantity'], material.name.mnm));
                         return false;
                     } else if ($scope.transaction.type == 'ro' && isTotalReturnQuantityGreaterThanAtpStock(material)) {
                         if (material.isBatch) {
-                            $scope.showWarning($scope.resourceBundle['total.return.quantity'] + "(" + $scope.totalReturnQuantity + ") " + $scope.resourceBundle['cannotexceedstock'] + ' (' + material.bidbatchDetMap[$scope.errorBid].atpstk + ') ' + $scope.resourceBundle['for'] + " batch " + $scope.errorBid + " " + $scope.resourceBundle['of'] + " " + material.name.mnm + ".");
+                            $scope.showWarning(messageFormat($scope.resourceBundle['transaction.total.return.quantity.greater.than.available.stock.batch'], $scope.totalReturnQuantity, material.bidbatchDetMap[$scope.errorBid].atpstk, $scope.errorBid, material.name.mnm));
                         } else {
-                            $scope.showWarning($scope.resourceBundle['total.return.quantity'] + "(" + +$scope.totalReturnQuantity + ") " + $scope.resourceBundle['cannotexceedstock'] + ' (' + material.atpstock + ') ' + $scope.resourceBundle['for'] + " " + material.name.mnm + ".");
+                            $scope.showWarning(messageFormat($scope.resourceBundle['transaction.total.return.quantity.greater.than.available.stock'], $scope.totalReturnQuantity, material.atpstock, material.name.mnm));
                         }
                         return false;
                     } else {
@@ -908,8 +906,8 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
 
             valid = !$scope.transaction.modifiedmaterials.some(function(material) {
                 if (!$scope.isReturnTransactionsAtdValid(material)) {
-                    var type = $scope.transaction.type == 'ri' ? 'issue' : 'receipt';
-                    $scope.showWarning($scope.resourceBundle['return.transaction.atd.message'] + " " + type + " " + $scope.resourceBundle['for'] + " " + material.name.mnm + ".");
+                    var type = $scope.transaction.type == 'ri' ? $scope.resourceBundle['transactions.issue'] : $scope.resourceBundle['transactions.receipt'];
+                    $scope.showWarning(messageFormat($scope.resourceBundle['transaction.return.atd.message'], type, material.name.mnm));
                     return true;
                 }
             });
@@ -1523,12 +1521,12 @@ trnControllers.controller('BatchTransactionCtrl', ['$scope', 'invService','$time
                         if (batch.quantity > avStock) {
                             showPopUP(batch, $scope.resourceBundle['quantity.exceed'], index);
                         } else {
-                            showPopUP(batch, "Quantity is invalid for " + batch.bid, index);
+                            showPopUP(batch, messageFormat($scope.resourceBundle['transaction.invalid.quantity'], batch.bid), index);
                         }
                         skipTrigger = true;
                     } else if (checkNotNullEmpty($scope.huName) && checkNotNullEmpty($scope.huQty) && checkNotNullEmpty(batch.bid) && checkNotNullEmpty(batch.quantity) && batch.quantity % $scope.huQty != 0) {
                         eventName = 'showpopup';
-                        showPopUP(batch, batch.quantity + " of " + batch.bid + " does not match the multiples of units expected in " + $scope.huName + ". It should be in multiples of " + $scope.huQty + " " + $scope.mnm + ".", index);
+                        showPopUP(batch, messageFormat($scope.resourceBundle['transaction.handling.units.mismatch'], batch.quantity, batch.bid, $scope.huName, $scope.huQty, $scope.mnm), index);
                         skipTrigger = true;
                     } else {
                         if (batch.quantity > 0 && batch.isVisitedStatus && checkNotNullEmpty(displayStatus) && checkNullEmpty(batch.mst) && $scope.msm) {
@@ -1743,7 +1741,7 @@ trnControllers.controller('AddBatchTransactionCtrl', ['$scope','$timeout',
                     var eventName = forceEvent
                 } else if (checkNotNullEmpty($scope.huName) && checkNotNullEmpty($scope.huQty) && checkNotNullEmpty(batch.bid) && checkNotNullEmpty(batch.quantity) && batch.quantity % $scope.huQty != 0) {
                     eventName = 'showpopup';
-                    showPopUP(batch, batch.quantity + " of " + batch.bid + " does not match the multiples of units expected in " + $scope.huName + ". It should be in multiples of " + $scope.huQty + " " + $scope.mnm + ".", index);
+                    showPopUP(batch, messageFormat($scope.resourceBundle['transaction.handling.units.mismatch'], batch.quantity, batch.bid, $scope.huName, $scope.huQty, $scope.mnm), index);
                     skipTrigger = true;
                 } else {
                     if (batch.quantity > 0 && batch.isVisitedStatus && checkNotNullEmpty(displayStatus) && checkNullEmpty(batch.mst) && $scope.msm) {
@@ -1911,7 +1909,7 @@ trnControllers.controller('StockBatchTransactionCtrl',['$scope','invService','$t
                     var eventName = forceEvent
                 } else if (checkNotNullEmpty($scope.huName) && checkNotNullEmpty($scope.huQty) && checkNotNullEmpty(batch.bid) && checkNotNullEmpty(batch.quantity) && batch.quantity % $scope.huQty != 0) {
                     eventName = 'showpopup';
-                    showPopUP(batch, batch.quantity + " of " + batch.bid + " does not match the multiples of units expected in " + $scope.huName + ". It should be in multiples of " + $scope.huQty + " " + $scope.mnm + ".", index);
+                    showPopUP(batch, messageFormat($scope.resourceBundle['transaction.handling.units.mismatch'], batch.quantity, batch.bid, $scope.huName, $scope.huQty, $scope.mnm), index);
                     skipTrigger = true;
                 } else {
                     if (batch.quantity > 0 && batch.isVisitedStatus && checkNotNullEmpty(displayStatus) && checkNullEmpty(batch.mst) && $scope.msm) {
@@ -2307,7 +2305,7 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope', '$timeout', 'reque
 
         function isReturnQuantityValid(transaction) {
             if (checkNullEmpty(transaction.rq) || transaction.rq == 0) {
-                $scope.showWarning($scope.resourceBundle['invalid.return.quantity'] + " " + $scope.resourceBundle['for'] + " " + transaction.mnm);
+                $scope.showWarning(messageFormat($scope.resourceBundle['transaction.invalid.return.quantity'], transaction.mnm));
                 return false;
             }
             return true;
@@ -2317,44 +2315,44 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope', '$timeout', 'reque
             if (checkNotNullEmpty(transaction.rq)) {
                 if (transaction.rq > transaction.q) {
                     if ($scope.transaction.type == 'ri') {
-                        $scope.showWarning($scope.resourceBundle['return.quantity'] + " (" + transaction.rq + ") " + $scope.resourceBundle['cannot.exceed.issued.quantity'] + " (" + transaction.q + ") " + $scope.resourceBundle['for'] + " " + $scope.mnm + ".");
+                        $scope.showWarning(messageFormat($scope.resourceBundle['transaction.return.quantity.greater.than.issued.quantity'], transaction.rq, transaction.q, $scope.mnm));
                         return false;
                     } else if ($scope.transaction.type == 'ro') {
-                        $scope.showWarning($scope.resourceBundle['return.quantity'] + " (" + transaction.rq + ") " + $scope.resourceBundle['cannot.exceed.received.quantity'] + " (" + transaction.q + ") " + $scope.resourceBundle['for'] + " " + $scope.mnm + ".");
+                        $scope.showWarning(messageFormat($scope.resourceBundle['transaction.return.quantity.greater.than.received.quantity'], transaction.rq, transaction.q, $scope.mnm));
                         return false;
                     }
                 }
                 if ($scope.transaction.type == 'ro') {
                     if (transaction.rq > 0 && checkNotNullEmpty(transaction.bid)) {
                         if (checkNullEmpty($scope.material.bidbatchDetMap[transaction.bid])) {
-                            $scope.showWarning($scope.resourceBundle['batch'] + " " + transaction.bid + " " + $scope.resourceBundle['return.not.allowed.non.existing.batch'] + " " + $scope.mnm + ".");
+                            $scope.showWarning(messageFormat($scope.resourceBundle['transaction.return.batch.does.not.exist'], transaction.bid, $scope.mnm));
                             return false;
                         } else if (transaction.rq > $scope.material.bidbatchDetMap[transaction.bid].atpstk) {
-                            $scope.showWarning($scope.resourceBundle['return.quantity'] + ' (' + transaction.rq + ') ' + $scope.resourceBundle['cannotexceedstock'] + ' (' + $scope.material.bidbatchDetMap[transaction.bid].atpstk + ') ' + $scope.resourceBundle['for'] + " " + $scope.resourceBundle['batch.lower'] + " " + transaction.bid + " " + $scope.resourceBundle['of'] + " " + $scope.mnm + ".");
+                            $scope.showWarning(messageFormat($scope.resourceBundle['transaction.return.quantity.greater.than.available.stock.batch'], transaction.rq, $scope.material.bidbatchDetMap[transaction.bid].atpstk, transaction.bid, $scope.mnm));
                             return false;
                         }
                     } else if (transaction.rq > $scope.material.atpstock) {
-                        $scope.showWarning($scope.resourceBundle['return.quantity'] + ' (' + transaction.rq + ') ' + $scope.resourceBundle['cannotexceedstock'] + ' (' + $scope.material.atpstock + ') ' + $scope.resourceBundle['for'] + " " + $scope.mnm + ".");
+                        $scope.showWarning(messageFormat($scope.resourceBundle['transaction.return.quantity.greater.than.available.stock'], transaction.rq, $scope.material.atpstock, $scope.mnm));
                         return false;
                     }
                 }
                 if (checkNotNullEmpty($scope.material.name.huName) && checkNotNullEmpty($scope.material.name.huQty) && checkNotNullEmpty(transaction.rq) && transaction.rq % $scope.material.name.huQty != 0) {
-                    $scope.showWarning(transaction.rq + " " + $scope.resourceBundle['of'] + " " + $scope.material.name.mnm + " " + $scope.resourceBundle['handling.units.mismatch.message'] + " " + $scope.material.name.huName + ". " + $scope.resourceBundle['handling.units.expected.message'] + " " + $scope.material.name.huQty + " " + $scope.material.name.mnm + ".");
+                    $scope.showWarning(messageFormat($scope.resourceBundle['transaction.handling.units.mismatch'], transaction.rq, $scope.material.name.mnm, $scope.material.name.huName, $scope.material.name.huQty, $scope.material.name.mnm));
                     return false;
                 }
                 var status = $scope.material.ts ? $scope.tempmatstatus : $scope.matstatus;
                 if (checkNotNullEmpty(status) && checkNullEmpty(transaction.rmst) && $scope.msm) {
-                    $scope.showWarning($scope.resourceBundle['status.required'] + " " + $scope.resourceBundle['for'] + " " + $scope.mnm + ".");
+                    $scope.showWarning(messageFormat($scope.resourceBundle['transaction.status.required'], $scope.mnm));
                     return false;
                 }
                 if (checkNullEmpty(transaction.rrsn) && $scope.reasonMandatory) {
-                    $scope.showWarning($scope.resourceBundle['reason.required'] + " " + $scope.resourceBundle['for'] + " " + $scope.mnm + ".");
+                    $scope.showWarning(messageFormat($scope.resourceBundle['transaction.reason.required'], $scope.mnm));
                     return false;
                 }
 
                 if (!$scope.isReturnTransactionsAtdValid(transaction)) {
-                    var type = $scope.transaction.type == 'ri' ? 'issue' : 'receipt';
-                    $scope.showWarning($scope.resourceBundle['return.transaction.atd.message'] + " " + type + " " + $scope.resourceBundle['for'] + " " + $scope.mnm + ".");
+                    var type = $scope.transaction.type == 'ri' ? $scope.resourceBundle['transactions.issue'] : $scope.resourceBundle['transactions.receipt'];
+                    $scope.showWarning(messageFormat($scope.resourceBundle['transaction.return.atd.message'], type, $scope.mnm));
                     return false;
                 }
             }
@@ -2377,11 +2375,11 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope', '$timeout', 'reque
                 if (checkNotNullEmpty(transaction.rq) && transaction.rq > transaction.q) {
                     if ($scope.transaction.type == 'ri') {
                         showPopup($scope, transaction, idPrefix + transaction.id,
-                            $scope.resourceBundle['return.quantity'] + " (" + transaction.rq + ") " + $scope.resourceBundle['cannot.exceed.issued.quantity'] + " (" + transaction.q + ") " + $scope.resourceBundle['for'] + " " + $scope.mnm,
+                            messageFormat($scope.resourceBundle['transaction.return.quantity.greater.than.issued.quantity'], transaction.rq, transaction.q, $scope.mnm),
                             index, $timeout);
                         isInvalid = true;
                     } else if ($scope.transaction.type == 'ro') {
-                        showPopup($scope, transaction, idPrefix + transaction.id, $scope.resourceBundle['return.quantity'] + " (" + transaction.rq + ") " + $scope.resourceBundle['cannot.exceed.received.quantity'] + " (" + transaction.q + ") " + $scope.resourceBundle['for'] + " " + $scope.mnm,
+                        showPopup($scope, transaction, idPrefix + transaction.id, messageFormat($scope.resourceBundle['transaction.return.quantity.greater.than.received.quantity'], transaction.rq, transaction.q, $scope.mnm),
                             index, $timeout);
                         isInvalid = true;
                     }
@@ -2391,23 +2389,23 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope', '$timeout', 'reque
                     if (transaction.rq > 0 && checkNotNullEmpty(transaction.bid)) {
                         if (checkNullEmpty($scope.material.bidbatchDetMap[transaction.bid])) {
                             showPopup($scope, transaction, idPrefix + transaction.id,
-                                $scope.resourceBundle['batch'] + " " + transaction.bid + " " + $scope.resourceBundle['return.not.allowed.non.existing.batch'] + " " + $scope.mnm + ".",
+                                messageFormat($scope.resourceBundle['transaction.return.batch.does.not.exist'], transaction.bid, $scope.mnm),
                                 index, $timeout);
                             isInvalid = true;
                         } else if (transaction.rq > $scope.material.bidbatchDetMap[transaction.bid].atpstk) {
-                            showPopup($scope, transaction, idPrefix + transaction.id, $scope.resourceBundle['return.quantity'] + ' (' + transaction.rq + ') ' + $scope.resourceBundle['cannotexceedstock'] + ' (' + $scope.material.bidbatchDetMap[transaction.bid].atpstk + ') ' + $scope.resourceBundle['for'] + " " + $scope.resourceBundle['batch.lower'] + " " + transaction.bid + " " + $scope.resourceBundle['of'] + " " + $scope.mnm + ".",
+                            showPopup($scope, transaction, idPrefix + transaction.id, messageFormat($scope.resourceBundle['transaction.return.quantity.greater.than.available.stock.batch'], transaction.rq, $scope.material.bidbatchDetMap[transaction.bid].atpstk, transaction.bid, $scope.mnm),
                                 index, $timeout);
                             isInvalid = true;
                         }
                     } else if (transaction.rq > $scope.material.atpstock) {
-                        showPopup($scope, transaction, idPrefix + transaction.id, $scope.resourceBundle['return.quantity'] + ' (' + transaction.rq + ') ' + $scope.resourceBundle['cannotexceedstock'] + ' (' + material.atpstock + ') ' + $scope.resourceBundle['for'] + " " + $scope.mnm + ".",
+                        showPopup($scope, transaction, idPrefix + transaction.id, messageFormat($scope.resourceBundle['transaction.return.quantity.greater.than.available.stock'], transaction.rq, material.atpstock, $scope.mnm),
                             index, $timeout);
                         isInvalid = true;
                     }
                 }
 
                 if (!isInvalid && checkNotNullEmpty(material.name.huName) && checkNotNullEmpty(material.name.huQty) && checkNotNullEmpty(transaction.rq) && transaction.rq % material.name.huQty != 0) {
-                    showPopup($scope, transaction, idPrefix + transaction.id, transaction.rq + " " + $scope.resourceBundle['of'] + " " + material.name.mnm + " " + $scope.resourceBundle['handling.units.mismatch.message'] + " " + material.name.huName + ". " + $scope.resourceBundle['handling.units.expected.message'] + " " + material.name.huQty + " " + material.name.mnm + ".",
+                    showPopup($scope, transaction, idPrefix + transaction.id, messageFormat($scope.resourceBundle['transaction.handling.units.mismatch'], transaction.rq, material.name.mnm, material.name.huName, material.name.huQty, material.name.mnm),
                         index, $timeout);
                     isInvalid = true;
                 }

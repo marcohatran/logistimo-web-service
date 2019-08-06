@@ -27,9 +27,9 @@
             <div class="row mt18 lPad5">
                 <div class="col-sm-8 mb10">
                     <span class="h3">
-                        Shipment: {{shipment.sId}}
+                        {{resourceBundle['shipment']}}: {{shipment.sId}}
                     </span>
-                    <span class="badge currentstatus" ng-class="{'cancelled': shipment.statusCode == ORDER.CANCELLED}">{{ORDER.statusTxt[shipment.statusCode]}}</span>
+                    <span class="badge currentstatus" ng-class="{'cancelled': shipment.statusCode == ORDER.CANCELLED}">{{getLabelFromResourceBundle(ORDER.statusTxt[shipment.statusCode])}}</span>
                     <span class="suborder h5" ng-show="shipment.oty == 1">({{resourceBundle['order']}}: <a ng-href="#/orders/detail/{{shipment.orderId}}/" target="_blank">{{shipment.orderId}}</a>)</span>
                     <span class="suborder h5" ng-show="shipment.oty == 0">(
                         <span ng-hide="transRelease">{{resourceBundle['transactions.transfer.upper']}}</span>
@@ -37,15 +37,15 @@
                         : <a ng-href="#/orders/transfers/detail/{{shipment.orderId}}/">{{shipment.orderId}}</a>)</span>
                     <div>
                         <span class="lnk"
-                              ng-show="isUndef(shipment.salesRefId) && !edit.salesRefId && shipment.statusCode == 'op'"
-                              ng-class="{'required': oCfg.ridm && shipment.statusCode == 'op'}">{{"Add " + resourceBundle['sales.reference.id'] }} </span>
+                              ng-show="isUndef(shipment.salesRefId) && !edit.salesRefId && beforeShip"
+                              ng-class="{'required': oCfg.ridm && beforeShip}">{{resourceBundle['add'] + " " + resourceBundle['sales.reference.id'] }} </span>
                         <span class="lnk" ng-show="isDef(shipment.salesRefId) && !edit.salesRefId">
-                            <span ng-class="{'required': oCfg.ridm && shipment.statusCode == 'op'}">{{resourceBundle['sales.reference.id']}}</span>
+                            <span ng-class="{'required': oCfg.ridm && beforeShip}">{{resourceBundle['sales.reference.id']}}</span>
                             <span>{{ ": " + shipment.salesRefId }} </span>
                         </span>
                         <div class="lnk">
                             <div ng-show="edit.salesRefId" class="" style="width: 30%">
-                                <span ng-class="{'required': oCfg.ridm && shipment.statusCode == 'op'}">{{resourceBundle['sales.reference.id']}}</span>
+                                <span ng-class="{'required': oCfg.ridm && beforeShip}">{{resourceBundle['sales.reference.id']}}</span>
                                 <span>:</span>
                                 <editable-text edit-model="shipment.tempSalesRefId"
                                                on-ok="updateShipmentField('salesRefId', shipment.tempSalesRefId)"
@@ -54,7 +54,7 @@
                                                set-focus="">
                                 </editable-text>
                             </div>
-                            <a ng-show="!edit.salesRefId && (shipment.statusCode == 'op') && !dp.vp"
+                            <a ng-show="!edit.salesRefId && beforeShip && !dp.vp"
                                uib-tooltip="{{resourceBundle['edit']}}" tooltip-append-to-body="true"
                                ng-click="toggleEdit('salesRefId')">
                                 <span class="glyphicons glyphicons-edit pt2 ml15"></span>
@@ -91,13 +91,13 @@
                 <div class="col-sm-12">
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            Status
+                            {{resourceBundle['status']}}
                         </div>
                         <div class="panel-body">
                             <div class="col-sm-9">
                                 <div ng-include="'views/orders/status-indicator.html'"></div>
-                                <span class="glyphicons glyphicons-history codegray large"  uib-tooltip="Show status history" ng-if="!dispStatusHistory" tooltip-append-to-body="true" ng-click="toggleStatusHistory()"></span>
-                                <span class="glyphicons glyphicons-history codegray large"  uib-tooltip="Hide status history" ng-if="dispStatusHistory" tooltip-append-to-body="true" ng-click="toggleStatusHistory()"></span>
+                                <span class="glyphicons glyphicons-history codegray large"  uib-tooltip="{{resourceBundle['orders.show.status.history']}}" ng-if="!dispStatusHistory" tooltip-append-to-body="true" ng-click="toggleStatusHistory()"></span>
+                                <span class="glyphicons glyphicons-history codegray large"  uib-tooltip="{{resourceBundle['orders.hide.status.history']}}" ng-if="dispStatusHistory" tooltip-append-to-body="true" ng-click="toggleStatusHistory()"></span>
 
                             </div>
                             <div class="col-sm-3 btn-group">
@@ -106,11 +106,11 @@
                                         <li>
                                             <button type="button" class="btn btn-sm btn-primary dropdown-toggle"
                                                     data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" ng-show="statusList.length > 0">
-                                                <span class="glyphicons glyphicons-show-lines medium pt2" uib-tooltip="Change status" tooltip-append-to-body="true"></span>
+                                                <span class="glyphicons glyphicons-show-lines medium pt2" uib-tooltip="{{resourceBundle['orders.change.status']}}" tooltip-append-to-body="true"></span>
                                             </button>
                                             <ul class="dropdown-menu dropdown-menu-right">
                                                 <li ng-repeat="status in statusList">
-                                                    <a ng-hide="checkHideStatus(status)"  ng-click="changeStatus(status)"> {{ORDERSTATUSTEXT.statusTxt[status]}}</a>
+                                                    <a ng-hide="checkHideStatus(status)"  ng-click="changeStatus(status)">{{getLabelFromResourceBundle(ORDERSTATUSTEXT.statusTxt[status])}}</a>
                                                 </li>
                                             </ul>
                                         </li>
@@ -129,6 +129,26 @@
                                     <div ng-include="'views/orders/status-history.html'" ng-init="isShip = true"></div>
                                 </div>
                             </div>
+                            <div ng-if="deliveryRequest != null" class="col-sm-12 pt20">
+                                <div class="row mb10 col-sm-6">
+                                    <span class="col-sm-1">
+                                        <img class="medium-icon" src="images/truck-icon.png">
+                                    </span>
+                                    <span class="pull-left pt5 ml5">Request for delivery was placed at
+                                        {{deliveryRequest.cr_on | date:'d/M/yy h:mm a'}}</span>
+                                    <div ng-if="!dispDeliveryStatus" class="pt5"
+                                         ng-click="toggleDispDeliveryStatus()">
+                                        <span class="glyphicons glyphicons-chevron-down small pt2 ml10"></span>
+                                    </div>
+                                    <div ng-if="dispDeliveryStatus" class="pt5"
+                                         ng-click="toggleDispDeliveryStatus()">
+                                        <span class="glyphicons glyphicons-chevron-up small pt2 ml10"></span>
+                                    </div>
+                                </div>
+                                <div class="row pt5" ng-show="dispDeliveryStatus">
+                                    <div ng-include="'views/shipment/shipment-tracking.html'"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -144,7 +164,6 @@
                                 <div class="col-sm-12">
                                     <p><a class="capitalize"
                                        ng-href="#/setup/entities/detail/{{shipment.customerId}}" target="_blank">{{shipment.customerName}}</a></p>
-
                                     <p class="capitalize">{{shipment.customerAdd}}</p>
                                 </div>
                             </div>
@@ -161,7 +180,6 @@
                                 <div class="col-sm-12">
                                         <p><a class="capitalize" href="#/setup/entities/detail/{{shipment.vendorId}}"
                                            target="_blank">{{shipment.vendorName}}</a></p>
-
                                         <p class="capitalize">{{shipment.vendorAdd}}</p>
                                 </div>
                             </div>
@@ -173,38 +191,162 @@
                 <div class="col-sm-12">
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            Details
+                            {{resourceBundle['consignment']}}
                         </div>
                         <div class="panel-body">
                             <div class="row">
                                 <div class="col-sm-6">
                                     <div class="row mb10">
-                                        <label class="col-sm-4 control-label" ng-class="{'required':isTMand}">
-                                            {{resourceBundle['transporter']}} </label>
+                                        <label class="col-sm-4 control-label">
+                                            {{resourceBundle['number.of.packages']}} </label>
 
                                         <div class="col-sm-7">
-                                            <p ng-hide="edit.transp">
-                                                {{shipment.transporter ? shipment.transporter : resourceBundle['none'] }}
+                                            <p ng-hide="edit.numpckg" class="word-wrap">
+                                                {{shipment.consignment.pkgCnt ? shipment.consignment.pkgCnt : 0 }}
                                                 <a class="ml15"
-                                                   ng-show="!edit.transp && !dp.vp && shipment.atv"
-                                                   ng-click="toggleEdit('transp')" uib-tooltip="{{resourceBundle['edit']}}" tooltip-append-to-body="true">
+                                                   ng-show="!edit.numpckg && !dp.vp && shipment.atv"
+                                                   ng-click="toggleEdit('numpckg')" uib-tooltip="{{resourceBundle['edit']}}" tooltip-append-to-body="true">
                                                     <span class="glyphicons glyphicons-edit alignBaseLine"></span>
                                                 </a>
                                             </p>
-                                            <div ng-show="edit.transp">
-                                                <editable-text edit-model="shipment.tempTransporter"
-                                                               on-ok="updateShipmentField('transp', shipment.tempTransporter)"
-                                                               on-cancel="toggleEdit('transp')"
+                                            <div ng-show="edit.numpckg">
+                                                <editable-number min="0" max="9999999"
+                                                                edit-model="shipment.consignment.temp_pkgCnt"
+                                                               on-ok="updateShipmentField('numpckg', shipment.consignment.temp_pkgCnt)"
+                                                               on-cancel="toggleEdit('numpckg')"
+                                                               set-focus="">
+                                                </editable-number>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb10">
+                                        <label class="col-sm-4 control-label">
+                                            {{resourceBundle['total.weight']}} (kg)</label>
+
+                                        <div class="col-sm-7">
+                                            <p ng-hide="edit.wt" class="word-wrap">
+                                                {{shipment.consignment.wt ? shipment.consignment.wt : 0 }}
+                                                <a class="ml15"
+                                                   ng-show="!edit.wt && !dp.vp && shipment.atv"
+                                                   ng-click="toggleEdit('wt')" uib-tooltip="{{resourceBundle['edit']}}" tooltip-append-to-body="true">
+                                                    <span class="glyphicons glyphicons-edit alignBaseLine"></span>
+                                                </a>
+                                            </p>
+                                            <div ng-show="edit.wt">
+                                                <editable-number edit-model="shipment.consignment.temp_wt" min="0"
+                                                               max="9999999"
+                                                               on-ok="updateShipmentField('wt', shipment.consignment.temp_wt)"
+                                                               on-cancel="toggleEdit('wt')"
+                                                               set-focus="">
+                                                </editable-number>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb10">
+                                        <label class="col-sm-4 control-label">
+                                            {{resourceBundle['volume.inches']}}</label>
+
+                                        <div class="col-sm-7">
+                                            <p ng-hide="edit.vol" class="word-wrap">
+                                                L: {{shipment.consignment.dimension.l ? shipment.consignment.dimension.l : 0 }},
+                                                W: {{shipment.consignment.dimension.w ? shipment.consignment.dimension.w : 0 }},
+                                                H: {{shipment.consignment.dimension.h ? shipment.consignment.dimension.h : 0 }}
+                                                <a class="ml15"
+                                                   ng-show="!edit.vol && !dp.vp && shipment.atv"
+                                                   ng-click="toggleEdit('vol')" uib-tooltip="{{resourceBundle['edit']}}" tooltip-append-to-body="true">
+                                                    <span class="glyphicons glyphicons-edit alignBaseLine"></span>
+                                                </a>
+                                            </p>
+                                            <div ng-show="edit.vol">
+                                                <div class="row">
+                                                    <input type="number" min=0 max="9999999" placeholder="L"
+                                                           class="col-sm-3 form-control form-control-override"
+                                                           ng-model="shipment.consignment.temp_dimension.l">
+                                                    </input>
+                                                    <input type="number" min=0 max="9999999" placeholder="W" class="col-sm-3 form-control form-control-override"
+                                                           ng-model="shipment.consignment.temp_dimension.w">
+                                                    </input>
+                                                    <input type="number" min=0 max="9999999" placeholder="H" class="col-sm-3 form-control form-control-override"
+                                                           ng-model="shipment.consignment.temp_dimension.h">
+                                                    </input>
+                                                    <span class="fix-bot-right">
+                                                        <span ng-click="updateShipmentField('vol', shipment.consignment.temp_dimension)"
+                                                              class="glyphicons glyphicons-ok clickable editBtn"></span>
+                                                        <span ng-click="toggleEdit('vol')"
+                                                              class="glyphicons glyphicons-remove clickable editBtn"></span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 mb10">
+                                    <div class="row">
+                                        <label class="col-sm-4 control-label"> {{resourceBundle['content.declaration']}}</label>
+
+                                        <div class="col-sm-7">
+                                            <p ng-hide="edit.declaration" class="word-wrap">
+                                                {{shipment.consignment.declaration ? shipment.consignment.declaration : resourceBundle['none'] }}
+                                                <a class="ml15"
+                                                   ng-show="!edit.declaration && !dp.vp && shipment.atv"
+                                                   ng-click="toggleEdit('declaration')" uib-tooltip="{{resourceBundle['edit']}}" tooltip-append-to-body="true">
+                                                    <span class="glyphicons glyphicons-edit alignBaseLine"></span>
+                                                </a>
+                                            </p>
+                                            <div ng-show="edit.declaration">
+                                                <editable-text edit-model="shipment.consignment.temp_declaration"
+                                                               max-length="500"
+                                                               on-ok="updateShipmentField('declaration', shipment.consignment.temp_declaration)"
+                                                               on-cancel="toggleEdit('declaration')"
                                                                set-focus="">
                                                 </editable-text>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="row mb10">
-                                        <label class="col-sm-4 control-label"> {{resourceBundle['trackingid']}}</label>
+                                </div>
+                                <div class="col-sm-6 mb10">
+                                    <div class="row">
+                                        <label class="col-sm-4 control-label"> {{resourceBundle['value']}}</label>
 
                                         <div class="col-sm-7">
-                                            <p ng-hide="edit.trackid">
+                                            <p ng-hide="edit.value" class="word-wrap">
+                                                {{shipment.consignment.value ? shipment.consignment.value : 0 }}
+                                                <a class="ml15"
+                                                   ng-show="!edit.value && !dp.vp && shipment.atv"
+                                                   ng-click="toggleEdit('value')"
+                                                   uib-tooltip="{{resourceBundle['edit']}}" tooltip-append-to-body="true">
+                                                    <span class="glyphicons glyphicons-edit alignBaseLine"></span>
+                                                </a>
+                                            </p>
+                                            <div ng-show="edit.value">
+                                                <editable-number min="0" max="9999999" edit-model="shipment.consignment.temp_val"
+                                                               on-ok="updateShipmentField('value', shipment.consignment.temp_val)"
+                                                               on-cancel="toggleEdit('value')"
+                                                               set-focus="">
+                                                </editable-number>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt10">
+                <div class="col-sm-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            {{resourceBundle['tracking.details']}}
+                        </div>
+                        <div class="panel-body">
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <div class="row mb10">
+                                        <label class="col-sm-4 control-label">{{resourceBundle['trackingid']}}</label>
+
+                                        <div class="col-sm-7">
+                                            <p ng-hide="edit.trackid" class="word-wrap">
                                                 {{shipment.trackingId ? shipment.trackingId : resourceBundle['none'] }}
                                                 <a class="ml15"
                                                    ng-show="!edit.trackid && !dp.vp && shipment.atv"
@@ -214,6 +356,7 @@
                                             </p>
                                             <div ng-show="edit.trackid">
                                                 <editable-text edit-model="shipment.tempTrackingId"
+                                                               max-length="255"
                                                                on-ok="updateShipmentField('trackid',shipment.tempTrackingId)"
                                                                on-cancel="toggleEdit('trackid')"
                                                                set-focus="">
@@ -222,10 +365,10 @@
                                         </div>
                                     </div>
                                     <div class="row mb10">
-                                        <label class="col-sm-4 control-label" ng-class="{'required': oCfg.eadm && shipment.statusCode == 'op'}"> {{resourceBundle['eda']}} </label>
+                                        <label class="col-sm-4 control-label" ng-class="{'required': oCfg.eadm && beforeShip}"> {{resourceBundle['eda']}} </label>
 
                                         <div class="col-sm-7">
-                                            <p class="capitalize" ng-hide="edit.sefd">
+                                            <p class="capitalize" ng-hide="edit.sefd"  class="word-wrap">
                                                 {{shipment.eadLabel? shipment.eadLabel:resourceBundle['none']}}
                                                 <a class="ml15 alignBaseLine"
                                                    ng-show="!edit.sefd && !dp.vp && shipment.atv && shipment.statusCode != ORDER.FULFILLED"
@@ -247,51 +390,89 @@
                                         </div>
                                     </div>
                                     <div class="row mb10" ng-if="shipment.statusCode == 'fl'">
-                                        <label class="col-sm-4 control-label"> Actual fulfilment date </label>
+                                        <label class="col-sm-4 control-label"> {{resourceBundle['actual.fulfilment.date']}} </label>
 
                                         <div class="col-sm-7">
                                             <label class="capitalize" ng-hide="edit.sefd">{{shipment.afd? shipment.afd:resourceBundle['none']}}</label>
                                         </div>
                                     </div>
-                                </div>
-                               <div class="col-sm-6" ng-if="isDef(rsn)">
-                                    <div class="row">
-                                        <label class="col-sm-4 control-label">
-                                            {{resourceBundle['reason.shipment']}} </label>
+                                    <div class="row mb10">
+                                        <label class="col-sm-4 control-label"> {{resourceBundle['vehicle']}}</label>
 
                                         <div class="col-sm-7">
-                                            <label class="capitalize">{{rsn}}</label>
+                                            <p ng-hide="edit.vehicle" class="word-wrap">
+                                                {{shipment.vehicle ? shipment.vehicle : resourceBundle['none'] }}
+                                                <a class="ml15"
+                                                   ng-show="!edit.vehicle && !dp.vp && shipment.atv"
+                                                   ng-click="toggleEdit('vehicle')" uib-tooltip="{{resourceBundle['edit']}}" tooltip-append-to-body="true">
+                                                    <span class="glyphicons glyphicons-edit alignBaseLine"></span>
+                                                </a>
+                                            </p>
+                                            <div ng-show="edit.vehicle">
+                                                <editable-text edit-model="shipment.tempVehicle"
+                                                               max-length="255"
+                                                               on-ok="updateShipmentField('vehicle', shipment.tempVehicle)"
+                                                               on-cancel="toggleEdit('vehicle')"
+                                                               set-focus="">
+                                                </editable-text>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-sm-6 mb10">
-                                    <div class="row">
-                                        <label class="col-sm-4 control-label cbx">{{resourceBundle['packagesize']}}</label>
+                                    <div class="row mb10" ng-if="isDef(rsn)">
+                                        <label class="col-sm-4 control-label">
+                                            {{resourceBundle['reason.shipment']}} </label>
+                                        <div class="col-sm-7">
+                                            <label class="capitalize">{{rsn}}</label>
+                                        </div>
+                                    </div>
+                                    <div class="row mb10">
+                                        <label class="col-sm-4 control-label" ng-class="{'required':isTMand}">
+                                            {{resourceBundle['transporter']}} </label>
 
                                         <div class="col-sm-7">
-                                            <p ng-show="!edit.ps" class="cbx">
-                                                {{shipment.ps? shipment.ps : resourceBundle['none']}}
+                                            <p ng-hide="edit.transp" class="word-wrap">
+                                                {{shipment.transporter ? shipment.transporter : resourceBundle['none'] }}
                                                 <a class="ml15"
-                                                   ng-show="!edit.ps && !dp.vp && shipment.atv"
-                                                   ng-click="toggleEdit('ps')" uib-tooltip="{{resourceBundle['edit']}}" tooltip-append-to-body="true">
+                                                   ng-show="!edit.transp && !dp.vp && shipment.atv"
+                                                   ng-click="toggleEdit('transp')"
+                                                   uib-tooltip="{{resourceBundle['edit']}}" tooltip-append-to-body="true">
                                                     <span class="glyphicons glyphicons-edit alignBaseLine"></span>
                                                 </a>
                                             </p>
-                                            <select class="form-control" ng-model="shipment.tempPS" ng-show="isDef(packageSize) && edit.ps">
-                                                <option ng-repeat="psize in packageSize" value="{{psize}}"
-                                                        ng-selected="shipment.tempPS == psize">
-                                                    {{psize || resourceBundle['select'] + ' ' + resourceBundle['packagesize']}}
-                                                </option>
-                                            </select>
-                                            <input type="text" class="form-control" ng-show="isUndef(packageSize) && edit.ps" ng-model="shipment.tempPS">
-                                            <div ng-show="edit.ps" class="mt10">
-                                                <button class="btn btn-sm btn-primary"
-                                                        ng-click="updateShipmentField('ps',shipment.tempPS)">
-                                                    {{resourceBundle['save']}}
-                                                </button>
-                                                <button class="btn btn-sm btn-default" ng-click="toggleEdit('ps')">
-                                                    {{resourceBundle['cancel']}}
-                                                </button>
+                                            <div ng-show="edit.transp">
+                                                <transporter-select transporter-model="shipment.tempTransporter"
+                                                                    on-blur="onTransporterFocusChange"
+                                                                    place-holder="Enter transporter"
+                                                                    disable="disableTransporterSelection"
+                                                                    on-ok="updateTransporterDetails(transporter)"
+                                                                    show-confirm="true"
+                                                                    on-cancel="toggleEdit('transp')">
+                                                </transporter-select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb10">
+                                        <label class="col-sm-4 control-label" ng-class="{'required':isTMand}">
+                                            {{resourceBundle['phone.number']}} </label>
+
+                                        <div class="col-sm-7">
+                                            <p ng-hide="edit.phnm" class="word-wrap">
+                                                {{shipment.phonenum ? shipment.phonenum : resourceBundle['none'] }}
+                                                <a class="ml15"
+                                                   ng-show="!edit.phnm && !dp.vp && shipment.atv"
+                                                   ng-click="toggleEdit('phnm')" uib-tooltip="{{resourceBundle['edit']}}" tooltip-append-to-body="true">
+                                                    <span class="glyphicons glyphicons-edit alignBaseLine"></span>
+                                                </a>
+                                            </p>
+                                            <div ng-show="edit.phnm">
+                                                <editable-text edit-model="shipment.tempPhonenum"
+                                                               max-length="20"
+                                                               on-ok="updateShipmentField('phnm', shipment.tempPhonenum)"
+                                                               on-cancel="toggleEdit('phnm')"
+                                                               set-focus="">
+                                                </editable-text>
                                             </div>
                                         </div>
                                     </div>
@@ -309,6 +490,10 @@
                         </li>
                         <li ng-class="{ active: view == 'message'}">
                             <a ng-click="view='message'">{{resourceBundle['comments']}} <span class="badge">{{messageCnt ? messageCnt : 0}}</span></a>
+                        </li>
+                        <li ng-class="{ active: view == 'delivery_requests'}">
+                            <a ng-click="view='delivery_requests'">{{resourceBundle['del.reqsts']}} <span
+                                    class="badge">{{drCnt ? drCnt : 0}}</span></a>
                         </li>
                     </ul>
                 </div>
@@ -335,16 +520,16 @@
                                                         <th class="col-sm-2 text-left">{{resourceBundle['material']}}
                                                         </th>
                                                         <th class="col-sm-2 text-center">{{resourceBundle['ordered']}}</th>
-                                                        <th class="text-center" ng-show="allocate || shipment.statusCode != 'op'"
+                                                        <th class="text-center" ng-show="allocate || !beforeShip"
                                                             ng-if="shipment.statusCode != 'cn'"
-                                                            ng-class="{'col-sm-2':shipment.statusCode == 'op','col-sm-3':shipment.statusCode != 'op'}">
-                                                            <span ng-if="shipment.statusCode == 'op'">{{resourceBundle['allocated']}}</span>
-                                                            <span ng-if="shipment.statusCode != 'op'">{{resourceBundle['shipped']}}</span>
+                                                            ng-class="{'col-sm-2':beforeShip,'col-sm-3':!beforeShip}">
+                                                            <span ng-if="beforeShip">{{resourceBundle['allocated']}}</span>
+                                                            <span ng-if="!beforeShip">{{resourceBundle['shipped']}}</span>
                                                         </th>
                                                         <!--<th class="col-sm-0-1" ng-show="allocate || shipment.statusCode != 'op'"
                                                             ng-if="shipment.statusCode != 'cn'"></th>-->
                                                         <th class="text-center" ng-show="shipment.statusCode == 'fl'"
-                                                            ng-class="{'col-sm-2':shipment.statusCode == 'op','col-sm-3':shipment.statusCode != 'op'}">
+                                                            ng-class="{'col-sm-2':beforeShip,'col-sm-3': !beforeShip}">
                                                             {{resourceBundle['fulfilled']}}
                                                         </th>
                                                         <!--<th class="col-sm-0-1" ng-show="shipment.statusCode == 'fl'"></th>-->
@@ -354,7 +539,7 @@
                                                                 <span ng-show="shipment.customerName.length > 17">...</span>
                                                             </span>
                                                         </th>-->
-                                                        <th class="text-center" ng-hide="shipment.statusCode != 'op'">
+                                                        <th class="text-center" ng-show="beforeShip">
                                                             {{resourceBundle['available.stock']}}
                                                             <span class="litetext">{{shipment.vendorName | limitTo:17}}
                                                                 <span ng-show="shipment.vendorName.length > 17">...</span>
@@ -374,15 +559,15 @@
                                                             <span class="litetext" ng-if="item.oq">{{resourceBundle['original']}}: {{item.oq}}</span>
                                                             <span class="litetext" ng-if="item.rq > 0">{{resourceBundle['order.recommended']}}: {{item.rq}}</span>
                                                         </td>
-                                                        <td class="text-center" ng-show="allocate || shipment.statusCode != 'op'"
+                                                        <td class="text-center" ng-show="allocate || !beforeShip"
                                                             ng-if="shipment.statusCode != 'cn'">
                                                             <div ng-hide="edit.ship" style="clear: both" class="col-sm-9 pr30 text-right">
-                                                                <span>{{shipment.statusCode == 'op' ? item.aq : item.q}}
+                                                                <span>{{beforeShip ? item.aq : item.q}}
                                                                 </span>
                                                             </div>
                                                             <span ng-show="(allocate && item.isBa &&
-                                                                ((shipment.statusCode == 'op' && isDef(item.aq)) ||
-                                                                (shipment.statusCode != 'op' && isDef(item.q)))) && !edit.ship"
+                                                                ((beforeShip && isDef(item.aq)) ||
+                                                                (!beforeShip && isDef(item.q)))) && !edit.ship"
                                                                   class="glyphicons glyphicons-list-alt pull-left col-sm-2 pl0 text-left"
                                                                   style="vertical-align:middle;"
                                                                   ng-click="toggleBatch('sBDetail',$index)">
@@ -548,7 +733,7 @@
                                                             <span class="litetext" ng-show="item.csavibper > 0 && isDef(mmdt)">{{item.csavibper | roundNoTrailZeros:2}} {{mmdt}}</span>
                                                             <span class="litetext">({{item.min}},{{item.max}})</span>
                                                         </td>-->
-                                                        <td class="text-center" ng-hide="shipment.statusCode != 'op'">
+                                                        <td class="text-center" ng-show="beforeShip">
                                                             {{item.atpstk}}
                                                             <span class="litetext">{{resourceBundle['material.stockonhand']}}: {{item.vs}}</span>
                                                             <span class="litetext" ng-show="isDef(item.itstk)">In-transit: {{item.itstk}}</span>
@@ -590,6 +775,10 @@
                                 <div ng-include="'views/conversation/messages.html'"
                                      ng-init="objId = sid;objType = 'SHIPMENT'"></div>
                             </div>
+                            <div ng-switch-when="delivery_requests" class="tab-pane">
+                                <div ng-include="'views/shipment/delivery-request-listing.html'"
+                                     ng-init="objId = sid;objType = 'SHIPMENT'"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -597,6 +786,14 @@
         </div>
         <div ng-switch-when="fulfilShipment">
             <div ng-include="'views/shipment/fulfil-shipment.html'"></div>
+        </div>
+        <div ng-switch-when="createDelReqs">
+            <div ng-include="'views/delivery-requests/new-delivery-request.html'"
+                 ng-init="drOrderId = shipment.orderId; drShipmentId = shipment.sId;
+                    consignment = shipment.consignment;
+                    vendor = {name: shipment.vendorName, id: shipment.vendorId, addr: shipment.vendorAdd};
+                    cust = {name: shipment.customerName, id: shipment.customerId, addr: shipment.customerAdd}">
+            </div>
         </div>
     </div>
 </div>

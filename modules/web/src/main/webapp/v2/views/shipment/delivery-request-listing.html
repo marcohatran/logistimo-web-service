@@ -1,0 +1,70 @@
+<!--
+  ~ Copyright © 2019 Logistimo.
+  ~
+  ~ This file is part of Logistimo.
+  ~
+  ~ Logistimo software is a mobile & web platform for supply chain management and remote temperature monitoring in
+  ~ low-resource settings, made available under the terms of the GNU Affero General Public License (AGPL).
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+  ~ Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+  ~ later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+  ~ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License along with this program.  If not, see
+  ~ <http://www.gnu.org/licenses/>.
+  ~
+  ~ You can be released from the requirements of the license by purchasing a commercial license. To know more about
+  ~ the commercial license, please contact us at opensource@logistimo.com
+  -->
+<div class="row" ng-controller="DeliveryRequestListingController">
+    <div class="col-sm-12 mt10" ng-if="delivery_requests != null && delivery_requests.length > 0">
+        <table class="table table-condensed table-hover table-logistimo">
+            <tr>
+                <th class="text-left ml10">{{resourceBundle['serialnum']}}</th>
+                <th class="text-left ml10">{{resourceBundle['tracking.id']}}</th>
+                <th class="text-center">{{resourceBundle['status']}}</th>
+                <th class="text-center">{{resourceBundle['transporter']}}</th>
+                <th class="text-center">{{resourceBundle['created']}}</th>
+                <th class="text-center">{{resourceBundle['actions']}}</th>
+            </tr>
+            <tbody ng-repeat="dr in delivery_requests" data-ng-switch>
+                <tr>
+                    <td class="col-sm-2 ml10">
+                        <a target="_blank" class="alignBaseLine">{{$index + 1}}</a>
+                    </td>
+                    <td class="col-sm-2 text-left ml10">
+                        <a target="_blank" class="alignBaseLine">{{dr.trckdtls.tr_id_display}}</a>
+                    </td>
+                    <td class="text-center">
+                        <span>{{dr.st_display}}</span>
+                        <span class="litetext">{{dr.stUpdOn | date:'d/M/yy h:mm a' }}</span>
+                    </td>
+                    <td class="text-center">
+                        <a href="#/setup/transporters/all/detail/{{dr.trckdtls.tid}}"
+                           target="_blank" class="alignBaseLine">{{dr.trckdtls.transporter}}</a>
+                    </td>
+                    <td class="text-center">
+                        <span>{{dr.cr_on | date:'d/M/yy h:mm a'}}</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="p2 glyphicon glyphicon-refresh clickable"
+                              title="{{resourceBundle['refresh'] | capitalize}}"
+                              ng-click="onDeliveryRequestSync(dr.id, $index)"></span>
+                        <span class="p2 ml5 glyphicon glyphicon-remove clickable"
+                              title="{{resourceBundle['cancel']}}" ng-if="dr.showCancel"
+                              ng-confirm-click="{{resourceBundle['dr.cancel.cnf']}}"
+                              confirmed-click="onDeliveryRequestCancel(dr.id, $index)"></span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="col-sm-12 mt10" ng-if="delivery_requests == null || delivery_requests.length == 0">
+        <p class="alert alert-warning">{{resourceBundle['dr.listing.not.found']}}</p>
+    </div>
+</div>

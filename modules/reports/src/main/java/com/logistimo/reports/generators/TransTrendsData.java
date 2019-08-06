@@ -123,7 +123,7 @@ public class TransTrendsData extends ReportData {
     DataTable data = new DataTable();
     // Add the column descriptions
     ArrayList<ColumnDescription> cd = new ArrayList<>();
-    cd.add(new ColumnDescription(DATE, ValueType.DATE, jsMessages.getString("date")));
+    cd.add(new ColumnDescription(DATE, ValueType.DATE, messages.getString("date")));
     String ISSUES = messages.getString("issues");
     String RECEIPTS = messages.getString("receipts");
     // Get configurable column names
@@ -153,11 +153,11 @@ public class TransTrendsData extends ReportData {
       cd.add(new ColumnDescription(C_TRANSFER, ValueType.NUMBER, messages.getString("transfers")));
     } else if (ReportsConstants.TYPE_TRANSACTION.equals(reportType)) {
       // Transaction counts
-      cd.add(new ColumnDescription(T_TOTAL, ValueType.NUMBER, jsMessages.getString("total")));
+      cd.add(new ColumnDescription(T_TOTAL, ValueType.NUMBER, messages.getString("total")));
       cd.add(new ColumnDescription(T_ISSUES, ValueType.NUMBER, ISSUES));
       cd.add(new ColumnDescription(T_RECEIPTS, ValueType.NUMBER, RECEIPTS));
       cd.add(new ColumnDescription(T_STOCKCOUNT, ValueType.NUMBER,
-          messages.getString("stock") + " " + jsMessages.getString("count") + "s"));
+          messages.getString("stock") + " " + messages.getString("count") + "s"));
       cd.add(new ColumnDescription(T_WASTAGE, ValueType.NUMBER,
           messages.getString("transactions.wastage.upper")));
       cd.add(new ColumnDescription(T_DEMAND, ValueType.NUMBER, messages.getString("demand")));

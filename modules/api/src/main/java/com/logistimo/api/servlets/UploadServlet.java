@@ -82,15 +82,13 @@ public class UploadServlet extends SgServlet {
 
   @Override
   protected void processGet(HttpServletRequest request, HttpServletResponse response,
-                            ResourceBundle backendMessages,
                             ResourceBundle messages)
       throws ServletException, IOException, ServiceException {
-    processPost(request, response, backendMessages, messages);
+    processPost(request, response, messages);
   }
 
   @Override
   protected void processPost(HttpServletRequest request, HttpServletResponse response,
-                             ResourceBundle backendMessages,
                              ResourceBundle messages)
       throws ServletException, IOException, ServiceException {
     xLogger.fine("Entered processPost");
@@ -106,7 +104,7 @@ public class UploadServlet extends SgServlet {
     }
     // Process our actions (NOTE: NONE of our actions should have a parameter called 'job_id' - this is reserved for MR callback on bulk import only
     if (ACTION_SCHEDULEBULKUPLOAD.equals(action)) {
-      scheduleBulkUpload(request, response, backendMessages);
+      scheduleBulkUpload(request, response, messages);
     } else {
       xLogger.severe("Invalid action: {0}", action);
     }

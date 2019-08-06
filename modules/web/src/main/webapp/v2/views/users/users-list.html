@@ -87,11 +87,11 @@
                         <div class="filter-label">{{resourceBundle['lastlogin']}}</div>
                         <div class="row mgh0">
                             <div class="col-sm-6" style="right:15px;" >
-                                <date-picker date-model="from" place-holder="From" max-date="today"></date-picker>
+                                <date-picker date-model="from" place-holder="{{resourceBundle['from']}}" max-date="today"></date-picker>
                             </div>
                             <!--<div class="col-sm-6" style="right:15px;" ng-hide="isDef(nvrlogged)">-->
                             <div class="col-sm-6" style="right:15px;">
-                                <date-picker date-model="to" place-holder="To" min-date="from" max-date="today"></date-picker>
+                                <date-picker date-model="to" place-holder="{{resourceBundle['to']}}" min-date="from" max-date="today"></date-picker>
                             </div>
                         </div>
                     </div>

@@ -104,27 +104,27 @@ public class LoginServlet extends JsonRestServlet {
 
 
   public void processGet(HttpServletRequest req, HttpServletResponse resp,
-                         ResourceBundle backendMessages, ResourceBundle messages)
+                         ResourceBundle messages)
       throws IOException, ServiceException {
     String action = req.getParameter(RestConstantsZ.ACTION);
     if (RestConstantsZ.ACTION_LOGIN.equalsIgnoreCase(action)) {
-      authenticateUser(req, resp, backendMessages, true);
+      authenticateUser(req, resp, messages, true);
     } else if(RestConstantsZ.ACTION_NEW_LOGIN.equalsIgnoreCase(action)) {
-      authenticateUser(req, resp, backendMessages, false);
+      authenticateUser(req, resp, messages, false);
     } else if (RestConstantsZ.ACTION_LOGOUT.equalsIgnoreCase(action)) {
       xLogger.info(
           "Logged out - does nothing, just there for backward compatibility, if at all needed");
     } else if (FORGOT_PASSWRD.equalsIgnoreCase(action)) {
-      validateForgotPassword(req, resp, backendMessages);
+      validateForgotPassword(req, resp, messages);
     } else {
       throw new ServiceException("Invalid action: " + action);
     }
   }
 
   public void processPost(HttpServletRequest req, HttpServletResponse resp,
-                          ResourceBundle backendMessages, ResourceBundle messages)
+                          ResourceBundle messages)
       throws IOException, ServiceException {
-    processGet(req, resp, backendMessages, messages);
+    processGet(req, resp, messages);
   }
 
   public void authenticateUser(HttpServletRequest req, HttpServletResponse resp,
@@ -246,7 +246,7 @@ public class LoginServlet extends JsonRestServlet {
             domainId = user.getDomainId();
             // Get the resource bundle according to the user's login
             try {
-              backendMessages = Resources.get().getBundle("BackendMessages", user.getLocale());
+              backendMessages = Resources.getBundle(user.getLocale());
             } catch (MissingResourceException e) {
               xLogger
                   .severe("Unable to get resource bundles BackendMessages for locale {0}", locale);
@@ -259,7 +259,7 @@ public class LoginServlet extends JsonRestServlet {
                         .parseCustom(startDateStr, Constants.DATETIME_FORMAT, user.getTimezone());
               } catch (ParseException pe) {
                 status = false;
-                backendMessages = Resources.get().getBundle("BackendMessages", user.getLocale());
+                backendMessages = Resources.getBundle(user.getLocale());
                 message = backendMessages.getString("error.invalidstartdate");
                 xLogger.severe("Exception while parsing start date. Exception: {0}, Message: {1}",
                     pe.getClass().getName(), pe.getMessage());
@@ -270,7 +270,7 @@ public class LoginServlet extends JsonRestServlet {
             // Authentication failed, use the locale from the request, if provided
             status = false;
             try {
-              backendMessages = Resources.get().getBundle("BackendMessages", new Locale(locale));
+              backendMessages = Resources.getBundle(new Locale(locale));
               message = backendMessages.getString("error.invalidusername");
             } catch (MissingResourceException e) {
               xLogger

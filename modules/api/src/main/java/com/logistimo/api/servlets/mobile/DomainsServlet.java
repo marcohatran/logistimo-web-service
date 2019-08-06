@@ -66,7 +66,7 @@ public class DomainsServlet extends JsonRestServlet {
 
   @Override
   protected void processGet(HttpServletRequest request, HttpServletResponse response,
-                            ResourceBundle backendMessages, ResourceBundle messages)
+                            ResourceBundle messages)
       throws ServletException, IOException,
       ServiceException {
     String action = request.getParameter("action");
@@ -83,7 +83,7 @@ public class DomainsServlet extends JsonRestServlet {
 
   @Override
   protected void processPost(HttpServletRequest request,
-                             HttpServletResponse response, ResourceBundle backendMessages,
+                             HttpServletResponse response,
                              ResourceBundle messages)
       throws ServletException, IOException, ServiceException {
     String action = request.getParameter("action");

@@ -98,7 +98,7 @@ public class HandlingUnitController {
     }
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
       throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
     }
@@ -204,7 +204,7 @@ public class HandlingUnitController {
   String updateHandlingUnit(@RequestBody HUModel huModel) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
       throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
     }

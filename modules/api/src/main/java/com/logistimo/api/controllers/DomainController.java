@@ -314,7 +314,7 @@ public class DomainController {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     boolean authorisedUser = false;
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
       throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
     }

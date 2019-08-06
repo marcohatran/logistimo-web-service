@@ -76,7 +76,7 @@ public class BulletinBoardDashboardController {
   @ResponseBody
   String create(@RequestBody BulletinBoardDashBoardModel model) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", sUser.getLocale());
+    ResourceBundle backendMessages = Resources.getBundle(sUser.getLocale());
     long domainId = SecurityUtils.getDomainId();
     try {
       if (model.getDashboardId() != null) {
@@ -121,7 +121,7 @@ public class BulletinBoardDashboardController {
   public
   @ResponseBody
   String delete(@PathVariable Long dbId) {
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
+    ResourceBundle backendMessages = Resources.getBundle(SecurityUtils.getLocale());
     try {
       String name = bulletinBoardDashBoardService.deleteDashboard(dbId);
       return backendMessages.getString("dashboard.upper") + " " + MsgUtil.bold(name) + " " + backendMessages

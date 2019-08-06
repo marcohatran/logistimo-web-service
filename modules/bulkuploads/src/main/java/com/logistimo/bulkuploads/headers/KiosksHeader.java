@@ -27,102 +27,68 @@ import com.logistimo.constants.CharacterConstants;
 import com.logistimo.services.Resources;
 import com.logistimo.utils.FieldLimits;
 
+import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.StringJoiner;
 
 /**
  * Created by charan on 06/03/17.
  */
 public class KiosksHeader implements IHeader {
+    @Override
+    public String getUploadableCSVHeader(Locale locale, String type) {
+        ResourceBundle bundle = Resources.getBundle(locale);
+        StringJoiner header = new StringJoiner(CharacterConstants.COMMA);
+        if ("assets".equalsIgnoreCase(type)) {
+            header.add(bundle.getString("kiosk"))
+                .add(bundle.getString("custom.entity"))
+                .add(bundle.getString("city"))
+                .add(bundle.getString("district"))
+                .add(bundle.getString("state"))
+                .add(bundle.getString("asset.type.header"))
+                .add(bundle.getString("bulk.asset.id"))
+                .add(bundle.getString("asset.manufacturer.header"))
+                .add(bundle.getString("model"))
+                .add(bundle.getString("sensor.device.id"))
+                .add(bundle.getString("sim1"))
+                .add(bundle.getString("sim1.id"))
+                .add(bundle.getString("sim1.ntw.provider"))
+                .add(bundle.getString("sim2"))
+                .add(bundle.getString("sim2.id"))
+                .add(bundle.getString("sim2.ntw.provider"))
+                .add(bundle.getString("imei.of.monitoring.asset"));
+        } else {
+            header.add(bundle.getString("bulkupload.entity.operation.header"))
+                .add(MessageFormat.format(bundle.getString("bulkupload.entity.name.header"),
+                    FieldLimits.ENTITY_NAME_MIN_LENGTH, FieldLimits.TEXT_FIELD_MAX_LENGTH))
+                .add(bundle.getString("bulkupload.entity.users.header"))
+                .add(bundle.getString("bulkupload.country.header"))
+                .add(bundle.getString("bulkupload.state.header"))
+                .add(MessageFormat.format(bundle.getString("bulkupload.village.header"), CharacterConstants.ASTERISK,
+                    FieldLimits.TEXT_FIELD_MAX_LENGTH))
+                .add(MessageFormat.format(bundle.getString("bulkupload.latitude.header"), FieldLimits.LAT_LONG_MAX_DIGITS_AFTER_DECIMAL, FieldLimits.LATITUDE_MIN, FieldLimits.LATITUDE_MAX))
+                .add(MessageFormat.format(bundle.getString("bulkupload.longitude.header"), FieldLimits.LAT_LONG_MAX_DIGITS_AFTER_DECIMAL, FieldLimits.LONGITUDE_MIN, FieldLimits.LONGITUDE_MAX))
+                .add(bundle.getString("bulkupload.district.header"))
+                .add(bundle.getString("bulkupload.taluk.header"))
+                .add(MessageFormat.format(bundle.getString("bulkupload.street.address.header"), FieldLimits.STREET_ADDRESS_MAX_LENGTH))
+                .add(MessageFormat.format(bundle.getString("bulkupload.zipcode.header"), FieldLimits.TEXT_FIELD_MAX_LENGTH))
+                .add(bundle.getString("bulkupload.material.currency.header"))
+                .add(MessageFormat.format(bundle.getString("bulkupload.tax.header"), FieldLimits.TAX_MIN_VALUE, FieldLimits.TAX_MAX_VALUE))
+                .add(MessageFormat.format(bundle.getString("bulkupload.tax.id.header"), FieldLimits.TEXT_FIELD_MAX_LENGTH))
+                .add(MessageFormat.format(bundle.getString("bulkupload.inventory.policy.header"), FieldLimits.SYSTEM_DETERMINED_REPLENISHMENT))
+                .add(MessageFormat.format(bundle.getString("bulkupload.service.level.header"), FieldLimits.MIN_SERVICE_LEVEL, FieldLimits.MAX_SERVICE_LEVEL))
+                .add(bundle.getString("bulkupload.kiosk.name.new.header"))
+                .add(bundle.getString("bulkupload.entity.add.all.materials.header"))
+                .add(bundle.getString("bulkupload.entity.materials.header"))
+                .add(bundle.getString("bulkupload.entity.materials.initial.stock.header"))
+                .add(bundle.getString("bulkupload.entity.customers.header"))
+                .add(bundle.getString("bulkupload.entity.vendors.header"))
+                .add(bundle.getString("bulkupload.tags.header"))
+                .add(MessageFormat.format(bundle.getString("bulkupload.entity.custom.id.header"), FieldLimits.TEXT_FIELD_MAX_LENGTH))
+                .add(bundle.getString("bulkupload.entity.disable.batch.management"));
+        }
 
-  public String getUploadableCSVHeader(Locale locale, String type) {
-    ResourceBundle bundle = Resources.get().getBundle("BackendMessages", locale);
-    ResourceBundle messageBundle = Resources.get().getBundle("Messages", locale);
-    String format;
-    if ("assets".equalsIgnoreCase(type)) {
-      format = bundle.getString("kiosk") + CharacterConstants.COMMA +
-          bundle.getString("custom.entity") + CharacterConstants.COMMA +
-          bundle.getString("city") + CharacterConstants.COMMA +
-          bundle.getString("district") + CharacterConstants.COMMA +
-          bundle.getString("state") + CharacterConstants.COMMA +
-          bundle.getString("asset.type") + CharacterConstants.COMMA +
-          bundle.getString("bulk.asset.id") + CharacterConstants.COMMA +
-          bundle.getString("manufacturer") + CharacterConstants.COMMA +
-          bundle.getString("model") + CharacterConstants.COMMA +
-          bundle.getString("sensor.device.id") + CharacterConstants.COMMA +
-          bundle.getString("sim1") + CharacterConstants.COMMA +
-          bundle.getString("sim1.id") + CharacterConstants.COMMA +
-          bundle.getString("sim1.ntw.provider") + CharacterConstants.COMMA +
-          bundle.getString("sim2") + CharacterConstants.COMMA +
-          bundle.getString("sim2.id") + CharacterConstants.COMMA +
-          bundle.getString("sim2.ntw.provider") + CharacterConstants.COMMA +
-          bundle.getString("imei");
-    } else {
-      format =
-          "Operation* (a = add / e = edit / d = delete; if empty it is defaulted to add; ensure "
-              + messageBundle.getString("kiosk.lower") + " name is EXACT for edit/delete)," +
-              messageBundle.getString("kiosk.name") + "* (1-" + FieldLimits.TEXT_FIELD_MAX_LENGTH
-              + ") characters)," +
-              messageBundle.getString("users")
-              + "* (semi-colon separated list of user IDs - e.g. user1;user2;user3)," +
-              messageBundle.getString("country")
-              + "* (ISO-3166 2-letter codes as at http://userpage.chemie.fu-berlin.de/diverse/doc/ISO_3166.html),"
-              +
-              messageBundle.getString("state")
-              + "* (should be the same as in the corresponding LogiWeb drop-downs)," + messageBundle
-              .getString("village") + "* (not more than " + FieldLimits.TEXT_FIELD_MAX_LENGTH
-              + " characters)" + "," +
-              messageBundle.getString("latitude")
-              + " (should be a number rounded to eight decimal places maximum between "
-              + FieldLimits.LATITUDE_MIN + " and " + FieldLimits.LATITUDE_MAX + ")" + ","
-              + messageBundle
-              .getString("longitude")
-              + " (should be a number rounded to eight decimal places maximum between"
-              + FieldLimits.LONGITUDE_MIN + " and " + FieldLimits.LONGITUDE_MAX + ")" + "," +
-              messageBundle.getString("district")
-              + " (should be the same as in the corresponding LogiWeb drop-downs)," + messageBundle
-              .getString("taluk")
-              + " (should be the same as in the corresponding LogiWeb drop-downs)," +
-              messageBundle.getString("streetaddress") + " (not more than "
-              + FieldLimits.STREET_ADDRESS_MAX_LENGTH + " characters)" + "," +
-              messageBundle.getString("zipcode") + " (not more than "
-              + +FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters)" + "," +
-              messageBundle.getString("currency")
-              + " (ISO-4217 3-letter codes as at http://en.wikipedia.org/wiki/ISO_4217)," +
-              messageBundle.getString("tax") + " (in % between " + FieldLimits.TAX_MIN_VALUE
-              + " and " + FieldLimits.TAX_MAX_VALUE + "; rounded to two decimal places maximum)," +
-              messageBundle.getString("tax.id") + " (not more than "
-              + +FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters)" + "," +
-              messageBundle.getString("inventory.policy")
-              + " (sq = System-determined replenishment - s/Q; leave empty for default; default is user-determined replenishment),"
-              + messageBundle.getString("inventory.servicelevel") + " (in %)," +
-              messageBundle.getString("kiosk.name") + "[" + messageBundle.getString("new")
-              + "] (new name if " + messageBundle.getString("kiosk.lower")
-              + " name is to be modified; used ONLY if operation is edit)," +
-              messageBundle.getString("add") + " " + messageBundle.getString("all") + " "
-              + messageBundle.getString("materials")
-              + "? (yes/no; 'yes' implies all materials will be added to this " + messageBundle
-              .getString("kiosk.lower") + "; default is 'no'; used only with 'add' operation)," +
-              messageBundle.getString("materials")
-              + " (semi-colon separated Material Names if ALL materials are not to be added; e.g. material-name1;material-name2;material-name3; use only with 'add' operation and ENSURE that these materials are present),"
-              +
-              messageBundle.getString("stock") + " (initial stock level for all materials in this "
-              + messageBundle.getString("kiosk.lower") + "; default is 0)," +
-              messageBundle.getString("customers") + " (semi-colon separated " + messageBundle
-              .getString("customer.lower") + " names; " + messageBundle.getString("kiosks.example")
-              + " use only with 'add' operation and ENSURE that these " + messageBundle
-              .getString("kiosks.lowercase") + " are already present)," +
-              messageBundle.getString("vendors") + " (semi-colon separated " + messageBundle
-              .getString("vendor.lower") + " names; " + messageBundle.getString("kiosks.example")
-              + " use only with 'add' operation and ENSURE that these " + messageBundle
-              .getString("kiosks.lowercase") + " are already present)," +
-              messageBundle.getString("tags") + " (semi-colon separate tags; e.g. tag1;tag2;tag3),"
-              +
-              messageBundle.getString("customid.entity") + " (not more than "
-              + FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters)," +
-              messageBundle.getString("disable.batch") + " (true/false ; defaults to false)";
+        return header.toString();
     }
-
-    return format;
-  }
 }

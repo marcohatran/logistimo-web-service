@@ -1293,3 +1293,4 @@ message.status.violation=Message Delivery - Carrier violation
 message.status.unknown=Message Delivery - Unknown error
 message.status.missing=Inbound Message - Missing Segment
 message.status.price.exceeded=Message price exceeds Max Price
+order.readyfordispatch=Ready for dispatch

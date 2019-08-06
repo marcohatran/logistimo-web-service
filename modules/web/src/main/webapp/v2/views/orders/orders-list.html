@@ -37,6 +37,7 @@
                             <option value="">{{resourceBundle.all}}</option>
                             <option value="pn">{{resourceBundle['order.pending']}}</option>
                             <option value="cf">{{resourceBundle['order.confirmed']}}</option>
+                            <option value="rp">{{resourceBundle['order.readyfordispatch']}}</option>
                             <option value="bo">{{resourceBundle['order.backordered']}}</option>
                             <option value="cm">{{resourceBundle['order.shipped']}}</option>
                             <option value="fl">{{resourceBundle['order.fulfilled']}}</option>
@@ -45,11 +46,11 @@
                     </div>
                     <div class="col-sm-3">
                         <span class="filter-label">{{resourceBundle.from}}</span>
-                        <date-picker date-model="from" place-holder="From" max-date="today"></date-picker>
+                        <date-picker date-model="from" place-holder="{{resourceBundle.from}}" max-date="today"></date-picker>
                     </div>
                     <div class="col-sm-3">
                         <span class="filter-label">{{resourceBundle.to}}</span>
-                        <date-picker date-model="to" place-holder="To" min-date="from" max-date="today"></date-picker>
+                        <date-picker date-model="to" place-holder="{{resourceBundle.to}}" min-date="from" max-date="today"></date-picker>
                     </div>
                 </div>
                 <div class="row" ng-show="showMore">

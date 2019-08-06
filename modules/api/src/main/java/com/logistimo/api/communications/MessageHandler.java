@@ -233,7 +233,7 @@ public abstract class MessageHandler {
     xLogger.fine("setUserDetails: userId = {0}, user = {1}", userId, user);
     countryCode =
         user.getCountry(); // this is set explicitly, so that MachineProtocolMessageHandler.getResponseMessages() can set this value for later use (i.e. determining which g/w)
-    backendMessages = Resources.get().getBundle("BackendMessages", user.getLocale());
+    backendMessages = Resources.getBundle(user.getLocale());
   }
 
   // Get the message service instance

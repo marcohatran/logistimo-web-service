@@ -108,7 +108,7 @@ public class StockRebalancingRunNotificationAction {
   private String getMessage(ExecutionMetadataModel executionMetadataModel,
       Page<StockRebalancingEvent> events, DomainConfig domainConfig) {
     ResourceBundle messages =
-        Resources.get().getBundle(MESSAGES, new Locale(domainConfig.getLangPreference()));
+        Resources.getBundle(new Locale(domainConfig.getLangPreference()));
     String message = messages.getString(STOCKREBALANCING_ADMIN_NOTIFICATION);
     Map<String, String> values = new HashMap<>();
     values.put(INVENTORY_COUNT, String.valueOf(events.getTotalElements()));

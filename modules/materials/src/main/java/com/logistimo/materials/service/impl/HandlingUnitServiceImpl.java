@@ -73,7 +73,7 @@ public class HandlingUnitServiceImpl implements IHandlingUnitService {
     IHandlingUnit handlingUnitByName = getHandlingUnitByName(domainId, handlingUnit.getName());
     if (handlingUnitByName != null) {
       xLogger.warn("add: Handling unit with name {0} already exists", handlingUnit.getName());
-      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
+      ResourceBundle backendMessages = Resources.getBundle(SecurityUtils.getLocale());
       throw new ServiceException(
           backendMessages.getString("error.cannotadd") + ". '" + handlingUnit.getName() + "' "
               + backendMessages.getString("error.alreadyexists") + ".");
@@ -114,7 +114,7 @@ public class HandlingUnitServiceImpl implements IHandlingUnitService {
         List<IHandlingUnit> temp = getHandlingUnitListByName(domainId, handlingUnit.getName());
         for (IHandlingUnit iHu : temp) {
           if (!iHu.getId().equals(handlingUnit.getId())) {
-            ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
+            ResourceBundle backendMessages = Resources.getBundle(SecurityUtils.getLocale());
             throw new InvalidDataException("Handling unit " + hu.getName() + " " + backendMessages
                 .getString("error.alreadyexists"));
           }
@@ -160,7 +160,7 @@ public class HandlingUnitServiceImpl implements IHandlingUnitService {
     } catch (JDOObjectNotFoundException e) {
       xLogger.warn("get handling unit: FAILED!!! Handling unit {0} does not exist in the database",
           handlingUnitId, e);
-      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
+      ResourceBundle backendMessages = Resources.getBundle(SecurityUtils.getLocale());
       throw new ServiceException(
           "Handling unit " + handlingUnitId + " " + backendMessages.getString("error.notfound"));
     } finally {

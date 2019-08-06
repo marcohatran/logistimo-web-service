@@ -231,7 +231,7 @@ public class NotifyEventUpdateAction {
   }
 
   private String getResourceBundleMessage(String key, Locale locale) {
-    ResourceBundle resourceBundle = Resources.get().getBundle("Messages", locale);
+    ResourceBundle resourceBundle = Resources.getBundle(locale);
     return resourceBundle.getString(key);
   }
 

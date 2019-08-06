@@ -376,6 +376,14 @@
     </servlet-mapping>
 	<!-- Security Filter -->
     <filter>
+        <filter-name>RequestTraceFilter</filter-name>
+        <filter-class>com.logistimo.api.filters.RequestTraceFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>RequestTraceFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+    <filter>
         <filter-name>CorsFilter</filter-name>
         <filter-class>org.apache.catalina.filters.CorsFilter</filter-class>
         <init-param>
@@ -384,7 +392,7 @@
         </init-param>
         <init-param>
             <param-name>cors.allowed.methods</param-name>
-            <param-value>GET,POST,HEAD,OPTIONS,PUT,DELETE</param-value>
+            <param-value>GET,POST,PATCH,HEAD,OPTIONS,PUT,DELETE</param-value>
         </init-param>
         <init-param>
             <param-name>cors.allowed.headers</param-name>
@@ -470,36 +478,5 @@
     <listener>
         <listener-class>com.logistimo.api.listeners.LogiMetricsServletContextListener</listener-class>
     </listener>
-
-    <error-page>
-        <!-- Missing resource -->
-        <error-code>404</error-code>
-        <location>/v2/404.html</location>
-    </error-page>
-    <error-page>
-        <!-- Missing login -->
-        <error-code>401</error-code>
-        <location>/v2/general-error.html</location>
-    </error-page>
-    <error-page>
-        <!-- Missing login -->
-        <error-code>409</error-code>
-        <location>/v2/general-error.html</location>
-    </error-page>
-    <error-page>
-        <!-- Forbidden directory listing -->
-        <error-code>403</error-code>
-        <location>/v2/general-error.html</location>
-    </error-page>
-    <error-page>
-        <!-- Uncaught exception -->
-        <error-code>500</error-code>
-        <location>/v2/general-error.html</location>
-    </error-page>
-    <error-page>
-        <!-- Unsupported servlet method -->
-        <error-code>503</error-code>
-        <location>/v2/general-error.html</location>
-    </error-page>
 
 </web-app>

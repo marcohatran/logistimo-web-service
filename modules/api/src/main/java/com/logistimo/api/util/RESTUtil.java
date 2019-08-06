@@ -784,7 +784,8 @@ public class RESTUtil {
       }
     }
     // Get default backendMessages
-    backendMessages = Resources.get().getBundle("BackendMessages", new Locale(Constants.LANG_DEFAULT));
+    backendMessages =
+        Resources.getBundle(new Locale(Constants.LANG_DEFAULT));
     try {
       boolean authenticated = false;
       // Check if Basic auth. header exists
@@ -806,14 +807,15 @@ public class RESTUtil {
           ud = aus.authenticate(authRequest);
           authenticated = (ud != null);
           if (!authenticated) {
-            backendMessages = Resources.get().getBundle("BackendMessages", new Locale(Constants.LANG_DEFAULT));
+            backendMessages =
+                Resources.getBundle(new Locale(Constants.LANG_DEFAULT));
             errMsg = backendMessages.getString("error.invalidusername");
           } else {
             u = as.getUserAccount(uId);
           }
         } else if (uId == null) {
           // no proper credentials
-          backendMessages = Resources.get().getBundle("BackendMessages", new Locale(Constants.LANG_DEFAULT));
+          backendMessages = Resources.getBundle(new Locale(Constants.LANG_DEFAULT));
           errMsg = backendMessages.getString("error.invalidusername");
         } else {
           // Brought this back, without this few pages in old UI break. ( Stock view dashboard)
@@ -826,7 +828,7 @@ public class RESTUtil {
             authenticated = true;
           } else { // no authenticated session either
             backendMessages =
-                Resources.get().getBundle("BackendMessages", new Locale(Constants.LANG_DEFAULT));
+                Resources.getBundle(new Locale(Constants.LANG_DEFAULT));
             errMsg = backendMessages.getString("error.invalidusername");
           }
         }
@@ -2370,10 +2372,7 @@ public class RESTUtil {
 
     String transTypeStr = reqParamsMap.get(RestConstantsZ.TRANSACTION_TYPE);
     if (StringUtils.isNotEmpty(transTypeStr)) {
-      if (ITransaction.TYPE_PHYSICALCOUNT.equals(transTypeStr) || ITransaction.TYPE_ISSUE
-          .equals(transTypeStr) || ITransaction.TYPE_RECEIPT.equals(transTypeStr)
-          || ITransaction.TYPE_TRANSFER.equals(transTypeStr) || ITransaction.TYPE_WASTAGE
-          .equals(transTypeStr)) {
+      if (ITransaction.EXPORT_TYPES.contains(transTypeStr)) {
         parsedRequest.parsedReqMap.put(RestConstantsZ.TRANSACTION_TYPE, transTypeStr);
       } else {
         parsedRequest.errMessage = backendMessages.getString("error.invalidtransactiontype");

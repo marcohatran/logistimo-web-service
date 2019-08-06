@@ -61,15 +61,14 @@ public class InventrySnapshotExportHandler implements IExportHandler {
   @Override
   public String getCSVHeader(Locale locale, DomainConfig dc, String type) {
     xLogger.fine("Entering getCSVHeader. locale: {0}", locale);
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-    ResourceBundle jsMessages = Resources.get().getBundle("JSMessages", locale);
+    ResourceBundle messages = Resources.getBundle(locale);
     String
         header =
-        messages.getString("kiosk") + CharacterConstants.SPACE + jsMessages.getString("id")
+        messages.getString("kiosk") + CharacterConstants.SPACE + messages.getString("id")
             + CharacterConstants.COMMA +
             messages.getString("customid.entity") + CharacterConstants.COMMA +
             messages.getString("kiosk.name") + CharacterConstants.COMMA +
-            messages.getString("material") + CharacterConstants.SPACE + jsMessages.getString("id")
+            messages.getString("material") + CharacterConstants.SPACE + messages.getString("id")
             + CharacterConstants.COMMA +
             messages.getString("customid.material") + CharacterConstants.COMMA +
             messages.getString("material.name") + CharacterConstants.COMMA +
@@ -87,9 +86,9 @@ public class InventrySnapshotExportHandler implements IExportHandler {
             messages.getString("inventory.policy") + "," + messages
             .getString("inventory.servicelevel") + "," +
             messages.getString("kiosk") + CharacterConstants.SPACE +
-            jsMessages.getString("tags.lower") + CharacterConstants.COMMA +
+            messages.getString("tags.lower") + CharacterConstants.COMMA +
             messages.getString("material") + CharacterConstants.SPACE +
-            jsMessages.getString("tags.lower") + CharacterConstants.COMMA +
+            messages.getString("tags.lower") + CharacterConstants.COMMA +
             messages.getString("country") + "," + messages.getString("state") + "," +
             messages.getString("district") + "," + messages.getString("taluk") + "," +
             messages.getString("zipcode") + "," + messages.getString("village");

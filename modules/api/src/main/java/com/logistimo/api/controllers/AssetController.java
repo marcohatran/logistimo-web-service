@@ -48,7 +48,6 @@ import com.logistimo.config.models.AssetSystemConfig;
 import com.logistimo.config.models.ConfigurationException;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
-import com.logistimo.constants.CharacterConstants;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exports.ExportService;
 import com.logistimo.logger.XLog;
@@ -134,7 +133,7 @@ public class AssetController {
                       @RequestParam(required = false, defaultValue = "false") boolean update) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     try {
       long domainId = sUser.getCurrentDomainId();
       if (!update) {
@@ -200,7 +199,7 @@ public class AssetController {
                     HttpServletRequest request) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     String timezone = sUser.getTimezone();
     Results assetResults;
     Navigator
@@ -232,7 +231,7 @@ public class AssetController {
   AssetDetailsModel getAssets(@PathVariable Long assetId) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     String timezone = sUser.getTimezone();
     try {
       AssetDetailsModel assetDetailsModel =
@@ -270,7 +269,7 @@ public class AssetController {
                             HttpServletRequest request) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     Navigator
         navigator =
         new Navigator(request.getSession(), "AssetController.getAssets", offset, size, "dummy", 0);
@@ -305,7 +304,7 @@ public class AssetController {
                              @PathVariable String assetId) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     assetId = AssetUtil.decodeURLParameters(assetId);
     AssetDetailsModel assetDetailsModel;
     try {
@@ -328,7 +327,7 @@ public class AssetController {
                            @PathVariable String assetId) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     String timezone = sUser.getTimezone();
     assetId = AssetUtil.decodeURLParameters(assetId);
     try {
@@ -404,7 +403,7 @@ public class AssetController {
                                     @RequestParam(required = false, defaultValue = "false") Boolean delete) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     Long domainId = sUser.getCurrentDomainId();
     try {
       if (delete) {
@@ -600,7 +599,7 @@ public class AssetController {
     String userId = sUser.getUsername();
     final Long domainId = sUser.getCurrentDomainId();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.getBundle(locale);
     if (assetsDeleteModel != null) {
       Map<String, List<String>> deleteModel = new HashMap<>(5);
       for (AssetModel assetModel : assetsDeleteModel.data) {
@@ -639,7 +638,7 @@ public class AssetController {
       }
     }
 
-    return backendMessages.getString("assets") + " " + backendMessages.getString("delete.success");
+    return backendMessages.getString("one.or.more.asset") + " " + backendMessages.getString("delete.success");
   }
 
   @RequestMapping(value = "/model", method = RequestMethod.GET)
@@ -669,7 +668,7 @@ public class AssetController {
   String exportData(@RequestBody String json) throws ParseException, ServiceException {
     ExportModel eModel = assetBuilder.buildExportModel(json);
     long jobId = exportService.scheduleExport(eModel, "status.assets");
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", Locale.ENGLISH);
+    ResourceBundle backendMessages = Resources.getBundle(Locale.ENGLISH);
     IUserAccount u = usersService.getUserAccount(SecurityUtils.getUsername());
     return backendMessages.getString("export.success1") + " " + u.getEmail() + " "
         + backendMessages.getString("export.success2") + " "
@@ -684,7 +683,7 @@ public class AssetController {
   String updateWorkingStatus(@PathVariable String vendorId,
                              @PathVariable String deviceId,
                              @RequestBody final AssetModels.AssetStatus assetStatusModel) throws ServiceException {
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", SecurityUtils.getUserDetails().getLocale());
+    ResourceBundle backendMessages = Resources.getBundle(SecurityUtils.getUserDetails().getLocale());
     deviceId = AssetUtil.decodeURLParameters(deviceId);
     assetStatusModel.stub = SecurityUtils.getUsername();
     IAsset asset = assetManagementService.getAsset(vendorId, deviceId);
