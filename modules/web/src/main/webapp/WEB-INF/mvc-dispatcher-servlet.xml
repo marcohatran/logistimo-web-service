@@ -41,13 +41,14 @@
             <bean class="org.springframework.http.converter.json.GsonHttpMessageConverter">
                 <property name="gson">
                     <bean id="gson" class="com.logistimo.gson.LogiGsonFactory" factory-method="create"/>
-                </property>
-                <property name="prefixJson" value="true"/>
+		    </property>
             </bean>
         </mvc:message-converters>
     </mvc:annotation-driven>
 
-
+    <bean id="gsonBuilder" class="com.google.gson.GsonBuilder">
+        <property name="dateFormat" value="yyyy-MM-dd'T'HH:mm:ss.SSSZ"/>
+    </bean>
 
     <bean id="contextHolder" class="com.logistimo.context.StaticApplicationContext"/>
     
